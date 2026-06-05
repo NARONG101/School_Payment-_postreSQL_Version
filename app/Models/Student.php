@@ -31,6 +31,14 @@ class Student extends Model
         return "{$this->first_name} {$this->last_name}";
     }
 
+    /**
+     * Always store time_type as lowercase to prevent case-mismatch bugs.
+     */
+    public function setTimeTypeAttribute(?string $value): void
+    {
+        $this->attributes['time_type'] = $value ? strtolower(trim($value)) : null;
+    }
+
     public function getTotalPaidAttribute(): float
     {
         return $this->payments()->where('status', 'paid')->sum('amount_paid');
@@ -57,7 +65,12 @@ class Student extends Model
 
     public function getLastPaymentAttribute()
     {
-        return $this->payments()->latest('payment_date')->first();
+        // Return the payment covering the furthest month
+        // (highest next_payment_date = most recent month covered)
+        return $this->payments()
+            ->orderByDesc('next_payment_date')
+            ->orderByDesc('id')
+            ->first();
     }
 
     public function getNextPaymentDateAttribute()
@@ -66,14 +79,50 @@ class Student extends Model
         if (!$lastPayment || !$lastPayment->payment_date) {
             return null;
         }
-        $nextPaymentDate = \Carbon\Carbon::parse($lastPayment->payment_date)->addMonth();
-        if ($this->monthly_payment_day) {
-            try {
-                $nextPaymentDate->day($this->monthly_payment_day);
-            } catch (\Exception $e) {
-            }
+
+        // Use stored next_payment_date if available (most accurate)
+        if ($lastPayment->next_payment_date) {
+            return $lastPayment->next_payment_date;
         }
-        return $nextPaymentDate;
+
+        // Recalculate using the anchored logic
+        $paymentDay = (int) ($this->monthly_payment_day ?? $lastPayment->payment_date->day);
+        return self::nextPaymentDateFrom(
+            \Carbon\Carbon::parse($lastPayment->payment_date),
+            $paymentDay
+        );
+    }
+
+    /**
+     * Calculate the next payment date anchored to a fixed day-of-month.
+     *
+     * Rule: find the next occurrence of $paymentDay AFTER $paidDate.
+     *   - If $paymentDay is still in the future this month → use it.
+     *   - Otherwise → use it next month.
+     *
+     * Example: paid 01 Jun, day=27 → next = 27 Jun
+     *          paid 28 Jun, day=27 → next = 27 Jul
+     */
+    public static function nextPaymentDateFrom(\Carbon\Carbon $paidDate, int $paymentDay): \Carbon\Carbon
+    {
+        $paymentDay = max(1, min(31, $paymentDay));
+
+        // Try same month — clamp to last day of that month
+        $lastDaySame   = (int) $paidDate->copy()->endOfMonth()->day;
+        $daySame       = min($paymentDay, $lastDaySame);
+        $candidateSame = $paidDate->copy()->startOfMonth()->day($daySame);
+
+        // Use same-month candidate ONLY if it is strictly AFTER the paid date
+        // (if paid on the exact day, that month is done → go to next month)
+        if ($candidateSame->gt($paidDate)) {
+            return $candidateSame;
+        }
+
+        // Next month — clamp to last day of that month
+        $nextMonthStart = $paidDate->copy()->addMonthNoOverflow()->startOfMonth();
+        $lastDayNext    = (int) $nextMonthStart->copy()->endOfMonth()->day;
+        $dayNext        = min($paymentDay, $lastDayNext);
+        return $nextMonthStart->copy()->day($dayNext);
     }
 
     public function getDaysUntilNextPaymentAttribute()

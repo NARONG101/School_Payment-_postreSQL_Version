@@ -1,34 +1,25 @@
+{{-- This view is kept for compatibility but alerts-grades.blade.php is the primary view --}}
 @extends('layouts.app')
 @section('title', $title)
 @section('page-title', $title)
-
+@section('topbar-actions')
+    <a href="{{ route('payments.alerts') }}" class="btn btn-outline btn-sm">
+        <i class="fas fa-arrow-left" aria-hidden="true"></i> <span>Back to Alerts</span>
+    </a>
+@endsection
 @section('content')
 <div class="card">
     <div class="card-header">
         <div class="card-title">
             @if($type === 'overdue')
-                <i class="fas fa-exclamation-circle" style="color:var(--danger)"></i>
+                <i class="fas fa-exclamation-circle" style="color:var(--danger)" aria-hidden="true"></i>
             @elseif($type === 'closely')
-                <i class="fas fa-bell" style="color:var(--warning)"></i>
+                <i class="fas fa-bell" style="color:var(--warning)" aria-hidden="true"></i>
             @else
-                <i class="fas fa-clock" style="color:var(--primary)"></i>
+                <i class="fas fa-clock" style="color:var(--primary)" aria-hidden="true"></i>
             @endif
             {{ $title }}
         </div>
-        @if(str_contains($title, 'Grade'))
-            @php
-                $backRoute = $type === 'overdue' ? route('payments.alerts.overdue') : 
-                            ($type === 'closely' ? route('payments.alerts.closely') : 
-                            route('payments.alerts.upcoming'));
-            @endphp
-            <a href="{{ $backRoute }}" class="btn btn-outline btn-sm">
-                <i class="fas fa-arrow-left"></i> Back to Grades
-            </a>
-        @else
-            <a href="{{ route('payments.alerts') }}" class="btn btn-outline btn-sm">
-                <i class="fas fa-arrow-left"></i> Back to Alerts
-            </a>
-        @endif
     </div>
     <div class="table-wrap">
         <table>
@@ -44,16 +35,16 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($payments as $payment)
+                @forelse($payments ?? [] as $payment)
                 <tr>
                     <td>
-                        <div style="font-weight:600">{{ $payment->student?->full_name ?? '—' }}</div>
-                        <div style="font-size:11px;color:var(--gray-400)">{{ $payment->student?->student_id ?? '—' }}</div>
+                        <div style="font-weight:600;color:var(--text-primary)">{{ $payment->student?->full_name ?? '—' }}</div>
+                        <div style="font-size:11px;color:var(--text-muted)">{{ $payment->student?->student_id ?? '—' }}</div>
                     </td>
-                    <td>Grade {{ $payment->student?->year_level ?? '—' }}</td>
-                    <td>{{ $payment->time_type ?? '—' }}</td>
-                    <td style="font-weight:700">${{ number_format($payment->balance, 2) }}</td>
-                    <td>{{ $payment->deadline_date?->format('M d, Y') ?? '—' }}</td>
+                    <td style="color:var(--text-secondary)">Grade {{ $payment->student?->year_level ?? '—' }}</td>
+                    <td style="color:var(--text-secondary)">{{ $payment->time_type ?? '—' }}</td>
+                    <td style="font-weight:700;color:var(--text-primary)">${{ number_format($payment->balance, 2) }}</td>
+                    <td style="font-size:12px;color:var(--text-muted)">{{ $payment->deadline_date?->format('M d, Y') ?? '—' }}</td>
                     <td>
                         @if($payment->status === 'overdue')
                             <span class="badge badge-danger">Overdue</span>
@@ -66,7 +57,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="empty-state">No payments found!</td></tr>
+                <tr><td colspan="7"><div class="empty-state"><i class="fas fa-check-circle" style="color:var(--success)" aria-hidden="true"></i><p>No payments found!</p></div></td></tr>
                 @endforelse
             </tbody>
         </table>

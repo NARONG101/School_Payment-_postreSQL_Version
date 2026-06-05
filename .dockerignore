@@ -1,0 +1,48 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node
+node_modules
+
+# PHP vendor (installed in Docker build)
+vendor
+
+# Laravel local files
+.env
+.env.*
+!.env.example
+storage/app/public
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views
+storage/logs
+bootstrap/cache
+
+# Build artifacts
+public/build
+public/hot
+public/storage
+
+# Dev tools
+.phpunit.result.cache
+.phpunit.cache
+_ide_helper.php
+.phpactor.json
+
+# IDE / OS
+.idea
+.vscode
+.cursor
+.DS_Store
+Thumbs.db
+*.log
+
+# Docker files (not needed inside image)
+docker-compose.yml
+docker-compose*.yml
+
+# Docs
+*.md
+!README.md

@@ -1,0 +1,88 @@
+# ── Render deployment configuration ──────────────────────────
+# Docs: https://render.com/docs/render-yaml-spec
+#
+# Deploy steps:
+#   1. Push this repo to GitHub / GitLab
+#   2. Connect the repo in Render dashboard
+#   3. Render will detect this file automatically
+#   4. Set the secret env vars in Render dashboard:
+#        APP_KEY, ADMIN_EMAIL, ADMIN_PASSWORD
+# ─────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: student-payment-system
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # Render free tier uses port 10000 internally but we expose 8080
+    # Render maps its external port → your container's port automatically
+    # via the PORT env var. We hard-code 8080 in nginx/supervisord.
+
+    plan: free          # change to 'starter' or higher for production
+    region: singapore   # choose closest to your users
+
+    # ── Persistent disk for SQLite + uploaded files ───────────
+    disk:
+      name: app-data
+      mountPath: /var/www/html/storage/app
+      sizeGB: 1         # increase as needed
+
+    # ── Environment variables ─────────────────────────────────
+    envVars:
+      - key: APP_NAME
+        value: "Student Payment System"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false     # Set manually in Render dashboard — NEVER commit this
+
+      - key: APP_URL
+        value: https://student-payment-system.onrender.com   # update to your actual URL
+
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: DB_DATABASE
+        value: /var/www/html/storage/app/database.sqlite     # on the persistent disk
+
+      - key: SESSION_DRIVER
+        value: file
+      - key: SESSION_ENCRYPT
+        value: "true"
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: SESSION_LIFETIME
+        value: "120"
+
+      - key: CACHE_STORE
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: error
+
+      - key: FILESYSTEM_DISK
+        value: public
+
+      - key: RENDER
+        value: "true"
+
+      - key: ADMIN_EMAIL
+        sync: false     # Set in Render dashboard
+      - key: ADMIN_PASSWORD
+        sync: false     # Set in Render dashboard
+      - key: ADMIN_NAME
+        value: "Admin User"
+
+      - key: MAIL_MAILER
+        value: log
+      - key: MAIL_FROM_ADDRESS
+        value: "noreply@yourschool.edu"
+      - key: MAIL_FROM_NAME
+        value: "Student Payment System"

@@ -1,0 +1,53 @@
+version: "3.9"
+
+# ── Local development compose ────────────────────────────────
+# Usage:
+#   docker compose up --build
+#   App available at http://localhost:8080
+#
+# For production on Render, use the Dockerfile directly.
+# ─────────────────────────────────────────────────────────────
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: student-payment-system:local
+    container_name: student-payment-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      APP_NAME: "Student Payment System"
+      APP_ENV: local
+      APP_DEBUG: "false"
+      APP_KEY: "${APP_KEY}"
+      APP_URL: "http://localhost:8080"
+
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/www/html/database/database.sqlite
+
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      QUEUE_CONNECTION: sync
+
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: debug
+
+      MAIL_MAILER: log
+    volumes:
+      # Persist uploaded files and SQLite DB across restarts
+      - app_storage:/var/www/html/storage/app/public
+      - app_database:/var/www/html/database
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/up"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  app_storage:
+  app_database:

@@ -11,96 +11,118 @@ use Illuminate\Support\Facades\Auth;
 
 class StudentController extends Controller
 {
+    /** Allowed time slots — must match PaymentController::TIME_SLOTS */
+    private const TIME_SLOTS = [
+        'mon-fri 7:00-9:00',
+        'mon-fri 9:00-11:00',
+        'mon-fri 1:00-3:00',
+        'mon-fri 3:00-5:00',
+        'mon-fri 5:30-7:30',
+        'sat-sun 7:00-11:00',
+        'sat-sun 1:00-5:00',
+    ];
+
+    // ── Index ─────────────────────────────────────────────────────────────────
+
     public function index(Request $request)
     {
-        $query = Student::query();
+        // All students for the full table (with sort)
+        $sortBy = $request->get('sort', 'newest');
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('student_id', 'like', "%{$search}%");
-            });
-        }
+        $allQuery = Student::withCount('payments');
 
-        if ($request->filled('grade')) {
-            $query->where('year_level', $request->grade);
-        }
+        $allStudents = match ($sortBy) {
+            'oldest'  => $allQuery->orderBy('id')->get(),
+            'az'      => $allQuery->orderBy('first_name')->orderBy('last_name')->get(),
+            'za'      => $allQuery->orderByDesc('first_name')->orderByDesc('last_name')->get(),
+            'enroll'  => $allQuery->orderByDesc('enrollment_date')->get(),
+            'grade'   => $allQuery->orderByDesc('year_level')->orderBy('last_name')->get(),
+            default   => $allQuery->orderByDesc('id')->get(), // newest
+        };
 
-        $students = $query->withCount('payments')->orderBy('year_level')->orderBy('last_name')->get()->groupBy('year_level');
-        $grades = Student::distinct()->orderBy('year_level')->pluck('year_level');
+        // Grade cards — always grouped by grade
+        $grades  = $allStudents->pluck('year_level')->unique()->sort()->values();
+        $byGrade = $allStudents->groupBy('year_level');
 
-        return view('students.index', compact('students', 'grades'));
+        return view('students.index', compact('allStudents', 'grades', 'byGrade', 'sortBy'));
     }
+
+    // ── Create ────────────────────────────────────────────────────────────────
 
     public function create()
     {
         return view('students.create');
     }
 
+    // ── Store ─────────────────────────────────────────────────────────────────
+
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'student_id'           => 'nullable|unique:students,student_id|max:20',
-            'first_name'           => 'required|max:100',
-            'last_name'            => 'required|max:100',
-            'phone'                => 'nullable|max:20',
-            'address'              => 'nullable|max:255',
-            'come_from'            => 'nullable|max:255',
-            'subject'              => 'required|max:100',
-            'date_of_birth'        => 'nullable|date|before:today',
-            'gender'               => 'nullable|in:male,female,other',
-            'year_level'           => 'required|integer|min:1|max:12',
-            'enrollment_date'      => 'required|date',
-            'photo'                => 'nullable|image|max:2048',
-            'monthly_payment_day'  => 'required|integer|min:1|max:31',
-            'monthly_fee'          => 'required|numeric|min:0',
-            'time_type'            => 'required',
-            'payment_method'       => 'required|in:cash,bank_transfer',
-            'payment_photo'        => 'nullable|image|max:2048',
+            'student_id'          => 'nullable|unique:students,student_id|max:20|alpha_dash',
+            'first_name'          => 'required|string|max:100',
+            'last_name'           => 'required|string|max:100',
+            'phone'               => 'nullable|string|max:20',
+            'address'             => 'nullable|string|max:255',
+            'come_from'           => 'nullable|string|max:255',
+            'subject'             => 'required|string|max:100',
+            'date_of_birth'       => 'nullable|date|before:today',
+            'gender'              => 'nullable|in:male,female,other',
+            'year_level'          => 'required|integer|min:1|max:12',
+            'enrollment_date'     => 'required|date',
+            'photo'               => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'monthly_payment_day' => 'required|integer|min:1|max:31',
+            'monthly_fee'         => 'required|numeric|min:0|max:99999',
+            'time_type'           => 'required|in:' . implode(',', self::TIME_SLOTS),
+            'payment_method'      => 'required|in:cash,bank_transfer',
+            'payment_photo'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
+        // Auto-generate student ID if blank
         if (empty($validated['student_id'])) {
             $validated['student_id'] = Student::generateStudentId();
         }
 
+        // Store profile photo
         if ($request->hasFile('photo')) {
             $validated['photo'] = $request->file('photo')->store('students/photos', 'public');
         }
 
         $validated['status'] = 'active';
-        
-        $timeType = $validated['time_type'];
+
+        // Extract fields not in the students table
+        $timeType      = $validated['time_type'];
         $paymentMethod = $validated['payment_method'];
-        $paymentPhoto = $request->file('payment_photo');
-        
+        $paymentPhoto  = $request->file('payment_photo');
+
         unset($validated['payment_method'], $validated['payment_photo']);
-        
+
         $student = Student::create($validated);
 
-        // Create first payment automatically based on enrollment date (paid, with admin fee)
-        $enrollmentDate = Carbon::parse($validated['enrollment_date']);
-        $firstPaymentDate = $enrollmentDate->copy();
-        $nextPaymentDate = $firstPaymentDate->copy()->addMonth();
-        $adminFee = 20;
-        $totalAmount = $validated['monthly_fee'] + $adminFee;
+        // Auto-create first payment (enrollment date, with $10 admin fee — one time only)
+        $enrollDate = Carbon::parse($validated['enrollment_date']);
+        $paymentDay = (int) $validated['monthly_payment_day'];
+
+        // Next payment = next occurrence of payment_day AFTER enrollment date
+        $nextPaymentDate = Student::nextPaymentDateFrom($enrollDate, $paymentDay);
+
+        $adminFee = 10; // $10 admin fee on enrollment only
 
         $paymentData = [
-            'receipt_number' => Payment::generateReceiptNumber(),
-            'student_id' => $student->id,
-            'amount_due' => $validated['monthly_fee'],
-            'admin_fee' => $adminFee,
-            'amount_paid' => $totalAmount,
-            'balance' => 0,
-            'payment_date' => $firstPaymentDate,
-            'due_date' => $firstPaymentDate,
-            'deadline_date' => $firstPaymentDate,
+            'receipt_number'    => Payment::generateReceiptNumber(),
+            'student_id'        => $student->id,
+            'amount_due'        => $validated['monthly_fee'],
+            'admin_fee'         => $adminFee,
+            'amount_paid'       => $validated['monthly_fee'] + $adminFee,
+            'balance'           => 0,
+            'payment_date'      => $enrollDate,
+            'due_date'          => $enrollDate,
+            'deadline_date'     => $enrollDate,
             'next_payment_date' => $nextPaymentDate,
-            'status' => 'paid',
-            'payment_method' => $paymentMethod,
-            'time_type' => $timeType,
-            'created_by' => Auth::id(),
+            'status'            => 'paid',
+            'payment_method'    => $paymentMethod,
+            'time_type'         => $timeType,
+            'created_by'        => Auth::id(),
         ];
 
         if ($paymentPhoto) {
@@ -113,9 +135,10 @@ class StudentController extends Controller
             ->with('success', 'Student enrolled successfully! First payment created.');
     }
 
+    // ── Show ──────────────────────────────────────────────────────────────────
+
     public function show(Student $student)
     {
-        $student->load(['payments']);
         $payments = $student->payments()->latest()->paginate(10);
         $stats = [
             'total_paid'    => $student->payments()->where('status', 'paid')->sum('amount_paid'),
@@ -126,44 +149,65 @@ class StudentController extends Controller
         return view('students.show', compact('student', 'payments', 'stats'));
     }
 
+    // ── Edit ──────────────────────────────────────────────────────────────────
+
     public function edit(Student $student)
     {
         return view('students.edit', compact('student'));
     }
 
+    // ── Update ────────────────────────────────────────────────────────────────
+
     public function update(Request $request, Student $student)
     {
         $validated = $request->validate([
-            'student_id'           => 'required|max:20|unique:students,student_id,' . $student->id,
-            'first_name'           => 'required|max:100',
-            'last_name'            => 'required|max:100',
-            'phone'                => 'nullable|max:20',
-            'address'              => 'nullable|max:255',
-            'come_from'            => 'nullable|max:255',
-            'subject'              => 'required|max:100',
-            'date_of_birth'        => 'nullable|date|before:today',
-            'gender'               => 'nullable|in:male,female,other',
-            'year_level'           => 'required|integer|min:1|max:12',
-            'enrollment_date'      => 'required|date',
-            'photo'                => 'nullable|image|max:2048',
-            'monthly_payment_day'  => 'required|integer|min:1|max:31',
-            'monthly_fee'          => 'required|numeric|min:0',
-            'time_type'            => 'required',
+            'student_id'          => 'required|string|max:20|unique:students,student_id,' . $student->id,
+            'first_name'          => 'required|string|max:100',
+            'last_name'           => 'required|string|max:100',
+            'phone'               => 'nullable|string|max:20',
+            'address'             => 'nullable|string|max:255',
+            'come_from'           => 'nullable|string|max:255',
+            'subject'             => 'required|string|max:100',
+            'date_of_birth'       => 'nullable|date|before:today',
+            'gender'              => 'nullable|in:male,female,other',
+            'year_level'          => 'required|integer|min:1|max:12',
+            'enrollment_date'     => 'required|date',
+            'photo'               => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'monthly_payment_day' => 'required|integer|min:1|max:31',
+            'monthly_fee'         => 'required|numeric|min:0|max:99999',
+            'time_type'           => 'required|in:' . implode(',', self::TIME_SLOTS),
         ]);
 
         if ($request->hasFile('photo')) {
-            if ($student->photo) Storage::disk('public')->delete($student->photo);
+            if ($student->photo) {
+                Storage::disk('public')->delete($student->photo);
+            }
             $validated['photo'] = $request->file('photo')->store('students/photos', 'public');
         }
+
         $student->update($validated);
+
         return redirect()->route('students.show', $student)
             ->with('success', 'Student updated successfully!');
     }
 
+    // ── Destroy ───────────────────────────────────────────────────────────────
+
     public function destroy(Student $student)
     {
+        // Delete associated photos from storage
+        foreach ($student->payments as $payment) {
+            if ($payment->photo) {
+                Storage::disk('public')->delete($payment->photo);
+            }
+        }
+        if ($student->photo) {
+            Storage::disk('public')->delete($student->photo);
+        }
+
         $student->payments()->delete();
         $student->delete();
+
         return redirect()->route('students.index')
             ->with('success', 'Student removed successfully!');
     }

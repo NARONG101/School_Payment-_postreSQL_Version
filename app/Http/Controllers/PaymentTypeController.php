@@ -21,9 +21,9 @@ class PaymentTypeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'        => 'required|max:100|unique:payment_types,name',
-            'description' => 'nullable|max:500',
-            'amount'      => 'required|numeric|min:0',
+            'name'        => 'required|string|max:100|unique:payment_types,name',
+            'description' => 'nullable|string|max:500',
+            'amount'      => 'required|numeric|min:0|max:99999',
             'is_active'   => 'boolean',
         ]);
 
@@ -31,7 +31,7 @@ class PaymentTypeController extends Controller
         PaymentType::create($validated);
 
         return redirect()->route('payment-types.index')
-            ->with('success', 'Payment type created!');
+            ->with('success', 'Payment type created successfully!');
     }
 
     public function edit(PaymentType $paymentType)
@@ -42,26 +42,26 @@ class PaymentTypeController extends Controller
     public function update(Request $request, PaymentType $paymentType)
     {
         $validated = $request->validate([
-            'name'        => 'required|max:100|unique:payment_types,name,' . $paymentType->id,
-            'description' => 'nullable|max:500',
-            'amount'      => 'required|numeric|min:0',
+            'name'        => 'required|string|max:100|unique:payment_types,name,' . $paymentType->id,
+            'description' => 'nullable|string|max:500',
+            'amount'      => 'required|numeric|min:0|max:99999',
             'is_active'   => 'boolean',
         ]);
 
-        $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['is_active'] = $request->boolean('is_active', false);
         $paymentType->update($validated);
 
         return redirect()->route('payment-types.index')
-            ->with('success', 'Payment type updated!');
+            ->with('success', 'Payment type updated successfully!');
     }
 
     public function destroy(PaymentType $paymentType)
     {
         if ($paymentType->payments()->count() > 0) {
-            return back()->with('error', 'Cannot delete: payment type has existing payments.');
+            return back()->with('error', 'Cannot delete: this payment type has existing payments.');
         }
         $paymentType->delete();
         return redirect()->route('payment-types.index')
-            ->with('success', 'Payment type deleted!');
+            ->with('success', 'Payment type deleted successfully!');
     }
 }

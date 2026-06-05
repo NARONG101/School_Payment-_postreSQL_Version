@@ -11,115 +11,143 @@ class DashboardController extends Controller
     public function index()
     {
         $now = Carbon::now();
+
         $students = Student::where(function ($q) {
             $q->where('status', 'active')->orWhereNull('status');
-        })->with(['payments' => function ($query) {
-            $query->latest('payment_date');
-        }])->get();
+        })->with(['payments' => fn ($q) => $q->orderByDesc('next_payment_date')
+                                             ->orderByDesc('id')])->get();
 
-        $overdueCount = 0;
-        $closelyCount = 0;
-        $upcomingCount = 0;
-        $alertData = [];
-        $recentPayments = collect();
-        $totalCollectedThisMonth = 0;
-        $paidThisMonthCount = 0;
-        $totalPending = 0;
+        // ── Monthly revenue chart (last 6 months) ────────────
         $monthlyData = [];
-
-        // Initialize monthly data array
         for ($i = 5; $i >= 0; $i--) {
-            $month = Carbon::now()->subMonths($i);
+            $m = $now->copy()->subMonths($i);
             $monthlyData[] = [
-                'month'  => $month->format('M Y'),
-                'amount' => 0,
-                'year'   => $month->year,
-                'month_num' => $month->month,
+                'month'     => $m->format('M Y'),
+                'amount'    => 0,
+                'year'      => $m->year,
+                'month_num' => $m->month,
             ];
         }
+
+        // ── Counters ──────────────────────────────────────────
+        $overdueCount            = 0;
+        $closelyCount            = 0;
+        $upcomingCount           = 0;
+        $alertData               = [];
+        $recentPayments          = collect();
+        $totalCollectedThisMonth = 0;
+        $totalPending            = 0;
 
         foreach ($students as $student) {
             foreach ($student->payments as $payment) {
                 $payment->setRelation('student', $student);
                 $recentPayments->push($payment);
 
-                // Monthly data
+                // Monthly chart data
                 if ($payment->payment_date && $payment->status === 'paid') {
-                    $paymentYear = $payment->payment_date->year;
-                    $paymentMonth = $payment->payment_date->month;
+                    $py = $payment->payment_date->year;
+                    $pm = $payment->payment_date->month;
                     foreach ($monthlyData as &$md) {
-                        if ($md['year'] === $paymentYear && $md['month_num'] === $paymentMonth) {
-                            $md['amount'] += $payment->amount_paid;
+                        if ($md['year'] === $py && $md['month_num'] === $pm) {
+                            $md['amount'] += (float) $payment->amount_paid;
                         }
                     }
                     unset($md);
                 }
 
-                // This month stats
-                if ($payment->payment_date && $payment->payment_date->month === now()->month && $payment->payment_date->year === now()->year) {
+                // This-month totals
+                if ($payment->payment_date
+                    && $payment->payment_date->month === $now->month
+                    && $payment->payment_date->year  === $now->year) {
                     if ($payment->status === 'paid') {
-                        $totalCollectedThisMonth += $payment->amount_paid;
-                        $paidThisMonthCount++;
+                        $totalCollectedThisMonth += (float) $payment->amount_paid;
                     }
                     if (in_array($payment->status, ['pending', 'partial'])) {
-                        $totalPending += $payment->balance;
+                        $totalPending += (float) $payment->balance;
                     }
                 }
             }
 
-            // Alert logic (from student model attributes)
-            if ($student->last_payment && $student->last_payment->payment_date) {
-                $daysLeft = $student->days_until_next_payment;
-                $data = [
-                    'student' => $student,
-                    'nextPaymentDate' => $student->next_payment_date,
-                    'daysUntilNextPayment' => $daysLeft,
-                    'alertLevel' => $student->alert_level,
+            // ── Alert logic using the correct anchored next-date ──
+            $lastPayment = $student->payments->first();
+            if (!$lastPayment || !$lastPayment->payment_date) {
+                // No payment at all → overdue
+                $overdueCount++;
+                $alertData[] = [
+                    'student'              => $student,
+                    'nextPaymentDate'      => null,
+                    'daysUntilNextPayment' => null,
+                    'alertLevel'           => 'overdue',
                 ];
+                continue;
+            }
 
-                if ($daysLeft < 0) {
-                    $overdueCount++;
-                    $alertData[] = $data;
-                } elseif ($daysLeft <= 7) {
-                    $closelyCount++;
-                    $alertData[] = $data;
-                } else {
-                    $upcomingCount++;
-                }
+            // Use stored next_payment_date if available, otherwise recalculate
+            if ($lastPayment->next_payment_date) {
+                $nextDate = Carbon::parse($lastPayment->next_payment_date);
+            } else {
+                $paymentDay = (int) ($student->monthly_payment_day ?? $lastPayment->payment_date->day);
+                $nextDate   = Student::nextPaymentDateFrom(
+                    Carbon::parse($lastPayment->payment_date),
+                    $paymentDay
+                );
+            }
+
+            $daysLeft = (int) $now->diffInDays($nextDate, false);
+
+            $alertLevel = match (true) {
+                $daysLeft < 0  => 'overdue',
+                $daysLeft <= 7 => 'closely',
+                default        => 'upcoming',
+            };
+
+            $entry = [
+                'student'              => $student,
+                'nextPaymentDate'      => $nextDate,
+                'daysUntilNextPayment' => $daysLeft,
+                'alertLevel'           => $alertLevel,
+            ];
+
+            if ($daysLeft < 0) {
+                $overdueCount++;
+                $alertData[] = $entry;
+            } elseif ($daysLeft <= 7) {
+                $closelyCount++;
+                $alertData[] = $entry;
+            } else {
+                $upcomingCount++;
             }
         }
 
-        // Sort alerts: overdue first, then critical
+        // Sort alerts: most overdue first, then soonest deadline
         usort($alertData, function ($a, $b) {
-            if ($a['alertLevel'] === $b['alertLevel']) {
-                return $a['daysUntilNextPayment'] <=> $b['daysUntilNextPayment'];
+            if ($a['alertLevel'] !== $b['alertLevel']) {
+                return $a['alertLevel'] === 'overdue' ? -1 : 1;
             }
-            return $a['alertLevel'] === 'overdue' ? -1 : 1;
+            return ($a['daysUntilNextPayment'] ?? 0) <=> ($b['daysUntilNextPayment'] ?? 0);
         });
 
-        // Sort recent payments and take first 5
-        $recentPayments = $recentPayments->where('status', 'paid')
+        // Recent paid payments (last 5)
+        $recentPayments = $recentPayments
+            ->where('status', 'paid')
             ->sortByDesc('payment_date')
             ->sortByDesc('id')
             ->take(5);
 
         $stats = [
-            'total_students'   => $students->count(),
-            'total_collected'  => $totalCollectedThisMonth,
-            'total_pending'    => $totalPending,
-            'overdue_count'    => $overdueCount,
-            'paid_this_month'  => $paidThisMonthCount,
-            'due_this_week'    => $closelyCount,
-            'upcoming_count'   => $upcomingCount,
+            'total_students'  => $students->count(),
+            'total_collected' => $totalCollectedThisMonth,
+            'total_pending'   => $totalPending,
+            'overdue_count'   => $overdueCount,
+            'due_this_week'   => $closelyCount,
+            'upcoming_count'  => $upcomingCount,
         ];
 
-        // Clean up monthly data (remove year and month_num)
-        $monthlyData = array_map(function ($md) {
-            return [
-                'month' => $md['month'],
-                'amount' => $md['amount'],
-            ];
-        }, $monthlyData);
+        // Strip internal keys from chart data
+        $monthlyData = array_map(fn ($md) => [
+            'month'  => $md['month'],
+            'amount' => $md['amount'],
+        ], $monthlyData);
 
         return view('dashboard', compact('stats', 'recentPayments', 'alertData', 'monthlyData'));
     }

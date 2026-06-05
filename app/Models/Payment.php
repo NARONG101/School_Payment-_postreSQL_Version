@@ -52,6 +52,14 @@ class Payment extends Model
         return $this->belongsTo(Student::class);
     }
 
+    /**
+     * Always store time_type as lowercase.
+     */
+    public function setTimeTypeAttribute(?string $value): void
+    {
+        $this->attributes['time_type'] = $value ? strtolower(trim($value)) : null;
+    }
+
     public function paymentType()
     {
         return $this->belongsTo(PaymentType::class);

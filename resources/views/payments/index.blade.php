@@ -2,28 +2,77 @@
 @section('title','All Payments')
 @section('page-title','All Payments')
 @section('topbar-actions')
-    <a href="{{ route('payments.create') }}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> New Payment</a>
+    <a href="{{ route('payments.create') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus" aria-hidden="true"></i> <span>New Payment</span>
+    </a>
+@endsection
+@section('styles')
+<style>
+.pay-sort-item { transition:background 0.12s; }
+.pay-sort-item:hover { background:var(--bg-hover) !important; color:var(--text-primary) !important; }
+.pay-sort-item:last-child { border-bottom:none !important; }
+.pay-sort-active { color:var(--primary) !important; background:var(--primary-50) !important; }
+</style>
 @endsection
 @section('content')
 <div class="card">
     <div class="card-header">
         <div class="card-title">All Payments ({{ $payments->count() }})</div>
     </div>
-    <div style="padding:16px;border-bottom:1px solid var(--gray-200)">
-        <form method="GET" class="filter-bar" id="filterForm">
-            <input type="text" name="search" class="form-control" placeholder="Search student, receipt..." value="{{ request('search') }}">
-            <select name="grade" class="form-control" style="width:150px;flex:none">
-                <option value="">All Grades</option>
-                @for($i=1;$i<=12;$i++)
-                <option value="{{ $i }}" {{ request('grade')==$i?'selected':'' }}>Grade {{ $i }}</option>
-                @endfor
-            </select>
-            <select name="sort_by" class="form-control" style="width:150px;flex:none">
-                <option value="id" {{ request('sort_by')=='id'?'selected':'' }}>Sort by ID</option>
-                <option value="date" {{ request('sort_by')=='date'?'selected':'' }}>Sort by Date</option>
-                <option value="grade" {{ request('sort_by')=='grade'?'selected':'' }}>Sort by Grade</option>
-            </select>
-            <a href="{{ route('payments.index') }}" class="btn btn-outline btn-sm">Reset</a>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+        <form method="GET" action="{{ route('payments.index') }}" class="filter-bar" id="filterForm" role="search">
+            {{-- Live search — client-side only --}}
+            <input type="text" class="form-control"
+                   placeholder="Search student, receipt…"
+                   value="" aria-label="Search payments"
+                   id="paySearchInput" autocomplete="off">
+
+            <div style="flex:1"></div>
+
+            {{-- Sort dropdown button --}}
+            <div style="position:relative" id="paymentSortDropdown">
+                <button type="button" id="paymentSortBtn"
+                        class="btn btn-outline btn-sm"
+                        style="gap:8px;min-width:130px;justify-content:space-between"
+                        aria-haspopup="true" aria-expanded="false">
+                    <span>
+                        <i class="fas fa-sort" aria-hidden="true"></i>
+                        Sort:
+                        <strong>{{ ['id'=>'Newest','date'=>'By Month','grade'=>'By Grade'][request('sort_by','id')] ?? 'Newest' }}</strong>
+                    </span>
+                    <i class="fas fa-chevron-down pay-sort-chevron" style="font-size:10px;transition:transform 0.2s" aria-hidden="true"></i>
+                </button>
+                <div id="paymentSortMenu"
+                     style="display:none;position:absolute;right:0;top:calc(100% + 6px);
+                            background:var(--bg-card);border:1px solid var(--border);
+                            border-radius:var(--radius);box-shadow:var(--shadow-lg);
+                            min-width:150px;z-index:500;overflow:hidden">
+                    @foreach(['id'=>['l'=>'Newest First','i'=>'fa-clock-rotate-left'],
+                               'date'=>['l'=>'By Month','i'=>'fa-calendar'],
+                               'grade'=>['l'=>'By Grade (High→Low)','i'=>'fa-layer-group']] as $k=>$o)
+                    @php $isActive = request('sort_by', 'id') === $k; @endphp
+                    <a href="{{ route('payments.index', ['sort_by'=>$k]) }}"
+                       class="pay-sort-item{{ $isActive ? ' pay-sort-active' : '' }}"
+                       style="display:flex;align-items:center;gap:10px;padding:10px 14px;
+                              text-decoration:none;font-size:13px;font-weight:500;
+                              color:{{ $isActive?'var(--primary)':'var(--text-primary)' }};
+                              background:{{ $isActive?'var(--primary-50)':'transparent' }};
+                              border-bottom:1px solid var(--border);">
+                        <i class="fas {{ $o['i'] }}" style="width:14px;color:var(--text-muted)" aria-hidden="true"></i>
+                        {{ $o['l'] }}
+                        @if($isActive)
+                            <i class="fas fa-check" style="margin-left:auto;color:var(--primary);font-size:11px" aria-hidden="true"></i>
+                        @endif
+                    </a>
+                    @endforeach
+                </div>
+            </div>
+
+            @if(request('sort_by'))
+            <a href="{{ route('payments.index') }}" class="btn btn-outline btn-sm" title="Reset sort">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </a>
+            @endif
         </form>
     </div>
     <div class="table-wrap">
@@ -33,10 +82,9 @@
                     <th>Receipt #</th>
                     <th>Student</th>
                     <th>Grade</th>
-                    <th>Come From</th>
                     <th>Subject</th>
                     <th>Status</th>
-                    <th>Paid Date</th>
+                    <th>For Month</th>
                     <th>Time Type</th>
                     <th>Amount Paid</th>
                     <th>Next Payment</th>
@@ -46,49 +94,57 @@
             <tbody>
                 @forelse($payments as $payment)
                 @php
-                    $statusClasses = [
-                        'paid' => 'text-success',
-                        'partial' => 'text-warning',
-                        'pending' => 'text-info',
-                        'overdue' => 'text-danger'
-                    ];
-                    $statusClass = $statusClasses[$payment->status] ?? 'text-gray-600';
+                    $sc = ['paid'=>'text-success','partial'=>'text-warning','pending'=>'text-info','overdue'=>'text-danger'];
+                    $cls = $sc[$payment->status] ?? 'text-muted';
+                    // Build a searchable string for client-side search
+                    $searchStr = strtolower(implode(' ', array_filter([
+                        $payment->receipt_number,
+                        $payment->student?->full_name,
+                        $payment->student?->student_id,
+                        $payment->student?->subject,
+                        $payment->status,
+                        $payment->time_type,
+                        'grade '.($payment->student?->year_level ?? ''),
+                    ])));
                 @endphp
-                <tr>
-                    <td><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--primary)">{{ $payment->receipt_number }}</span></td>
+                <tr data-searchable data-search="{{ $searchStr }}">
+                    <td><span class="mono" style="font-size:12px;color:var(--primary)">{{ $payment->receipt_number }}</span></td>
                     <td>
                         @if($payment->student)
-                            <a href="{{ route('students.show', $payment->student) }}" style="text-decoration:none">
-                                <div style="font-weight:600;color:var(--gray-800)">{{ $payment->student->full_name }} ({{ ucfirst($payment->student->gender ?? 'N/A') }})</div>
-                                <div style="font-size:11px;color:var(--gray-400)">{{ $payment->student->student_id }}</div>
-                            </a>
-                        @else
-                            <div style="font-weight:600;color:var(--gray-400)">—</div>
+                        <a href="{{ route('students.show', $payment->student) }}" style="text-decoration:none">
+                            <div style="font-weight:600;color:var(--text-primary)">{{ $payment->student->full_name }} ({{ ucfirst($payment->student->gender ?? 'N/A') }})</div>
+                            <div style="font-size:11px;color:var(--text-muted)">{{ $payment->student->student_id }}</div>
+                        </a>
+                        @else <span style="color:var(--text-muted)">—</span>
                         @endif
                     </td>
-                    <td>Grade {{ $payment->student?->year_level ?? '—' }}</td>
-                    <td>{{ $payment->student?->come_from ?? '-' }}</td>
-                    <td>{{ $payment->student?->subject ?? '-' }}</td>
-                    <td><span class="{{ $statusClass }}" style="font-weight:600">{{ ucfirst($payment->status) }}</span></td>
-                    <td style="font-size:12px">{{ $payment->payment_date?->format('M d, Y') ?? '—' }}</td>
-                    <td>{{ ucfirst($payment->time_type ?? 'weekday') }}</td>
-                    <td class="{{ $statusClass }}" style="font-weight:600">${{ number_format($payment->amount_paid,2) }}</td>
-                    <td style="font-size:12px">{{ $payment->next_payment_date?->format('M d, Y') ?? '—' }}</td>
+                    <td style="color:var(--text-secondary)">Grade {{ $payment->student?->year_level ?? '—' }}</td>
+                    <td style="color:var(--text-secondary)">{{ $payment->student?->subject ?? '—' }}</td>
+                    <td><span class="{{ $cls }}" style="font-weight:600">{{ ucfirst($payment->status) }}</span></td>
+                    <td style="font-size:12px;color:var(--text-muted)">
+                        {{ $payment->due_date?->format('M d, Y') ?? $payment->payment_date?->format('M d, Y') ?? '—' }}
+                        @if($payment->payment_date && $payment->due_date && $payment->payment_date->format('Y-m-d') !== $payment->due_date->format('Y-m-d'))
+                            <div style="font-size:10px;color:var(--text-muted)">paid {{ $payment->payment_date->format('M d, Y') }}</div>
+                        @endif
+                    </td>
+                    <td style="color:var(--text-secondary)">{{ $payment->time_type ?? '—' }}</td>
+                    <td class="{{ $cls }}" style="font-weight:600">${{ number_format($payment->amount_paid,2) }}</td>
+                    <td style="font-size:12px;color:var(--text-muted)">{{ $payment->next_payment_date?->format('M d, Y') ?? '—' }}</td>
                     <td>
                         <div style="display:flex;gap:4px">
-                            <a href="{{ route('payments.show', $payment) }}" class="btn btn-icon btn-outline" title="View"><i class="fas fa-eye" style="font-size:11px"></i></a>
-                            <a href="{{ route('payments.receipt', $payment) }}" class="btn btn-icon btn-outline" title="Receipt" style="color:var(--danger)" target="_blank"><i class="fas fa-file-pdf" style="font-size:11px"></i></a>
+                            <a href="{{ route('payments.show', $payment) }}" class="btn btn-icon btn-outline" title="View"><i class="fas fa-eye" style="font-size:11px" aria-hidden="true"></i></a>
+                            <a href="{{ route('payments.receipt', $payment) }}" class="btn btn-icon btn-outline" title="Receipt" style="color:var(--danger)" target="_blank" rel="noopener"><i class="fas fa-file-pdf" style="font-size:11px" aria-hidden="true"></i></a>
                             <button type="button" class="btn btn-icon btn-outline delete-btn" title="Delete" style="color:var(--danger)"
                                     data-action="{{ route('payments.destroy', $payment) }}"
                                     data-title="Delete Payment"
-                                    data-body="Are you sure you want to delete payment {{ $payment->receipt_number }}? This action cannot be undone.">
-                                <i class="fas fa-trash" style="font-size:11px"></i>
+                                    data-body="Delete receipt {{ e($payment->receipt_number) }}? This cannot be undone.">
+                                <i class="fas fa-trash" style="font-size:11px" aria-hidden="true"></i>
                             </button>
                         </div>
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="11"><div class="empty-state"><i class="fas fa-receipt"></i><p>No payments found</p></div></td></tr>
+                <tr><td colspan="10"><div class="empty-state"><i class="fas fa-receipt" aria-hidden="true"></i><p>No payments found</p></div></td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -97,20 +153,55 @@
 @endsection
 @section('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const filterForm = document.getElementById('filterForm');
-    const inputs = filterForm.querySelectorAll('input, select');
-    
-    inputs.forEach(input => {
-        input.addEventListener('change', function() {
-            filterForm.submit();
+document.addEventListener('DOMContentLoaded', function () {
+    var searchInp = document.getElementById('paySearchInput');
+    var allRows   = Array.prototype.slice.call(document.querySelectorAll('tbody tr[data-searchable]'));
+    var countEl   = document.querySelector('.card-title');
+    var total     = allRows.length;
+
+    /* ── Sort dropdown toggle ────────────────────────────── */
+    var sortBtn  = document.getElementById('paymentSortBtn');
+    var sortMenu = document.getElementById('paymentSortMenu');
+    var chevron  = document.querySelector('.pay-sort-chevron');
+
+    if (sortBtn && sortMenu) {
+        sortBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var open = sortMenu.style.display !== 'none';
+            sortMenu.style.display = open ? 'none' : 'block';
+            if (chevron) chevron.style.transform = open ? '' : 'rotate(180deg)';
+            sortBtn.setAttribute('aria-expanded', String(!open));
         });
-        input.addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') {
-                filterForm.submit();
-            }
+        document.addEventListener('click', function () {
+            sortMenu.style.display = 'none';
+            if (chevron) chevron.style.transform = '';
+            sortBtn.setAttribute('aria-expanded', 'false');
         });
-    });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') { sortMenu.style.display = 'none'; sortBtn.focus(); }
+        });
+    }
+
+    /* ── Client-side live search ─────────────────────────── */
+    function doSearch() {
+        var term  = (searchInp ? searchInp.value : '').trim().toLowerCase();
+        var shown = 0;
+        allRows.forEach(function (row) {
+            var match = term === '' || (row.getAttribute('data-search') || '').indexOf(term) !== -1;
+            row.style.display = match ? '' : 'none';
+            if (match) shown++;
+        });
+        if (countEl) {
+            countEl.textContent = 'All Payments (' + (shown === total ? total : shown + ' of ' + total) + ')';
+        }
+    }
+
+    if (searchInp) {
+        searchInp.addEventListener('input', doSearch);
+        searchInp.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') { searchInp.value = ''; doSearch(); }
+        });
+    }
 });
 </script>
 @endsection
