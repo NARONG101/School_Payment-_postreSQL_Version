@@ -49,6 +49,7 @@ RUN apk add --no-cache \
     oniguruma-dev \
     sqlite-dev \
     libxml2-dev \
+    postgresql-dev \
     zip \
     unzip \
     shadow
@@ -61,6 +62,8 @@ RUN docker-php-ext-configure gd \
         pdo \
         pdo_sqlite \
         pdo_mysql \
+        pdo_pgsql \
+        pgsql \
         gd \
         zip \
         intl \

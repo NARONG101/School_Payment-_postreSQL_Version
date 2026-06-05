@@ -9,6 +9,13 @@
 #        APP_KEY, ADMIN_EMAIL, ADMIN_PASSWORD
 # ─────────────────────────────────────────────────────────────
 
+databases:
+  - name: student-payment-db
+    databaseName: student_payment
+    user: student_payment_user
+    plan: free           # upgrade to 'starter' for production
+    region: singapore
+
 services:
   - type: web
     name: student-payment-system
@@ -16,18 +23,8 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
 
-    # Render free tier uses port 10000 internally but we expose 8080
-    # Render maps its external port → your container's port automatically
-    # via the PORT env var. We hard-code 8080 in nginx/supervisord.
-
     plan: free          # change to 'starter' or higher for production
     region: singapore   # choose closest to your users
-
-    # ── Persistent disk for SQLite + uploaded files ───────────
-    disk:
-      name: app-data
-      mountPath: /var/www/html/storage/app
-      sizeGB: 1         # increase as needed
 
     # ── Environment variables ─────────────────────────────────
     envVars:
@@ -43,10 +40,31 @@ services:
       - key: APP_URL
         value: https://student-payment-system.onrender.com   # update to your actual URL
 
+      # PostgreSQL — pulled from the managed DB above
       - key: DB_CONNECTION
-        value: sqlite
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: student-payment-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: student-payment-db
+          property: port
       - key: DB_DATABASE
-        value: /var/www/html/storage/app/database.sqlite     # on the persistent disk
+        fromDatabase:
+          name: student-payment-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: student-payment-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: student-payment-db
+          property: password
+      - key: DB_SSLMODE
+        value: require
 
       - key: SESSION_DRIVER
         value: file
