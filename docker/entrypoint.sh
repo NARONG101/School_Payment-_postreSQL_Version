@@ -11,21 +11,14 @@ if [ -z "$APP_KEY" ]; then
     exit 1
 fi
 
-# ── Ensure SQLite database file exists ───────────────────────
-DB_PATH="${DB_DATABASE:-/var/www/html/database/database.sqlite}"
-DB_DIR=$(dirname "$DB_PATH")
-
-if [ ! -d "$DB_DIR" ]; then
-    echo "==> Creating database directory: $DB_DIR"
-    mkdir -p "$DB_DIR"
-    chown appuser:appgroup "$DB_DIR"
-fi
-
-if [ ! -f "$DB_PATH" ]; then
-    echo "==> Creating SQLite database file: $DB_PATH"
-    touch "$DB_PATH"
-    chown appuser:appgroup "$DB_PATH"
-    chmod 664 "$DB_PATH"
+# ── Wait for PostgreSQL to be ready ─────────────────────────
+if [ "${DB_CONNECTION:-pgsql}" = "pgsql" ]; then
+    echo "==> Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT:-5432}..."
+    for i in $(seq 1 30); do
+        php -r "new PDO('pgsql:host=${DB_HOST};port=${DB_PORT:-5432};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}');" 2>/dev/null && break
+        echo "    attempt $i/30 — retrying in 2s..."
+        sleep 2
+    done
 fi
 
 # ── Storage symlink ──────────────────────────────────────────
