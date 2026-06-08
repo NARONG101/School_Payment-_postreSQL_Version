@@ -99,7 +99,9 @@ COPY --chown=appuser:appgroup --from=composer /app/vendor ./vendor
 COPY --chown=appuser:appgroup --from=frontend /app/public/build ./public/build
 
 # ── Run post-install scripts now that artisan is present ─────
-RUN composer dump-autoload --optimize --no-interaction
+COPY --from=composer /usr/bin/composer /usr/bin/composer
+RUN composer dump-autoload --optimize --no-interaction \
+    && rm /usr/bin/composer
 
 # ── Storage & cache directories ──────────────────────────────
 RUN mkdir -p \
