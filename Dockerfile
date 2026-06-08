@@ -26,7 +26,7 @@ RUN composer install \
     --no-dev \
     --no-interaction \
     --no-progress \
-    --optimize-autoloader \
+    --no-scripts \
     --prefer-dist
 
 # ============================================================
@@ -97,6 +97,9 @@ WORKDIR /var/www/html
 COPY --chown=appuser:appgroup . .
 COPY --chown=appuser:appgroup --from=composer /app/vendor ./vendor
 COPY --chown=appuser:appgroup --from=frontend /app/public/build ./public/build
+
+# ── Run post-install scripts now that artisan is present ─────
+RUN composer dump-autoload --optimize --no-interaction
 
 # ── Storage & cache directories ──────────────────────────────
 RUN mkdir -p \
