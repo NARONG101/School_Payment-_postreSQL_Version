@@ -18,7 +18,7 @@ if [ "${DB_CONNECTION:-pgsql}" = "pgsql" ] && [ -n "$DB_HOST" ] && [ "$DB_HOST" 
     until php -r "new PDO('pgsql:host=${DB_HOST};port=${DB_PORT:-5432};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}');" 2>/dev/null; do
         RETRIES=$((RETRIES + 1))
         if [ "$RETRIES" -ge 30 ]; then
-            echo "ERROR: PostgreSQL not reachable after 30 attempts. Check DB_HOST env var in Render dashboard."
+            echo "ERROR: PostgreSQL not reachable after 30 attempts. Check DB env vars in Render dashboard."
             exit 1
         fi
         echo "    attempt $RETRIES/30 — retrying in 2s..."
