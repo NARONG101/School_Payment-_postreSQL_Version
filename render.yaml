@@ -25,6 +25,7 @@ services:
 
     plan: free          # change to 'starter' or higher for production
     region: singapore   # choose closest to your users
+    healthCheckPath: /up
 
     # ── Environment variables ─────────────────────────────────
     envVars:
