@@ -91,6 +91,8 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY docker/php/php.ini        "$PHP_INI_DIR/conf.d/99-app.ini"
 COPY docker/php/opcache.ini    "$PHP_INI_DIR/conf.d/10-opcache.ini"
 COPY docker/php/www.conf       /usr/local/etc/php-fpm.d/www.conf
+# Remove the default pool that ships with php-fpm image (conflicts with our www.conf)
+RUN rm -f /usr/local/etc/php-fpm.d/zz-docker.conf /usr/local/etc/php-fpm.d/www.conf.default
 
 # ── Nginx config ─────────────────────────────────────────────
 COPY docker/nginx/nginx.conf        /etc/nginx/nginx.conf
