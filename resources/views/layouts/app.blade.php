@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#1a56db" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
     <title>@yield('title', 'EduPay Manager') — EduPay Manager</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <style>
 /* ═══════════════════════════════════════════════════════════
    LIGHT THEME (default)
@@ -638,6 +639,7 @@ textarea.form-control { resize:vertical; min-height:80px; }
 .info-val-sm { font-size:13px; font-weight:600; color:var(--text-primary); }
 .mono { font-family:'JetBrains Mono',monospace; }
     </style>
+    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
     @yield('styles')
 </head>
 <body>
