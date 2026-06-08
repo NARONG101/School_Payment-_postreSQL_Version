@@ -22,11 +22,20 @@ FROM composer:2.8 AS composer
 WORKDIR /app
 
 COPY composer.json composer.lock ./
+COPY artisan ./
+COPY app ./app
+COPY bootstrap ./bootstrap
+COPY config ./config
+COPY database ./database
+COPY resources ./resources
+COPY routes ./routes
+COPY storage ./storage
+
 RUN composer install \
     --no-dev \
     --no-interaction \
     --no-progress \
-    --no-scripts \
+    --optimize-autoloader \
     --prefer-dist
 
 # ============================================================
@@ -97,11 +106,6 @@ WORKDIR /var/www/html
 COPY --chown=appuser:appgroup . .
 COPY --chown=appuser:appgroup --from=composer /app/vendor ./vendor
 COPY --chown=appuser:appgroup --from=frontend /app/public/build ./public/build
-
-# ── Run post-install scripts now that artisan is present ─────
-COPY --from=composer /usr/bin/composer /usr/bin/composer
-RUN composer dump-autoload --optimize --no-interaction \
-    && rm /usr/bin/composer
 
 # ── Storage & cache directories ──────────────────────────────
 RUN mkdir -p \
