@@ -14,13 +14,20 @@ fi
 # ── Wait for PostgreSQL to be ready ─────────────────────────
 if [ "${DB_CONNECTION:-pgsql}" = "pgsql" ] && [ -n "$DB_HOST" ] && [ "$DB_HOST" != "127.0.0.1" ]; then
     echo "==> Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT:-5432}..."
-    for i in $(seq 1 30); do
-        php -r "new PDO('pgsql:host=${DB_HOST};port=${DB_PORT:-5432};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}');" 2>/dev/null && break
-        echo "    attempt $i/30 — retrying in 2s..."
+    RETRIES=0
+    until php -r "new PDO('pgsql:host=${DB_HOST};port=${DB_PORT:-5432};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}');" 2>/dev/null; do
+        RETRIES=$((RETRIES + 1))
+        if [ "$RETRIES" -ge 30 ]; then
+            echo "ERROR: PostgreSQL not reachable after 30 attempts. Check DB_HOST env var in Render dashboard."
+            exit 1
+        fi
+        echo "    attempt $RETRIES/30 — retrying in 2s..."
         sleep 2
     done
+    echo "==> PostgreSQL is ready."
 elif [ "${DB_CONNECTION:-pgsql}" = "pgsql" ] && [ -z "$DB_HOST" ]; then
-    echo "WARNING: DB_HOST is not set. Make sure the PostgreSQL environment variables are configured in Render."
+    echo "ERROR: DB_HOST is not set. Add PostgreSQL environment variables in Render dashboard."
+    exit 1
 fi
 
 # ── Storage symlink ──────────────────────────────────────────
