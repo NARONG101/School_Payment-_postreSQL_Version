@@ -31,12 +31,13 @@ COPY resources ./resources
 COPY routes ./routes
 COPY storage ./storage
 
-RUN composer install \
-    --no-dev \
-    --no-interaction \
-    --no-progress \
-    --optimize-autoloader \
-    --prefer-dist
+RUN mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views storage/logs \
+    && composer install \
+        --no-dev \
+        --no-interaction \
+        --no-progress \
+        --optimize-autoloader \
+        --prefer-dist
 
 # ============================================================
 # Stage 3: Production image
