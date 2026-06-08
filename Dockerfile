@@ -37,7 +37,8 @@ RUN mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions 
         --no-interaction \
         --no-progress \
         --optimize-autoloader \
-        --prefer-dist
+        --prefer-dist \
+        --ignore-platform-reqs
 
 # ============================================================
 # Stage 3: Production image
@@ -107,9 +108,6 @@ WORKDIR /var/www/html
 COPY --chown=appuser:appgroup . .
 COPY --chown=appuser:appgroup --from=composer /app/vendor ./vendor
 COPY --chown=appuser:appgroup --from=frontend /app/public/build ./public/build
-
-# Remove platform_check to avoid PHP version mismatch at runtime
-RUN rm -f vendor/composer/platform_check.php
 
 # ── Storage & cache directories ──────────────────────────────
 RUN mkdir -p \
