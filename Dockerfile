@@ -52,6 +52,7 @@ RUN apk add --no-cache \
     nginx \
     supervisor \
     curl \
+    netcat-openbsd \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
