@@ -12,13 +12,15 @@ if [ -z "$APP_KEY" ]; then
 fi
 
 # ── Wait for PostgreSQL to be ready ─────────────────────────
-if [ "${DB_CONNECTION:-pgsql}" = "pgsql" ]; then
+if [ "${DB_CONNECTION:-pgsql}" = "pgsql" ] && [ -n "$DB_HOST" ] && [ "$DB_HOST" != "127.0.0.1" ]; then
     echo "==> Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT:-5432}..."
     for i in $(seq 1 30); do
         php -r "new PDO('pgsql:host=${DB_HOST};port=${DB_PORT:-5432};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}');" 2>/dev/null && break
         echo "    attempt $i/30 — retrying in 2s..."
         sleep 2
     done
+elif [ "${DB_CONNECTION:-pgsql}" = "pgsql" ] && [ -z "$DB_HOST" ]; then
+    echo "WARNING: DB_HOST is not set. Make sure the PostgreSQL environment variables are configured in Render."
 fi
 
 # ── Storage symlink ──────────────────────────────────────────

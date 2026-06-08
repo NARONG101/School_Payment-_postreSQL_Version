@@ -42,7 +42,7 @@ RUN mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions 
 # ============================================================
 # Stage 3: Production image
 # ============================================================
-FROM php:8.3-fpm-alpine AS production
+FROM php:8.4-fpm-alpine AS production
 
 LABEL maintainer="Student Payment System"
 
@@ -107,6 +107,9 @@ WORKDIR /var/www/html
 COPY --chown=appuser:appgroup . .
 COPY --chown=appuser:appgroup --from=composer /app/vendor ./vendor
 COPY --chown=appuser:appgroup --from=frontend /app/public/build ./public/build
+
+# Remove platform_check to avoid PHP version mismatch at runtime
+RUN rm -f vendor/composer/platform_check.php
 
 # ── Storage & cache directories ──────────────────────────────
 RUN mkdir -p \
