@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
     {
         // ── Admin user ────────────────────────────────────────
         $adminEmail    = env('ADMIN_EMAIL',    'admin@school.edu');
-        $adminPassword = env('ADMIN_PASSWORD', 'ChangeMe123!');
+        $adminPassword = env('ADMIN_PASSWORD', '1234');
         $adminName     = env('ADMIN_NAME',     'Admin User');
 
         User::firstOrCreate(
