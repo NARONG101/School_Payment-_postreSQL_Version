@@ -148,10 +148,6 @@
                 <div class="qa-icon qa-red"><i class="fas fa-exclamation-triangle"></i></div>
                 Overdue
             </a>
-            <a href="{{ route('payment-types.index') }}" class="quick-action-btn">
-                <div class="qa-icon qa-purple"><i class="fas fa-tags"></i></div>
-                Payment Types
-            </a>
         </div>
     </div>
 </div>
