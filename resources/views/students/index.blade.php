@@ -2,6 +2,9 @@
 @section('title', 'Students')
 @section('page-title', 'Students')
 @section('topbar-actions')
+    <a href="{{ route('students.export.csv', request()->query()) }}" class="btn btn-outline btn-sm">
+        <i class="fas fa-download" aria-hidden="true"></i> <span>CSV</span>
+    </a>
     <a href="{{ route('students.create') }}" class="btn btn-primary btn-sm">
         <i class="fas fa-user-plus" aria-hidden="true"></i> <span>Enroll Student</span>
     </a>

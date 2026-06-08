@@ -191,7 +191,61 @@ class StudentController extends Controller
             ->with('success', 'Student updated successfully!');
     }
 
-    // ── Destroy ───────────────────────────────────────────────────────────────
+    // ── CSV Export ────────────────────────────────────────────────────────────
+
+    public function exportCsv(Request $request)
+    {
+        $sortBy = $request->get('sort', 'newest');
+        $allQuery = Student::withCount('payments');
+        $students = match ($sortBy) {
+            'oldest' => $allQuery->orderBy('id')->get(),
+            'az'     => $allQuery->orderBy('first_name')->orderBy('last_name')->get(),
+            'za'     => $allQuery->orderByDesc('first_name')->orderByDesc('last_name')->get(),
+            'enroll' => $allQuery->orderByDesc('enrollment_date')->get(),
+            'grade'  => $allQuery->orderByDesc('year_level')->orderBy('last_name')->get(),
+            default  => $allQuery->orderByDesc('id')->get(),
+        };
+
+        $filename = 'students_' . now()->format('Y-m-d') . '.csv';
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () use ($students) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'Student ID', 'First Name', 'Last Name', 'Gender',
+                'Grade', 'Subject', 'Phone', 'Address', 'Come From',
+                'Date of Birth', 'Enrollment Date', 'Monthly Fee',
+                'Payment Day', 'Time Type', 'Status', 'Total Payments',
+            ]);
+            foreach ($students as $s) {
+                fputcsv($handle, [
+                    $s->student_id,
+                    $s->first_name,
+                    $s->last_name,
+                    $s->gender ?? '',
+                    $s->year_level,
+                    $s->subject ?? '',
+                    $s->phone ?? '',
+                    $s->address ?? '',
+                    $s->come_from ?? '',
+                    $s->date_of_birth?->format('Y-m-d') ?? '',
+                    $s->enrollment_date?->format('Y-m-d') ?? '',
+                    $s->monthly_fee ?? '',
+                    $s->monthly_payment_day ?? '',
+                    $s->time_type ?? '',
+                    $s->status ?? 'active',
+                    $s->payments_count,
+                ]);
+            }
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
 
     public function destroy(Student $student)
     {

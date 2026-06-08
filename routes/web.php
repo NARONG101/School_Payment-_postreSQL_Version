@@ -24,10 +24,13 @@ Route::middleware('auth')->group(function () {
 
     // Students
     Route::resource('students', StudentController::class);
+    Route::get('students-export-csv', [StudentController::class, 'exportCsv'])->name('students.export.csv');
 
     // Payments — specific routes before resource to avoid conflicts
     Route::prefix('payments')->name('payments.')->group(function () {
         Route::get('alerts',                                    [PaymentController::class, 'deadlineAlerts'])->name('alerts');
+        Route::get('alerts/export-csv',                         [PaymentController::class, 'exportAlertsCsv'])->name('alerts.export.csv');
+        Route::get('export-csv',                                [PaymentController::class, 'exportCsv'])->name('export.csv');
         Route::get('alerts/overdue',                            [PaymentController::class, 'alertsOverdue'])->name('alerts.overdue');
         Route::get('alerts/overdue/grade/{grade}',              [PaymentController::class, 'alertsOverdueGrade'])->name('alerts.overdue.grade');
         Route::get('alerts/closely',                            [PaymentController::class, 'alertsClosely'])->name('alerts.closely');
@@ -47,6 +50,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('monthly-history')->name('history.')->group(function () {
         Route::get('/',                         [\App\Http\Controllers\MonthlyHistoryController::class, 'index'])->name('monthly');
         Route::get('{yearMonth}',               [\App\Http\Controllers\MonthlyHistoryController::class, 'show'])->name('month');
+        Route::get('{yearMonth}/export-csv',    [\App\Http\Controllers\MonthlyHistoryController::class, 'exportCsv'])->name('month.export.csv');
         Route::get('{yearMonth}/grade/{grade}', [\App\Http\Controllers\MonthlyHistoryController::class, 'students'])->name('students');
     });
 });

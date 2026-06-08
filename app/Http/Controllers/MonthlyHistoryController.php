@@ -102,6 +102,63 @@ class MonthlyHistoryController extends Controller
         return view('history.students', compact('yearMonth', 'grade', 'date', 'students'));
     }
 
+    // ── CSV Export — Monthly Report ───────────────────────────────────────────
+
+    public function exportCsv(string $yearMonth)
+    {
+        $date = $this->parseYearMonth($yearMonth);
+
+        $students = Student::where(function ($q) {
+            $q->where('status', 'active')->orWhereNull('status');
+        })
+        ->with(['payments' => function ($q) use ($date) {
+            $q->whereYear('due_date',  $date->year)
+              ->whereMonth('due_date', $date->month)
+              ->where('status', 'paid')
+              ->orderByDesc('id');
+        }])
+        ->orderBy('year_level')
+        ->orderBy('last_name')
+        ->get()
+        ->filter(fn ($s) => $s->payments->isNotEmpty());
+
+        $filename = 'monthly_report_' . $yearMonth . '.csv';
+        $headers  = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () use ($students, $date) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Monthly Report: ' . $date->format('F Y')]);
+            fputcsv($handle, []);
+            fputcsv($handle, [
+                'Receipt #', 'Student ID', 'Student Name', 'Grade',
+                'Subject', 'Amount Paid', 'Payment Date', 'Time Type',
+                'Payment Method', 'Next Payment Date',
+            ]);
+            foreach ($students as $s) {
+                foreach ($s->payments as $p) {
+                    fputcsv($handle, [
+                        $p->receipt_number,
+                        $s->student_id,
+                        $s->full_name ?? '',
+                        $s->year_level ?? '',
+                        $s->subject ?? '',
+                        $p->amount_paid,
+                        $p->payment_date?->format('Y-m-d') ?? '',
+                        $p->time_type ?? '',
+                        $p->payment_method ?? '',
+                        $p->next_payment_date?->format('Y-m-d') ?? '',
+                    ]);
+                }
+            }
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     // ── Helper ────────────────────────────────────────────────────────────────
 
     private function parseYearMonth(string $yearMonth): Carbon

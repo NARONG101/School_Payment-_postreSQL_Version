@@ -193,6 +193,107 @@ class PaymentController extends Controller
             ->with('success', 'Payment updated successfully!');
     }
 
+    // ── CSV Export — All Payments ─────────────────────────────────────────────
+
+    public function exportCsv(Request $request)
+    {
+        $query = Payment::with('student')
+            ->whereHas('student', function ($q) {
+                $q->where('status', 'active')->orWhereNull('status');
+            });
+
+        $sortBy = $request->get('sort_by', 'id');
+        $payments = match ($sortBy) {
+            'date'  => $query->orderByDesc('due_date')->orderByDesc('id')->get(),
+            'grade' => $query->get()->sortByDesc(fn ($p) => $p->student?->year_level ?? 0)->values(),
+            default => $query->orderByDesc('id')->get(),
+        };
+
+        $filename = 'payments_' . now()->format('Y-m-d') . '.csv';
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () use ($payments) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'Receipt #', 'Student ID', 'Student Name', 'Grade',
+                'Amount Due', 'Admin Fee', 'Amount Paid', 'Balance',
+                'Payment Date', 'Due Date', 'Next Payment Date',
+                'Status', 'Payment Method', 'Time Type', 'Notes',
+            ]);
+            foreach ($payments as $p) {
+                fputcsv($handle, [
+                    $p->receipt_number,
+                    $p->student?->student_id ?? '',
+                    $p->student?->full_name ?? '',
+                    $p->student?->year_level ?? '',
+                    $p->amount_due,
+                    $p->admin_fee ?? 0,
+                    $p->amount_paid,
+                    $p->balance ?? 0,
+                    $p->payment_date?->format('Y-m-d') ?? '',
+                    $p->due_date?->format('Y-m-d') ?? '',
+                    $p->next_payment_date?->format('Y-m-d') ?? '',
+                    $p->status,
+                    $p->payment_method ?? '',
+                    $p->time_type ?? '',
+                    $p->notes ?? '',
+                ]);
+            }
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    // ── CSV Export — Deadline Alerts ──────────────────────────────────────────
+
+    public function exportAlertsCsv(Request $request)
+    {
+        $now      = Carbon::now();
+        $students = $this->activeStudentsWithLastPayment()->get();
+        $filter   = $request->get('filter', 'all');
+
+        $rows = $students->map(fn ($s) => $this->buildStudentAlertData($s, $now))
+            ->when($filter !== 'all', fn ($c) => $c->filter(fn ($d) => $d['alertLevel'] === $filter))
+            ->sortBy(fn ($d) => $d['daysUntilNextPayment'] ?? 0)
+            ->values();
+
+        $filename = 'deadline_alerts_' . now()->format('Y-m-d') . '.csv';
+        $headers  = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () use ($rows) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'Student ID', 'Student Name', 'Grade', 'Subject',
+                'Next Payment Date', 'Days Until Due', 'Alert Level',
+                'Last Payment Date', 'Monthly Fee',
+            ]);
+            foreach ($rows as $d) {
+                $s = $d['student'];
+                fputcsv($handle, [
+                    $s->student_id,
+                    $s->full_name ?? '',
+                    $s->year_level ?? '',
+                    $s->subject ?? '',
+                    $d['nextPaymentDate']?->format('Y-m-d') ?? 'N/A',
+                    $d['daysUntilNextPayment'] ?? 'N/A',
+                    $d['alertLevel'],
+                    $d['lastPayment']?->payment_date?->format('Y-m-d') ?? 'N/A',
+                    $s->monthly_fee ?? '',
+                ]);
+            }
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     // ── Destroy ───────────────────────────────────────────────────────────────
 
     public function destroy(Payment $payment)

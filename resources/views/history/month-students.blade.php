@@ -9,6 +9,12 @@
     </button>
 @endsection
 
+@section('topbar-actions')
+    <a href="{{ route('history.month.export.csv', $yearMonth) }}" class="btn btn-outline btn-sm">
+        <i class="fas fa-download" aria-hidden="true"></i> <span>CSV</span>
+    </a>
+@endsection
+
 @section('styles')
 <style>
 /* ── Grade cards (same as students/index) ───────── */

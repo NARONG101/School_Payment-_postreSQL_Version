@@ -2,6 +2,9 @@
 @section('title','All Payments')
 @section('page-title','All Payments')
 @section('topbar-actions')
+    <a href="{{ route('payments.export.csv', request()->query()) }}" class="btn btn-outline btn-sm">
+        <i class="fas fa-download" aria-hidden="true"></i> <span>CSV</span>
+    </a>
     <a href="{{ route('payments.create') }}" class="btn btn-primary btn-sm">
         <i class="fas fa-plus" aria-hidden="true"></i> <span>New Payment</span>
     </a>
