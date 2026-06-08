@@ -19,6 +19,55 @@
 .stat-icon-red    { background:var(--danger-light); }
 .stat-icon-yellow { background:var(--warning-light); }
 .stat-icon-purple { background:rgba(124,58,237,0.1); }
+
+/* ── Quick Actions ── */
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+.quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.15s, box-shadow 0.15s, transform 0.1s, border-color 0.15s;
+    cursor: pointer;
+    text-align: center;
+}
+.quick-action-btn:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    color: var(--primary);
+}
+.quick-action-btn .qa-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.qa-blue   { background: var(--primary-50);          color: var(--primary); }
+.qa-green  { background: var(--success-light);        color: var(--success); }
+.qa-yellow { background: var(--warning-light);        color: var(--warning); }
+.qa-red    { background: var(--danger-light);         color: var(--danger); }
+.qa-purple { background: rgba(124,58,237,0.12);       color: #7c3aed; }
+.qa-teal   { background: rgba(6,182,212,0.12);        color: #0891b2; }
 </style>
 @endsection
 @section('content')
@@ -58,6 +107,53 @@
             <div class="stat-label">Upcoming</div>
         </div>
     </a>
+</div>
+
+{{-- ── Quick Actions ─────────────────────────────────────── --}}
+<div class="card" style="margin-top:18px">
+    <div class="card-header">
+        <div class="card-title"><i class="fas fa-bolt" style="color:var(--warning)" aria-hidden="true"></i> Quick Actions</div>
+    </div>
+    <div class="card-body">
+        <div class="quick-actions-grid">
+            <a href="{{ route('students.create') }}" class="quick-action-btn">
+                <div class="qa-icon qa-blue"><i class="fas fa-user-plus"></i></div>
+                Enroll Student
+            </a>
+            <a href="{{ route('payments.create') }}" class="quick-action-btn">
+                <div class="qa-icon qa-green"><i class="fas fa-plus-circle"></i></div>
+                New Payment
+            </a>
+            <a href="{{ route('students.index') }}" class="quick-action-btn">
+                <div class="qa-icon qa-teal"><i class="fas fa-user-graduate"></i></div>
+                All Students
+            </a>
+            <a href="{{ route('payments.index') }}" class="quick-action-btn">
+                <div class="qa-icon qa-purple"><i class="fas fa-receipt"></i></div>
+                All Payments
+            </a>
+            <a href="{{ route('revenue.index') }}" class="quick-action-btn">
+                <div class="qa-icon qa-green"><i class="fas fa-chart-line"></i></div>
+                Revenue Report
+            </a>
+            <a href="{{ route('history.monthly') }}" class="quick-action-btn">
+                <div class="qa-icon qa-blue"><i class="fas fa-history"></i></div>
+                Monthly History
+            </a>
+            <a href="{{ route('payments.alerts') }}" class="quick-action-btn">
+                <div class="qa-icon qa-yellow"><i class="fas fa-bell"></i></div>
+                Deadline Alerts
+            </a>
+            <a href="{{ route('payments.alerts.overdue') }}" class="quick-action-btn">
+                <div class="qa-icon qa-red"><i class="fas fa-exclamation-triangle"></i></div>
+                Overdue
+            </a>
+            <a href="{{ route('payment-types.index') }}" class="quick-action-btn">
+                <div class="qa-icon qa-purple"><i class="fas fa-tags"></i></div>
+                Payment Types
+            </a>
+        </div>
+    </div>
 </div>
 
 <div class="dashboard-grid">
