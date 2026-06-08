@@ -95,6 +95,7 @@ COPY docker/php/www.conf       /usr/local/etc/php-fpm.d/www.conf
 # ── Nginx config ─────────────────────────────────────────────
 COPY docker/nginx/nginx.conf        /etc/nginx/nginx.conf
 COPY docker/nginx/default.conf      /etc/nginx/http.d/default.conf
+COPY --chmod=755 docker/nginx/start-nginx.sh /start-nginx.sh
 
 # ── Supervisor config ────────────────────────────────────────
 COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
