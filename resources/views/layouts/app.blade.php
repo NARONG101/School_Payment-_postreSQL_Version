@@ -639,7 +639,7 @@ textarea.form-control { resize:vertical; min-height:80px; }
 .info-val-sm { font-size:13px; font-weight:600; color:var(--text-primary); }
 .mono { font-family:'JetBrains Mono',monospace; }
     </style>
-    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    @vite(['resources/js/app.js'])
     @yield('styles')
 </head>
 <body>

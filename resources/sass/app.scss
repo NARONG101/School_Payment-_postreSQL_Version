@@ -1,8 +1,2 @@
-// Fonts
-@import url('https://fonts.bunny.net/css?family=Nunito');
-
-// Variables
-@import 'variables';
-
-// Bootstrap
-@import 'bootstrap/scss/bootstrap';
+// Bootstrap is NOT imported here — the layout has its own complete custom CSS.
+// This file intentionally left minimal to avoid Bootstrap overriding custom styles.

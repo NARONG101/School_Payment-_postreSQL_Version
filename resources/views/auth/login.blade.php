@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     <title>Sign In — EduPay Manager</title>
-    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    @vite(['resources/js/app.js'])
     <style>
         :root,[data-theme="light"]{--login-bg:#0f172a;--card-bg:#ffffff;--text-h:#111827;--text-s:#6b7280;--text-l:#374151;--border:#e5e7eb;--input-bg:#ffffff;--input-text:#111827;--err-bg:#fde8e8;--err-text:#7f1d1d;--err-border:#fecaca;--check-label:#6b7280;}
         [data-theme="dark"]{--login-bg:#060d1a;--card-bg:#131c2e;--text-h:#f1f5f9;--text-s:#94a3b8;--text-l:#cbd5e1;--border:#1e3a5f;--input-bg:#1e2d45;--input-text:#e2e8f0;--err-bg:rgba(239,68,68,0.12);--err-text:#fca5a5;--err-border:rgba(239,68,68,0.3);--check-label:#94a3b8;}
