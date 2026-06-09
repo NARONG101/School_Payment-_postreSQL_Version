@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // ── Security headers on every response ────────────────
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
 
+        // ── Set locale from session ────────────────────────────
+        $middleware->append(\App\Http\Middleware\SetLocale::class);
+
         // ── Trust Render's load-balancer proxy ────────────────
         // Ensures HTTPS is detected correctly behind Render's proxy.
         $middleware->trustProxies(

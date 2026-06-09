@@ -8,6 +8,9 @@ use App\Http\Controllers\PaymentTypeController;
 use App\Http\Controllers\RevenueController;
 use App\Http\Controllers\Auth\LoginController;
 
+// ── Language switcher ─────────────────────────────────────
+Route::post('/language/{locale}', [\App\Http\Controllers\LanguageController::class, 'switch'])->name('language.switch');
+
 // ── Auth routes ───────────────────────────────────────────────
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware(['throttle:login']);

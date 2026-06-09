@@ -267,14 +267,73 @@
                     @error('payment_method')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                {{-- Photo --}}
+                {{-- Photo with camera capture --}}
                 <div class="form-group">
-                    <label class="form-label" for="photo">Payment Photo</label>
-                    <input type="file" id="photo" name="photo"
-                           class="form-control @error('photo') is-invalid @enderror"
-                           accept="image/jpeg,image/png,image/webp">
-                    @error('photo')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Optional — JPG, PNG, WebP, max 2MB</div>
+                    <label class="form-label" for="photo">{{ __('app.payment_photo') }}</label>
+
+                    {{-- Tab switcher --}}
+                    <div style="display:flex;gap:0;margin-bottom:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content">
+                        <button type="button" id="tabUpload"
+                            onclick="switchPhotoTab('upload')"
+                            style="padding:7px 16px;font-size:12px;font-weight:600;border:none;cursor:pointer;
+                                   background:var(--primary);color:#fff;transition:background .15s">
+                            <i class="fas fa-upload"></i> {{ __('app.upload_file') }}
+                        </button>
+                        <button type="button" id="tabCamera"
+                            onclick="switchPhotoTab('camera')"
+                            style="padding:7px 16px;font-size:12px;font-weight:600;border:none;cursor:pointer;
+                                   background:transparent;color:var(--text-secondary);transition:background .15s">
+                            <i class="fas fa-camera"></i> {{ __('app.take_photo') }}
+                        </button>
+                    </div>
+
+                    {{-- Upload panel --}}
+                    <div id="panelUpload">
+                        <input type="file" id="photo" name="photo"
+                               class="form-control @error('photo') is-invalid @enderror"
+                               accept="image/jpeg,image/png,image/webp"
+                               onchange="previewUpload(this)">
+                        <div id="uploadPreview" style="display:none;margin-top:8px">
+                            <img id="uploadPreviewImg" src="" alt="Preview"
+                                 style="max-width:180px;max-height:180px;border-radius:8px;border:1px solid var(--border)">
+                        </div>
+                        @error('photo')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">
+                            JPG, PNG, WebP — max 2MB
+                        </div>
+                    </div>
+
+                    {{-- Camera panel --}}
+                    <div id="panelCamera" style="display:none">
+                        <div style="position:relative;display:inline-block;border-radius:10px;overflow:hidden;border:2px solid var(--border);background:#000">
+                            <video id="cameraStream" autoplay playsinline muted
+                                   style="display:block;max-width:320px;max-height:240px"></video>
+                            <canvas id="cameraCanvas" style="display:none"></canvas>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+                            <button type="button" id="btnStartCamera" onclick="startCamera()"
+                                class="btn btn-outline btn-sm">
+                                <i class="fas fa-video"></i> Start Camera
+                            </button>
+                            <button type="button" id="btnCapture" onclick="capturePhoto()"
+                                class="btn btn-primary btn-sm" style="display:none">
+                                <i class="fas fa-camera"></i> Capture
+                            </button>
+                            <button type="button" id="btnRetake" onclick="retakePhoto()"
+                                class="btn btn-outline btn-sm" style="display:none">
+                                <i class="fas fa-redo"></i> Retake
+                            </button>
+                        </div>
+                        <div id="capturePreview" style="display:none;margin-top:10px">
+                            <img id="capturePreviewImg" src=""
+                                 style="max-width:180px;max-height:180px;border-radius:8px;border:2px solid var(--success)">
+                            <div style="font-size:11px;color:var(--success);margin-top:4px;font-weight:600">
+                                <i class="fas fa-check-circle"></i> Photo captured
+                            </div>
+                        </div>
+                        {{-- Hidden input for captured image data --}}
+                        <input type="hidden" id="capturedPhotoData" name="captured_photo_data">
+                    </div>
                 </div>
 
                 {{-- Notes --}}
@@ -501,5 +560,75 @@
     });
 
 }());
+</script>
+
+<script>
+/* ── Camera capture ─────────────────────────────────────────── */
+var _stream = null;
+
+function switchPhotoTab(tab) {
+    var isUpload = tab === 'upload';
+    document.getElementById('panelUpload').style.display  = isUpload ? '' : 'none';
+    document.getElementById('panelCamera').style.display  = isUpload ? 'none' : '';
+    document.getElementById('tabUpload').style.background = isUpload ? 'var(--primary)' : 'transparent';
+    document.getElementById('tabUpload').style.color      = isUpload ? '#fff' : 'var(--text-secondary)';
+    document.getElementById('tabCamera').style.background = isUpload ? 'transparent' : 'var(--primary)';
+    document.getElementById('tabCamera').style.color      = isUpload ? 'var(--text-secondary)' : '#fff';
+    if (isUpload && _stream) { _stream.getTracks().forEach(function(t){ t.stop(); }); _stream = null; }
+}
+
+function previewUpload(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('uploadPreviewImg').src = e.target.result;
+            document.getElementById('uploadPreview').style.display = '';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function startCamera() {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+        .then(function(stream) {
+            _stream = stream;
+            var video = document.getElementById('cameraStream');
+            video.srcObject = stream;
+            document.getElementById('btnStartCamera').style.display = 'none';
+            document.getElementById('btnCapture').style.display = '';
+        })
+        .catch(function(err) {
+            alert('Cannot access camera: ' + err.message + '\nPlease use the Upload tab instead.');
+        });
+}
+
+function capturePhoto() {
+    var video  = document.getElementById('cameraStream');
+    var canvas = document.getElementById('cameraCanvas');
+    canvas.width  = video.videoWidth  || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    document.getElementById('capturedPhotoData').value = dataUrl;
+    document.getElementById('capturePreviewImg').src   = dataUrl;
+    document.getElementById('capturePreview').style.display = '';
+    document.getElementById('btnCapture').style.display = 'none';
+    document.getElementById('btnRetake').style.display  = '';
+    if (_stream) { _stream.getTracks().forEach(function(t){ t.stop(); }); _stream = null; }
+    video.srcObject = null;
+}
+
+function retakePhoto() {
+    document.getElementById('capturedPhotoData').value = '';
+    document.getElementById('capturePreview').style.display = 'none';
+    document.getElementById('btnRetake').style.display  = 'none';
+    document.getElementById('btnStartCamera').style.display = '';
+    document.getElementById('btnCapture').style.display = 'none';
+}
+
+/* Stop camera when navigating away */
+window.addEventListener('beforeunload', function() {
+    if (_stream) _stream.getTracks().forEach(function(t){ t.stop(); });
+});
 </script>
 @endsection
