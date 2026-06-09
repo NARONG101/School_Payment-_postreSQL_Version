@@ -442,15 +442,14 @@ class PaymentController extends Controller
         $html = view('receipts.payment', compact('payment'))->render();
         $mpdf->WriteHTML($html);
 
-        // ── Inject logo — copy to font cache dir so mPDF can read it ──
-        $logoSrc   = public_path('logo.png');
-        $logoCache = storage_path('fonts/logo.png');
-        if (file_exists($logoSrc) && !file_exists($logoCache)) {
-            @copy($logoSrc, $logoCache);
-        }
-        if (file_exists($logoCache)) {
-            // A5 = 148mm wide; 32mm logo centered: x=(148-32)/2=58, y=4mm
-            $mpdf->Image($logoCache, 58, 4, 32, 0, 'PNG');
+        // ── Inject logo — use small optimized version for PDF ──
+        $logoSmall = storage_path('fonts/logo_small.png');
+        $logoBig   = storage_path('fonts/logo.png');
+        $logoUse   = file_exists($logoSmall) ? $logoSmall : (file_exists($logoBig) ? $logoBig : null);
+
+        if ($logoUse) {
+            // A5 = 148mm wide; 32mm logo centered: x=(148-32)/2=58, y=3mm
+            $mpdf->Image($logoUse, 58, 3, 32, 0, 'PNG');
         }
 
         return $mpdf;

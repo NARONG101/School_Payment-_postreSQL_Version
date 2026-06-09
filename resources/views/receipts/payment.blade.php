@@ -159,7 +159,7 @@ body {
     <div class="header">
         {{-- Logo is injected by mPDF directly via Image() API, not in HTML --}}
         <div class="school-name">CK Takhmao School</div>
-        <div class="school-sub">សាលាបង្វឹក CK តាខ្មៅ</div>
+        <div class="school-sub"><span style="font-family:kantumruypro;font-size:11pt;">សាលាបង្វឹក CK តាខ្មៅ</span></div>
         <div><span class="receipt-badge">Receipt</span></div>
         <div class="receipt-num">{{ $payment->receipt_number }}</div>
     </div>
