@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     <title>Sign In — CK Takhmao School</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600&display=swap" rel="stylesheet">
     @vite(['resources/js/app.js'])
     <style>
         :root,[data-theme="light"]{--login-bg:#0f172a;--card-bg:#ffffff;--text-h:#111827;--text-s:#6b7280;--text-l:#374151;--border:#e5e7eb;--input-bg:#ffffff;--input-text:#111827;--err-bg:#fde8e8;--err-text:#7f1d1d;--err-border:#fecaca;--check-label:#6b7280;}
@@ -18,7 +21,7 @@
         .brand-icon{width:52px;height:52px;background:linear-gradient(135deg,#1a56db,#7c3aed);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:22px;color:#fff;}
         .brand-logo{width:120px;height:auto;object-fit:contain;margin:0 auto 12px;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.3));}
         .brand-name{font-size:20px;font-weight:800;color:var(--text-h);}
-        .brand-sub{font-size:13px;color:var(--text-s);margin-top:3px;}
+        .brand-sub{font-size:15px;font-family:'Kantumruy Pro',sans-serif;color:var(--text-s);margin-top:4px;line-height:1.5;}
         .form-group{margin-bottom:16px;}
         .form-label{display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:var(--text-l);}
         .form-control{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:15px;color:var(--input-text);background:var(--input-bg);font-family:inherit;outline:none;transition:border 0.15s,box-shadow 0.15s;-webkit-appearance:none;appearance:none;}

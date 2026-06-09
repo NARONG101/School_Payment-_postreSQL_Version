@@ -166,7 +166,7 @@ img { max-width:100%; }
     justify-content:center; font-size:18px; color:#fff; flex-shrink:0;
 }
 .brand-name { font-size:15px; font-weight:800; color:#fff; line-height:1.2; }
-.brand-sub  { font-size:11px; color:var(--sidebar-section); margin-top:3px; }
+.brand-sub  { font-size:13px; font-family:'Kantumruy Pro', sans-serif; color:rgba(255,255,255,0.75); margin-top:4px; line-height:1.4; }
 .sidebar-toggle-btn {
     display:flex; align-items:center; justify-content:center;
     background:rgba(255,255,255,0.06);
