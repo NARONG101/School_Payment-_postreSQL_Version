@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
-    <title>Sign In — EduPay Manager</title>
+    <title>Sign In — CKCK Takhmao School</title>
     @vite(['resources/js/app.js'])
     <style>
         :root,[data-theme="light"]{--login-bg:#0f172a;--card-bg:#ffffff;--text-h:#111827;--text-s:#6b7280;--text-l:#374151;--border:#e5e7eb;--input-bg:#ffffff;--input-text:#111827;--err-bg:#fde8e8;--err-text:#7f1d1d;--err-border:#fecaca;--check-label:#6b7280;}
@@ -45,9 +45,11 @@
             <i class="fas fa-moon" id="loginThemeIcon"></i>
         </button>
         <div class="brand">
-            <div class="brand-icon" aria-hidden="true">🎓</div>
-            <div class="brand-name">EduPay Manager</div>
-            <div class="brand-sub">Student Payment Management System</div>
+            <div class="brand-icon" style="background:transparent;padding:0" aria-hidden="true">
+                <img src="/logo.png" alt="CKCK Logo" style="width:52px;height:52px;object-fit:contain;border-radius:10px">
+            </div>
+            <div class="brand-name">CKCK Takhmao School</div>
+            <div class="brand-sub">សាលាបង្វឹក CKCK តាខ្មៅ</div>
         </div>
         @if($errors->any())
         <div class="alert-danger" role="alert" aria-live="polite">

@@ -30,7 +30,7 @@ services:
     # ── Environment variables ─────────────────────────────────
     envVars:
       - key: APP_NAME
-        value: "Student Payment System"
+        value: "CKCK Takhmao School"
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
