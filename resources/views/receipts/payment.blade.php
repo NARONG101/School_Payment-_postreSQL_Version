@@ -4,50 +4,78 @@
 <head>
 <meta charset="utf-8">
 <style>
-/* ── Reset ── */
 * { margin:0; padding:0; box-sizing:border-box; }
+
 body {
     font-family: kantumruypro, sans-serif;
-    font-size: 11pt;
+    font-size: 10.5pt;
     color: #1e293b;
     background: #ffffff;
+    position: relative;
 }
 
 /* ── Page wrapper ── */
 .page {
     width: 100%;
-    padding: 20px 22px;
+    padding: 18px 20px 20px;
+    position: relative;
 }
 
-/* ════════════════════════════════════
-   HEADER
-════════════════════════════════════ */
+/* ════ WATERMARK — sits dead-center, behind everything ════ */
+.watermark {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: table;
+    z-index: 0;
+    pointer-events: none;
+}
+.watermark-inner {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+}
+.watermark-text {
+    font-size: 96pt;
+    font-weight: 900;
+    color: rgba(14, 159, 110, 0.07);
+    text-transform: uppercase;
+    letter-spacing: 18px;
+    transform: rotate(-35deg);
+    display: inline-block;
+}
+
+/* ── All content sits above watermark ── */
+.header, .section-head, .info-table,
+.amount-box, .sig-row { position: relative; z-index: 1; }
+
+/* ════ HEADER ════ */
 .header {
     text-align: center;
-    padding-bottom: 12px;
+    padding-bottom: 11px;
     border-bottom: 2.5px solid #1a56db;
-    margin-bottom: 14px;
+    margin-bottom: 13px;
 }
 .school-name {
-    font-size: 20pt;
+    font-size: 18pt;
     font-weight: 700;
     color: #1a56db;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 .school-sub {
-    font-size: 9pt;
+    font-size: 8.5pt;
     color: #64748b;
     margin-top: 2px;
 }
 .receipt-badge {
     display: inline-block;
-    margin-top: 8px;
+    margin-top: 7px;
     background: #1a56db;
-    color: #ffffff;
-    font-size: 9pt;
+    color: #fff;
+    font-size: 8.5pt;
     font-weight: 700;
     letter-spacing: 2px;
-    padding: 3px 18px;
+    padding: 2px 16px;
     border-radius: 20px;
     text-transform: uppercase;
 }
@@ -55,106 +83,83 @@ body {
     font-size: 10pt;
     color: #1a56db;
     font-weight: 700;
-    margin-top: 4px;
+    margin-top: 3px;
 }
 
-/* ════════════════════════════════════
-   SECTION HEADING
-════════════════════════════════════ */
+/* ════ SECTION HEADING ════ */
 .section-head {
     background: #eff6ff;
     border-left: 3px solid #1a56db;
-    padding: 4px 10px;
-    font-size: 8pt;
+    padding: 3px 9px;
+    font-size: 7.5pt;
     font-weight: 700;
     color: #1a56db;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    margin: 12px 0 6px;
+    margin: 10px 0 5px;
 }
 
-/* ════════════════════════════════════
-   INFO TABLE
-════════════════════════════════════ */
+/* ════ INFO TABLE ════ */
 .info-table {
     width: 100%;
     border-collapse: collapse;
 }
 .info-table td {
-    padding: 3px 6px;
+    padding: 2px 5px;
     vertical-align: top;
-    font-size: 10pt;
+    font-size: 9.5pt;
 }
-.info-table .lbl {
-    width: 28%;
+.lbl {
+    width: 26%;
     color: #94a3b8;
-    font-size: 8pt;
+    font-size: 7.5pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
-    padding-top: 4px;
+    letter-spacing: 0.3px;
+    padding-top: 3px;
 }
-.info-table .val {
+.val {
     color: #0f172a;
     font-weight: 600;
     border-bottom: 1px dotted #e2e8f0;
-}
-.info-table .val-wide {
-    color: #0f172a;
-    font-weight: 600;
-    border-bottom: 1px dotted #e2e8f0;
+    padding-bottom: 2px;
 }
 
-/* ════════════════════════════════════
-   DIVIDER
-════════════════════════════════════ */
-.divider {
-    border: none;
-    border-top: 1px dashed #cbd5e1;
-    margin: 10px 0;
-}
-
-/* ════════════════════════════════════
-   AMOUNT BOX
-════════════════════════════════════ */
+/* ════ AMOUNT BOX ════ */
 .amount-box {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
-    padding: 10px 14px;
-    margin-top: 12px;
+    padding: 9px 13px;
+    margin-top: 11px;
 }
 .amount-row {
     width: 100%;
     display: table;
-    padding: 3px 0;
-    font-size: 10.5pt;
+    padding: 2.5px 0;
+    font-size: 10pt;
     border-bottom: 1px solid #f1f5f9;
 }
 .amount-row:last-child { border-bottom: none; }
 .ar-label { display: table-cell; color: #475569; }
 .ar-value { display: table-cell; text-align: right; font-weight: 600; color: #0f172a; }
-.amount-row.paid .ar-value  { color: #0e9f6e; }
-.amount-row.bal  .ar-value  { color: #e02424; font-weight: 700; }
+.amount-row.paid .ar-value { color: #0e9f6e; }
+.amount-row.bal  .ar-value { color: #e02424; font-weight: 700; }
 .amount-row.total-row {
-    margin-top: 4px;
-    padding-top: 6px;
     border-top: 2px solid #e2e8f0;
-    font-size: 12pt;
+    font-size: 11pt;
     font-weight: 700;
 }
 .amount-row.total-row .ar-label { color: #0f172a; font-weight: 700; }
 
-/* ════════════════════════════════════
-   STATUS BADGE
-════════════════════════════════════ */
+/* ════ STATUS BADGES ════ */
 .status-paid {
     display: inline-block;
     background: #def7ec;
     color: #0e9f6e;
-    font-size: 9pt;
+    font-size: 8.5pt;
     font-weight: 700;
-    padding: 2px 14px;
+    padding: 2px 12px;
     border-radius: 20px;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -163,57 +168,46 @@ body {
     display: inline-block;
     background: #fef3c7;
     color: #d97706;
-    font-size: 9pt;
+    font-size: 8.5pt;
     font-weight: 700;
-    padding: 2px 14px;
+    padding: 2px 12px;
     border-radius: 20px;
     text-transform: uppercase;
 }
 
-/* ════════════════════════════════════
-   WATERMARK
-════════════════════════════════════ */
-.watermark {
-    position: fixed;
-    top: 38%;
-    left: 8%;
-    font-size: 90pt;
-    font-weight: 900;
-    color: rgba(14,159,110,0.10);
-    text-transform: uppercase;
-    letter-spacing: 14px;
-    transform: rotate(-35deg);
-    z-index: -1;
-}
-
-/* ════════════════════════════════════
-   SIGNATURES
-════════════════════════════════════ */
+/* ════ SIGNATURES ════ */
 .sig-row {
     width: 100%;
     display: table;
-    margin-top: 24px;
+    margin-top: 20px;
+    margin-bottom: 4px;
 }
 .sig-cell {
     display: table-cell;
     width: 50%;
     text-align: center;
-    font-size: 8.5pt;
+    font-size: 8pt;
     color: #64748b;
+    padding: 0 10px;
 }
 .sig-line {
     border-top: 1px solid #cbd5e1;
     padding-top: 5px;
-    margin: 0 20px;
 }
 </style>
 </head>
 <body>
-<div class="page">
 
-    @if($payment->status === 'paid')
-    <div class="watermark">PAID</div>
-    @endif
+{{-- ── WATERMARK (centered, behind everything) ── --}}
+@if($payment->status === 'paid')
+<div class="watermark">
+    <div class="watermark-inner">
+        <span class="watermark-text">PAID</span>
+    </div>
+</div>
+@endif
+
+<div class="page">
 
     {{-- ══ HEADER ══ --}}
     <div class="header">
@@ -247,7 +241,7 @@ body {
         @if($s?->address)
         <tr>
             <td class="lbl">Address</td>
-            <td class="val-wide" colspan="3">{{ $s->address }}</td>
+            <td class="val" colspan="3">{{ $s->address }}</td>
         </tr>
         @endif
     </table>
@@ -262,13 +256,11 @@ body {
             <td class="val">{{ $s?->subject ?? '—' }}</td>
         </tr>
         <tr>
+            @php $tt = $payment->time_type ?? $s?->time_type ?? ''; @endphp
             <td class="lbl">Time Slot</td>
-            <td class="val">{{ $payment->time_type ?? $s?->time_type ?? '—' }}</td>
+            <td class="val">{{ $tt ?: '—' }}</td>
             <td class="lbl">Class Type</td>
-            <td class="val">
-                @php $tt = $payment->time_type ?? $s?->time_type ?? ''; @endphp
-                {{ str_starts_with($tt, 'sat-sun') ? 'Weekend' : 'Weekday' }}
-            </td>
+            <td class="val">{{ str_starts_with($tt, 'sat-sun') ? 'Weekend' : 'Weekday' }}</td>
         </tr>
         <tr>
             <td class="lbl">Enrolled</td>
@@ -296,7 +288,7 @@ body {
         @if($payment->notes)
         <tr>
             <td class="lbl">Notes</td>
-            <td class="val-wide" colspan="3">{{ $payment->notes }}</td>
+            <td class="val" colspan="3">{{ $payment->notes }}</td>
         </tr>
         @endif
     </table>
@@ -309,7 +301,7 @@ body {
         </div>
         @if(($payment->admin_fee ?? 0) > 0)
         <div class="amount-row">
-            <span class="ar-label">Admin Fee <small style="color:#94a3b8">(enrollment)</small></span>
+            <span class="ar-label">Admin Fee <small style="color:#94a3b8;font-size:8pt">(enrollment)</small></span>
             <span class="ar-value">${{ number_format($payment->admin_fee, 2) }}</span>
         </div>
         @endif
