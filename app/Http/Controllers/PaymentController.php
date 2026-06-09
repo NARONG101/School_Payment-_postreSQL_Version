@@ -427,6 +427,14 @@ class PaymentController extends Controller
             'default_font' => 'kantumruypro',
         ]);
 
+        // ── Native mPDF watermark — perfectly centered, angle, alpha ──
+        if ($payment->status === 'paid') {
+            $mpdf->SetWatermarkText('PAID');
+            $mpdf->watermark_font      = 'dejavusans'; // bold latin font for watermark
+            $mpdf->watermarkTextAlpha  = 0.06;         // very subtle (0 = invisible, 1 = solid)
+            $mpdf->showWatermarkText   = true;
+        }
+
         $html = view('receipts.payment', compact('payment'))->render();
         $mpdf->WriteHTML($html);
         return $mpdf;
