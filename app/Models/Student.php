@@ -13,7 +13,8 @@ class Student extends Model
     protected $fillable = [
         'student_id', 'first_name', 'last_name', 'phone',
         'address', 'come_from', 'subject', 'date_of_birth', 'gender',
-        'year_level', 'enrollment_date', 'photo', 'monthly_payment_day', 'monthly_fee', 'time_type', 'status'
+        'year_level', 'enrollment_date', 'photo', 'monthly_payment_day',
+        'monthly_fee', 'time_type', 'status', 'study_status',
     ];
 
     protected $casts = [

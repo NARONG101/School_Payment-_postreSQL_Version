@@ -124,35 +124,63 @@ class MonthlyHistoryController extends Controller
 
         $filename = 'monthly_report_' . $yearMonth . '.csv';
         $headers  = [
-            'Content-Type'        => 'text/csv',
+            'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function () use ($students, $date) {
+        $callback = function () use ($students, $date, $yearMonth) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Monthly Report: ' . $date->format('F Y')]);
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            // Title
+            fputcsv($handle, [__('app.monthly_history') . ': ' . $date->format('F Y')]);
+            fputcsv($handle, ['Generated: ' . now()->format('d/m/Y H:i')]);
             fputcsv($handle, []);
+
             fputcsv($handle, [
-                'Receipt #', 'Student ID', 'Student Name', 'Grade',
-                'Subject', 'Amount Paid', 'Payment Date', 'Time Type',
-                'Payment Method', 'Next Payment Date',
+                __('app.receipt'), __('app.student_id'),
+                __('app.first_name') . ' ' . __('app.last_name'),
+                __('app.grade'), __('app.weekday') . '/' . __('app.weekend'),
+                __('app.subject'), __('app.amount'),
+                'Payment Date', __('app.time_type'),
+                __('app.payment_method'), __('app.next_payment'),
             ]);
-            foreach ($students as $s) {
-                foreach ($s->payments as $p) {
-                    fputcsv($handle, [
-                        $p->receipt_number,
-                        $s->student_id,
-                        $s->full_name ?? '',
-                        $s->year_level ?? '',
-                        $s->subject ?? '',
-                        $p->amount_paid,
-                        $p->payment_date?->format('Y-m-d') ?? '',
-                        $p->time_type ?? '',
-                        $p->payment_method ?? '',
-                        $p->next_payment_date?->format('Y-m-d') ?? '',
-                    ]);
+
+            // Group by grade
+            $byGrade = $students->groupBy('year_level')->sortKeys();
+            $gradeTotal = [];
+            foreach ($byGrade as $grade => $gradeStudents) {
+                fputcsv($handle, []);
+                fputcsv($handle, [__('app.grade') . ' ' . $grade]);
+                $subtotal = 0;
+                foreach ($gradeStudents as $s) {
+                    foreach ($s->payments as $p) {
+                        $ct = str_starts_with($p->time_type ?? '', 'sat-sun')
+                            ? __('app.weekend')
+                            : __('app.weekday');
+                        fputcsv($handle, [
+                            $p->receipt_number,
+                            $s->student_id,
+                            $s->full_name ?? '',
+                            $grade,
+                            $ct,
+                            $s->subject ?? '',
+                            $p->amount_paid,
+                            $p->payment_date?->format('Y-m-d') ?? '',
+                            $p->time_type ?? '',
+                            $p->payment_method ?? '',
+                            $p->next_payment_date?->format('Y-m-d') ?? '',
+                        ]);
+                        $subtotal += (float) $p->amount_paid;
+                    }
                 }
+                fputcsv($handle, ['', '', 'Subtotal Grade ' . $grade, '', '', '', '$' . number_format($subtotal, 2)]);
+                $gradeTotal[$grade] = $subtotal;
             }
+
+            // Grand total
+            fputcsv($handle, []);
+            fputcsv($handle, ['', '', 'TOTAL', '', '', '$' . number_format(array_sum($gradeTotal), 2)]);
             fclose($handle);
         };
 

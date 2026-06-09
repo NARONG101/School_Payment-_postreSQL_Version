@@ -118,35 +118,39 @@
         <div class="quick-actions-grid">
             <a href="{{ route('students.create') }}" class="quick-action-btn">
                 <div class="qa-icon qa-blue"><i class="fas fa-user-plus"></i></div>
-                Enroll Student
+                {{ __('app.enroll_student') }}
             </a>
             <a href="{{ route('payments.create') }}" class="quick-action-btn">
                 <div class="qa-icon qa-green"><i class="fas fa-plus-circle"></i></div>
-                New Payment
+                {{ __('app.new_payment') }}
             </a>
             <a href="{{ route('students.index') }}" class="quick-action-btn">
                 <div class="qa-icon qa-teal"><i class="fas fa-user-graduate"></i></div>
-                All Students
+                {{ __('app.all_students') }}
             </a>
             <a href="{{ route('payments.index') }}" class="quick-action-btn">
                 <div class="qa-icon qa-purple"><i class="fas fa-receipt"></i></div>
-                All Payments
+                {{ __('app.all_payments') }}
             </a>
             <a href="{{ route('revenue.index') }}" class="quick-action-btn">
                 <div class="qa-icon qa-green"><i class="fas fa-chart-line"></i></div>
-                Revenue Report
+                {{ __('app.revenue_report') }}
             </a>
             <a href="{{ route('history.monthly') }}" class="quick-action-btn">
                 <div class="qa-icon qa-blue"><i class="fas fa-history"></i></div>
-                Monthly History
+                {{ __('app.monthly_history') }}
             </a>
             <a href="{{ route('payments.alerts') }}" class="quick-action-btn">
                 <div class="qa-icon qa-yellow"><i class="fas fa-bell"></i></div>
-                Deadline Alerts
+                {{ __('app.deadline_alerts') }}
             </a>
-            <a href="{{ route('payments.alerts.overdue') }}" class="quick-action-btn">
-                <div class="qa-icon qa-red"><i class="fas fa-exclamation-triangle"></i></div>
-                Overdue
+            <a href="{{ route('students.index', ['class_type' => 'weekday']) }}" class="quick-action-btn">
+                <div class="qa-icon qa-teal"><i class="fas fa-calendar-week"></i></div>
+                {{ __('app.weekday_class') }}
+            </a>
+            <a href="{{ route('students.index', ['class_type' => 'weekend']) }}" class="quick-action-btn">
+                <div class="qa-icon qa-purple"><i class="fas fa-calendar-day"></i></div>
+                {{ __('app.weekend_class') }}
             </a>
         </div>
     </div>
