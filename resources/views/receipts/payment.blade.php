@@ -175,14 +175,14 @@ body {
 ════════════════════════════════════ */
 .watermark {
     position: fixed;
-    top: 42%;
-    left: 20%;
-    font-size: 52pt;
+    top: 38%;
+    left: 8%;
+    font-size: 90pt;
     font-weight: 900;
-    color: rgba(14,159,110,0.06);
+    color: rgba(14,159,110,0.10);
     text-transform: uppercase;
-    letter-spacing: 10px;
-    transform: rotate(-30deg);
+    letter-spacing: 14px;
+    transform: rotate(-35deg);
     z-index: -1;
 }
 
@@ -205,18 +205,6 @@ body {
     border-top: 1px solid #cbd5e1;
     padding-top: 5px;
     margin: 0 20px;
-}
-
-/* ════════════════════════════════════
-   FOOTER
-════════════════════════════════════ */
-.footer {
-    margin-top: 16px;
-    text-align: center;
-    font-size: 8pt;
-    color: #94a3b8;
-    border-top: 1px solid #e2e8f0;
-    padding-top: 10px;
 }
 </style>
 </head>
@@ -358,13 +346,6 @@ body {
                 <strong>{{ $payment->creator?->name ?? 'Admin' }}</strong>
             </div>
         </div>
-    </div>
-
-    {{-- ══ FOOTER ══ --}}
-    <div class="footer">
-        <div>Printed: {{ now()->format('d/m/Y \a\t h:i A') }}</div>
-        <div style="margin-top:2px">EduPay Manager &mdash; Student Payment Management System</div>
-        <div style="margin-top:2px; font-size:7.5pt; color:#cbd5e1">Official receipt. Keep for records.</div>
     </div>
 
 </div>
