@@ -11,21 +11,15 @@ body {
     color: #1e293b;
     background: #ffffff;
 }
-.page { width:100%; padding:18px 20px 20px; }
+.page { width:100%; padding:20px 20px 20px; }
 
 /* HEADER */
 .header {
     text-align:center;
+    padding-top:36px; /* space for logo injected above by mPDF */
     padding-bottom:11px;
     border-bottom:2.5px solid #1a56db;
     margin-bottom:13px;
-}
-.header-logo {
-    width: 80px;
-    height: 80px;
-    object-fit: contain;
-    margin: 0 auto 8px;
-    display: block;
 }
 .school-name {
     font-size:16pt;
@@ -34,9 +28,11 @@ body {
     letter-spacing:0.5px;
 }
 .school-sub {
-    font-size:8.5pt;
-    color:#64748b;
-    margin-top:2px;
+    font-size:11pt;
+    font-family: kantumruypro, sans-serif;
+    color:#475569;
+    margin-top:3px;
+    line-height:1.6;
 }
 .receipt-badge {
     display:inline-block;
@@ -161,19 +157,9 @@ body {
 
     {{-- HEADER --}}
     <div class="header">
-        @php
-            $logoPath = public_path('logo.png');
-            $logoB64  = '';
-            if (file_exists($logoPath)) {
-                $logoB64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-            }
-        @endphp
-        @if($logoB64)
-        <img src="{{ $logoB64 }}" class="header-logo" alt="CK Logo"
-             style="width:90px;height:60px;object-fit:contain;display:block;margin:0 auto 6px;">
-        @endif
+        {{-- Logo is injected by mPDF directly via Image() API, not in HTML --}}
         <div class="school-name">CK Takhmao School</div>
-        <div class="school-sub" style="font-family:kantumruypro,sans-serif;font-size:9pt;color:#64748b;margin-top:2px;">សាលាបង្វឹក CK តាខ្មៅ</div>
+        <div class="school-sub">សាលាបង្វឹក CK តាខ្មៅ</div>
         <div><span class="receipt-badge">Receipt</span></div>
         <div class="receipt-num">{{ $payment->receipt_number }}</div>
     </div>

@@ -401,6 +401,9 @@ class PaymentController extends Controller
             mkdir($tmpDir, 0755, true);
         }
 
+        // Raise pcre limit — base64 font in HTML can hit the 1MB default
+        @ini_set('pcre.backtrack_limit', '5000000');
+
         $config     = new \Mpdf\Config\ConfigVariables();
         $fontConfig = new \Mpdf\Config\FontVariables();
 
@@ -428,16 +431,28 @@ class PaymentController extends Controller
             'allowCJKOrphans' => false,
         ]);
 
-        // ── Native mPDF watermark — perfectly centered, angle, alpha ──
+        // ── Native mPDF watermark ──────────────────────────────
         if ($payment->status === 'paid') {
             $mpdf->SetWatermarkText('PAID');
-            $mpdf->watermark_font      = 'dejavusans'; // bold latin font for watermark
-            $mpdf->watermarkTextAlpha  = 0.06;         // very subtle (0 = invisible, 1 = solid)
+            $mpdf->watermark_font      = 'dejavusans';
+            $mpdf->watermarkTextAlpha  = 0.06;
             $mpdf->showWatermarkText   = true;
         }
 
         $html = view('receipts.payment', compact('payment'))->render();
         $mpdf->WriteHTML($html);
+
+        // ── Inject logo — copy to font cache dir so mPDF can read it ──
+        $logoSrc   = public_path('logo.png');
+        $logoCache = storage_path('fonts/logo.png');
+        if (file_exists($logoSrc) && !file_exists($logoCache)) {
+            @copy($logoSrc, $logoCache);
+        }
+        if (file_exists($logoCache)) {
+            // A5 = 148mm wide; 32mm logo centered: x=(148-32)/2=58, y=4mm
+            $mpdf->Image($logoCache, 58, 4, 32, 0, 'PNG');
+        }
+
         return $mpdf;
     }
 
