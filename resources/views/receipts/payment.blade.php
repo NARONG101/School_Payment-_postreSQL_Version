@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: kantumruypro, DejaVu Sans, sans-serif; font-size: 12px; color: #1f2937; background: white; }
+    body { font-family: KantumruyPro, DejaVu Sans, sans-serif; font-size: 12px; color: #1f2937; background: white; }
     .receipt { width: 100%; padding: 20px; }
     .header { text-align: center; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 2px solid #1a56db; }
     .school-name { font-size: 18px; font-weight: 700; color: #1a56db; margin-bottom: 3px; }
