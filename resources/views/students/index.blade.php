@@ -28,22 +28,6 @@
 .grade-card-name  { font-size:14px; font-weight:700; color:var(--text-primary); }
 .grade-card-count { font-size:11px; color:var(--text-muted); }
 
-/* ── Class type tabs ─────────────────────────────── */
-.class-type-tabs {
-    display:flex; gap:8px; flex-wrap:wrap;
-}
-.class-type-tab {
-    display:inline-flex; align-items:center; gap:7px;
-    padding:8px 16px; border-radius:8px; border:1px solid var(--border);
-    font-size:13px; font-weight:600; text-decoration:none;
-    color:var(--text-secondary); background:var(--bg-card);
-    transition:all 0.15s;
-}
-.class-type-tab:hover { background:var(--bg-hover); color:var(--text-primary); }
-.class-type-tab.active { background:var(--primary); color:#fff; border-color:var(--primary); }
-.class-type-tab.active-weekday { background:var(--success); color:#fff; border-color:var(--success); }
-.class-type-tab.active-weekend { background:#7c3aed; color:#fff; border-color:#7c3aed; }
-
 /* ── Sort bar ────────────────────────────────────── */
 .sort-bar {
     display:flex; align-items:center; gap:12px;
@@ -66,38 +50,6 @@
 @endsection
 
 @section('content')
-
-{{-- ── Class Type Filter ────────────────────────────────────── --}}
-<div class="card" style="margin-bottom:14px">
-    <div class="card-body" style="padding:14px 16px">
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-            <span style="font-size:13px;font-weight:700;color:var(--text-muted)">
-                <i class="fas fa-filter" aria-hidden="true"></i> {{ __('app.all_classes') }}:
-            </span>
-            <div class="class-type-tabs">
-                <a href="{{ route('students.index', array_merge(request()->query(), ['class_type' => '', 'sort' => $sortBy])) }}"
-                   class="class-type-tab {{ $classType === '' ? 'active' : '' }}">
-                    <i class="fas fa-users"></i> {{ __('app.all_classes') }}
-                    <span style="font-size:11px;opacity:0.8">({{ $allStudents->count() }})</span>
-                </a>
-                @php
-                    $weekdayCount = \App\Models\Student::where(function ($q) { $q->where('status','active')->orWhereNull('status'); })->where('time_type','like','mon-fri%')->count();
-                    $weekendCount = \App\Models\Student::where(function ($q) { $q->where('status','active')->orWhereNull('status'); })->where('time_type','like','sat-sun%')->count();
-                @endphp
-                <a href="{{ route('students.index', array_merge(request()->query(), ['class_type' => 'weekday', 'sort' => $sortBy])) }}"
-                   class="class-type-tab {{ $classType === 'weekday' ? 'active-weekday' : '' }}">
-                    <i class="fas fa-calendar-week"></i> {{ __('app.weekday') }}
-                    <span style="font-size:11px;opacity:0.8">({{ $weekdayCount }})</span>
-                </a>
-                <a href="{{ route('students.index', array_merge(request()->query(), ['class_type' => 'weekend', 'sort' => $sortBy])) }}"
-                   class="class-type-tab {{ $classType === 'weekend' ? 'active-weekend' : '' }}">
-                    <i class="fas fa-calendar-day"></i> {{ __('app.weekend') }}
-                    <span style="font-size:11px;opacity:0.8">({{ $weekendCount }})</span>
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
 
 {{-- ── Grade Cards ──────────────────────────────────────── --}}
 <div class="card" style="margin-bottom:18px">
@@ -185,7 +137,7 @@
                     'enroll' => ['label'=>'Enrollment',  'icon'=>'fa-calendar'],
                     'grade'  => ['label'=>'Grade',       'icon'=>'fa-layer-group'],
                 ] as $key => $opt)
-                <a href="{{ route('students.index', ['sort' => $key, 'class_type' => $classType]) }}"
+                <a href="{{ route('students.index', ['sort' => $key]) }}"
                    class="sort-menu-item {{ $sortBy === $key ? 'sort-menu-active' : '' }}"
                    style="display:flex;align-items:center;gap:10px;padding:10px 14px;
                           text-decoration:none;color:var(--text-primary);font-size:13px;font-weight:500;
@@ -209,7 +161,6 @@
                     <th>Student</th>
                     <th>ID</th>
                     <th>Grade</th>
-                    <th>Class</th>
                     <th>Subject</th>
                     <th>Come From</th>
                     <th>Time Slot</th>
@@ -248,13 +199,6 @@
                     <td>
                         <span class="badge badge-primary">Grade {{ $student->year_level }}</span>
                     </td>
-                    <td>
-                        @if(str_starts_with($student->time_type ?? '', 'sat-sun'))
-                            <span class="badge" style="background:rgba(124,58,237,0.12);color:#7c3aed">{{ __('app.weekend') }}</span>
-                        @else
-                            <span class="badge badge-success">{{ __('app.weekday') }}</span>
-                        @endif
-                    </td>
                     <td style="color:var(--text-secondary)">{{ $student->subject ?? '—' }}</td>
                     <td style="color:var(--text-secondary)">{{ $student->come_from ?? '—' }}</td>
                     <td style="color:var(--text-secondary);font-size:12px">{{ $student->time_type ?? '—' }}</td>
@@ -289,7 +233,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="10">
+                <tr><td colspan="9">
                     <div class="empty-state">
                         <i class="fas fa-user-graduate" aria-hidden="true"></i>
                         <p>No students found. <a href="{{ route('students.create') }}" style="color:var(--primary)">Enroll one</a></p>

@@ -55,13 +55,11 @@ class PaymentController extends Controller
                 $q->where('status', 'active')->orWhereNull('status');
             });
 
-        // Filter by class type (weekday = mon-fri, weekend = sat-sun)
-        $classType = $request->get('class_type', '');
-        if ($classType === 'weekday') {
-            $query->where('time_type', 'like', 'mon-fri%');
-        } elseif ($classType === 'weekend') {
-            $query->where('time_type', 'like', 'sat-sun%');
-        }
+        // Search is now handled client-side — no server search needed
+        // (keeping this for backward compatibility with any bookmarked URLs)
+
+        // Filter by grade — removed from UI, kept for URL param compatibility
+        // if ($request->filled('grade')) { ... }
 
         // Sort
         $sortBy = $request->get('sort_by', 'id');
@@ -73,7 +71,7 @@ class PaymentController extends Controller
             default => $query->orderByDesc('id')->get(), // newest first
         };
 
-        return view('payments.index', compact('payments', 'classType'));
+        return view('payments.index', compact('payments'));
     }
 
     // ── Create ────────────────────────────────────────────────────────────────
@@ -142,14 +140,6 @@ class PaymentController extends Controller
 
         if ($request->hasFile('photo')) {
             $validated['photo'] = $request->file('photo')->store('payments/photos', 'public');
-        } elseif ($request->filled('captured_photo_data')) {
-            // Save base64 camera capture as JPEG file
-            $data     = $request->input('captured_photo_data');
-            $data     = preg_replace('/^data:image\/\w+;base64,/', '', $data);
-            $decoded  = base64_decode($data);
-            $filename = 'payments/photos/cam_' . uniqid() . '.jpg';
-            \Illuminate\Support\Facades\Storage::disk('public')->put($filename, $decoded);
-            $validated['photo'] = $filename;
         }
 
         $payment = Payment::create($validated);
@@ -212,14 +202,6 @@ class PaymentController extends Controller
                 $q->where('status', 'active')->orWhereNull('status');
             });
 
-        // Filter by class type
-        $classType = $request->get('class_type', '');
-        if ($classType === 'weekday') {
-            $query->where('time_type', 'like', 'mon-fri%');
-        } elseif ($classType === 'weekend') {
-            $query->where('time_type', 'like', 'sat-sun%');
-        }
-
         $sortBy = $request->get('sort_by', 'id');
         $payments = match ($sortBy) {
             'date'  => $query->orderByDesc('due_date')->orderByDesc('id')->get(),
@@ -227,68 +209,38 @@ class PaymentController extends Controller
             default => $query->orderByDesc('id')->get(),
         };
 
-        $classLabel = match($classType) {
-            'weekday' => '_weekday',
-            'weekend' => '_weekend',
-            default   => '',
-        };
-
-        $filename = 'payments' . $classLabel . '_' . now()->format('Y-m-d') . '.csv';
+        $filename = 'payments_' . now()->format('Y-m-d') . '.csv';
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Type'        => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function () use ($payments, $classType) {
+        $callback = function () use ($payments) {
             $handle = fopen('php://output', 'w');
-            fwrite($handle, "\xEF\xBB\xBF"); // UTF-8 BOM
-
-            $classLabel = match($classType) {
-                'weekday' => ' (' . __('app.weekday_class') . ')',
-                'weekend' => ' (' . __('app.weekend_class') . ')',
-                default   => '',
-            };
-
-            fputcsv($handle, [__('app.all_payments') . $classLabel . ' — ' . now()->format('d/m/Y')]);
-            fputcsv($handle, []);
-
             fputcsv($handle, [
-                __('app.receipt'), __('app.student_id'), __('app.first_name') . ' ' . __('app.last_name'),
-                __('app.grade'), __('app.weekday') . '/' . __('app.weekend'),
-                __('app.amount'), 'Admin Fee', __('app.paid'),
-                'Balance', 'Payment Date', 'Due Date', 'Next Payment',
-                __('app.status'), __('app.payment_method'), __('app.time_type'), __('app.notes'),
+                'Receipt #', 'Student ID', 'Student Name', 'Grade',
+                'Amount Due', 'Admin Fee', 'Amount Paid', 'Balance',
+                'Payment Date', 'Due Date', 'Next Payment Date',
+                'Status', 'Payment Method', 'Time Type', 'Notes',
             ]);
-
-            // Group by grade
-            $byGrade = $payments->groupBy(fn($p) => $p->student?->year_level ?? '?');
-            ksort($byGrade);
-            foreach ($byGrade as $grade => $gradePayments) {
-                fputcsv($handle, []);
-                fputcsv($handle, [__('app.grade') . ' ' . $grade]);
-                foreach ($gradePayments as $p) {
-                    $ct = str_starts_with($p->time_type ?? '', 'sat-sun')
-                        ? __('app.weekend')
-                        : __('app.weekday');
-                    fputcsv($handle, [
-                        $p->receipt_number,
-                        $p->student?->student_id ?? '',
-                        $p->student?->full_name ?? '',
-                        $grade,
-                        $ct,
-                        $p->amount_due,
-                        $p->admin_fee ?? 0,
-                        $p->amount_paid,
-                        $p->balance ?? 0,
-                        $p->payment_date?->format('Y-m-d') ?? '',
-                        $p->due_date?->format('Y-m-d') ?? '',
-                        $p->next_payment_date?->format('Y-m-d') ?? '',
-                        $p->status,
-                        $p->payment_method ?? '',
-                        $p->time_type ?? '',
-                        $p->notes ?? '',
-                    ]);
-                }
+            foreach ($payments as $p) {
+                fputcsv($handle, [
+                    $p->receipt_number,
+                    $p->student?->student_id ?? '',
+                    $p->student?->full_name ?? '',
+                    $p->student?->year_level ?? '',
+                    $p->amount_due,
+                    $p->admin_fee ?? 0,
+                    $p->amount_paid,
+                    $p->balance ?? 0,
+                    $p->payment_date?->format('Y-m-d') ?? '',
+                    $p->due_date?->format('Y-m-d') ?? '',
+                    $p->next_payment_date?->format('Y-m-d') ?? '',
+                    $p->status,
+                    $p->payment_method ?? '',
+                    $p->time_type ?? '',
+                    $p->notes ?? '',
+                ]);
             }
             fclose($handle);
         };
@@ -302,76 +254,39 @@ class PaymentController extends Controller
     {
         $now      = Carbon::now();
         $students = $this->activeStudentsWithLastPayment()->get();
-        $filter    = $request->get('filter', 'all');
-        $classType = $request->get('class_type', '');
-
-        // Apply class type filter before building alert data
-        if ($classType === 'weekday') {
-            $students = $students->filter(fn ($s) => str_starts_with($s->time_type ?? '', 'mon-fri'));
-        } elseif ($classType === 'weekend') {
-            $students = $students->filter(fn ($s) => str_starts_with($s->time_type ?? '', 'sat-sun'));
-        }
+        $filter   = $request->get('filter', 'all');
 
         $rows = $students->map(fn ($s) => $this->buildStudentAlertData($s, $now))
             ->when($filter !== 'all', fn ($c) => $c->filter(fn ($d) => $d['alertLevel'] === $filter))
             ->sortBy(fn ($d) => $d['daysUntilNextPayment'] ?? 0)
             ->values();
 
-        $classLabel = match($classType) {
-            'weekday' => '_weekday',
-            'weekend' => '_weekend',
-            default   => '',
-        };
-
-        $filename = 'deadline_alerts' . $classLabel . '_' . now()->format('Y-m-d') . '.csv';
+        $filename = 'deadline_alerts_' . now()->format('Y-m-d') . '.csv';
         $headers  = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Type'        => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function () use ($rows, $classType) {
+        $callback = function () use ($rows) {
             $handle = fopen('php://output', 'w');
-            fwrite($handle, "\xEF\xBB\xBF");
-
-            $classLabel = match($classType) {
-                'weekday' => ' (' . __('app.weekday_class') . ')',
-                'weekend' => ' (' . __('app.weekend_class') . ')',
-                default   => '',
-            };
-
-            fputcsv($handle, [__('app.deadline_alerts') . $classLabel . ' — ' . now()->format('d/m/Y')]);
-            fputcsv($handle, []);
-
             fputcsv($handle, [
-                __('app.student_id'), __('app.first_name') . ' ' . __('app.last_name'),
-                __('app.grade'), __('app.weekday') . '/' . __('app.weekend'),
-                __('app.subject'), __('app.next_payment'), 'Days Until Due',
-                __('app.status'), 'Last Payment Date', __('app.monthly_fee'),
+                'Student ID', 'Student Name', 'Grade', 'Subject',
+                'Next Payment Date', 'Days Until Due', 'Alert Level',
+                'Last Payment Date', 'Monthly Fee',
             ]);
-
-            $byGrade = $rows->groupBy(fn($d) => $d['student']->year_level ?? '?');
-            ksort($byGrade);
-            foreach ($byGrade as $grade => $gradeRows) {
-                fputcsv($handle, []);
-                fputcsv($handle, [__('app.grade') . ' ' . $grade]);
-                foreach ($gradeRows as $d) {
-                    $s = $d['student'];
-                    $ct = str_starts_with($s->time_type ?? '', 'sat-sun')
-                        ? __('app.weekend')
-                        : __('app.weekday');
-                    fputcsv($handle, [
-                        $s->student_id,
-                        $s->full_name ?? '',
-                        $s->year_level ?? '',
-                        $ct,
-                        $s->subject ?? '',
-                        $d['nextPaymentDate']?->format('Y-m-d') ?? 'N/A',
-                        $d['daysUntilNextPayment'] ?? 'N/A',
-                        __('app.' . $d['alertLevel']) ?? $d['alertLevel'],
-                        $d['lastPayment']?->payment_date?->format('Y-m-d') ?? 'N/A',
-                        $s->monthly_fee ?? '',
-                    ]);
-                }
+            foreach ($rows as $d) {
+                $s = $d['student'];
+                fputcsv($handle, [
+                    $s->student_id,
+                    $s->full_name ?? '',
+                    $s->year_level ?? '',
+                    $s->subject ?? '',
+                    $d['nextPaymentDate']?->format('Y-m-d') ?? 'N/A',
+                    $d['daysUntilNextPayment'] ?? 'N/A',
+                    $d['alertLevel'],
+                    $d['lastPayment']?->payment_date?->format('Y-m-d') ?? 'N/A',
+                    $s->monthly_fee ?? '',
+                ]);
             }
             fclose($handle);
         };
@@ -453,16 +368,8 @@ class PaymentController extends Controller
 
     public function deadlineAlerts(Request $request)
     {
-        $now       = Carbon::now();
-        $classType = $request->get('class_type', '');
-        $students  = $this->activeStudentsWithLastPayment()->get();
-
-        // Apply class type filter
-        if ($classType === 'weekday') {
-            $students = $students->filter(fn ($s) => str_starts_with($s->time_type ?? '', 'mon-fri'));
-        } elseif ($classType === 'weekend') {
-            $students = $students->filter(fn ($s) => str_starts_with($s->time_type ?? '', 'sat-sun'));
-        }
+        $now      = Carbon::now();
+        $students = $this->activeStudentsWithLastPayment()->get();
 
         $overdue  = collect();
         $closely  = collect();
@@ -519,7 +426,6 @@ class PaymentController extends Controller
             'search'          => $search,
             'filterGrade'     => $filterGrade,
             'availableGrades' => $availableGrades,
-            'classType'       => $classType,
         ]);
     }
 

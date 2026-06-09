@@ -27,17 +27,9 @@ class StudentController extends Controller
     public function index(Request $request)
     {
         // All students for the full table (with sort)
-        $sortBy    = $request->get('sort', 'newest');
-        $classType = $request->get('class_type', ''); // 'weekday', 'weekend', or ''
+        $sortBy = $request->get('sort', 'newest');
 
         $allQuery = Student::withCount('payments');
-
-        // Filter by class type (weekday = mon-fri, weekend = sat-sun)
-        if ($classType === 'weekday') {
-            $allQuery->where('time_type', 'like', 'mon-fri%');
-        } elseif ($classType === 'weekend') {
-            $allQuery->where('time_type', 'like', 'sat-sun%');
-        }
 
         $allStudents = match ($sortBy) {
             'oldest'  => $allQuery->orderBy('id')->get(),
@@ -52,7 +44,7 @@ class StudentController extends Controller
         $grades  = $allStudents->pluck('year_level')->unique()->sort()->values();
         $byGrade = $allStudents->groupBy('year_level');
 
-        return view('students.index', compact('allStudents', 'grades', 'byGrade', 'sortBy', 'classType'));
+        return view('students.index', compact('allStudents', 'grades', 'byGrade', 'sortBy'));
     }
 
     // ── Create ────────────────────────────────────────────────────────────────
@@ -84,7 +76,6 @@ class StudentController extends Controller
             'time_type'           => 'required|in:' . implode(',', self::TIME_SLOTS),
             'payment_method'      => 'required|in:cash,bank_transfer',
             'payment_photo'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'study_status'        => 'nullable|in:studying,stopped',
         ]);
 
         // Auto-generate student ID if blank
@@ -185,7 +176,6 @@ class StudentController extends Controller
             'monthly_payment_day' => 'required|integer|min:1|max:31',
             'monthly_fee'         => 'required|numeric|min:0|max:99999',
             'time_type'           => 'required|in:' . implode(',', self::TIME_SLOTS),
-            'study_status'        => 'nullable|in:studying,stopped',
         ]);
 
         if ($request->hasFile('photo')) {
@@ -205,18 +195,8 @@ class StudentController extends Controller
 
     public function exportCsv(Request $request)
     {
-        $sortBy    = $request->get('sort', 'newest');
-        $classType = $request->get('class_type', '');
-
+        $sortBy = $request->get('sort', 'newest');
         $allQuery = Student::withCount('payments');
-
-        // Apply class_type filter
-        if ($classType === 'weekday') {
-            $allQuery->where('time_type', 'like', 'mon-fri%');
-        } elseif ($classType === 'weekend') {
-            $allQuery->where('time_type', 'like', 'sat-sun%');
-        }
-
         $students = match ($sortBy) {
             'oldest' => $allQuery->orderBy('id')->get(),
             'az'     => $allQuery->orderBy('first_name')->orderBy('last_name')->get(),
@@ -226,71 +206,39 @@ class StudentController extends Controller
             default  => $allQuery->orderByDesc('id')->get(),
         };
 
-        $classLabel = match($classType) {
-            'weekday' => '_weekday',
-            'weekend' => '_weekend',
-            default   => '',
-        };
-
-        $filename = 'students' . $classLabel . '_' . now()->format('Y-m-d') . '.csv';
+        $filename = 'students_' . now()->format('Y-m-d') . '.csv';
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Type'        => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function () use ($students, $classType) {
+        $callback = function () use ($students) {
             $handle = fopen('php://output', 'w');
-            // UTF-8 BOM for Excel Khmer support
-            fwrite($handle, "\xEF\xBB\xBF");
-
-            // Title row
-            $classLabel = match($classType) {
-                'weekday' => ' (' . __('app.weekday_class') . ')',
-                'weekend' => ' (' . __('app.weekend_class') . ')',
-                default   => '',
-            };
-            fputcsv($handle, [__('app.all_students') . $classLabel . ' — ' . now()->format('d/m/Y')]);
-            fputcsv($handle, []); // blank row
-
-            // Headers — added Class Type column after Grade
             fputcsv($handle, [
-                __('app.student_id'), __('app.first_name'), __('app.last_name'), __('app.gender'),
-                __('app.grade'), __('app.weekday') . '/' . __('app.weekend'),
-                __('app.subject'), __('app.phone'), __('app.address'), __('app.come_from'),
-                __('app.date_of_birth'), __('app.enrollment_date'), __('app.monthly_fee'),
-                __('app.payment_day'), __('app.time_type'), __('app.status'), 'Total Payments',
+                'Student ID', 'First Name', 'Last Name', 'Gender',
+                'Grade', 'Subject', 'Phone', 'Address', 'Come From',
+                'Date of Birth', 'Enrollment Date', 'Monthly Fee',
+                'Payment Day', 'Time Type', 'Status', 'Total Payments',
             ]);
-
-            // Group by grade
-            $byGrade = $students->groupBy('year_level')->sortKeys();
-            foreach ($byGrade as $grade => $gradeStudents) {
-                fputcsv($handle, []); // blank separator
-                fputcsv($handle, [__('app.grade') . ' ' . $grade]); // grade heading
-                foreach ($gradeStudents as $s) {
-                    // Derive class type from time_type
-                    $ct = str_starts_with($s->time_type ?? '', 'sat-sun')
-                        ? __('app.weekend')
-                        : __('app.weekday');
-                    fputcsv($handle, [
-                        $s->student_id,
-                        $s->first_name,
-                        $s->last_name,
-                        $s->gender ? __('app.' . $s->gender) : '',
-                        $s->year_level,
-                        $ct,
-                        $s->subject ?? '',
-                        $s->phone ?? '',
-                        $s->address ?? '',
-                        $s->come_from ?? '',
-                        $s->date_of_birth?->format('Y-m-d') ?? '',
-                        $s->enrollment_date?->format('Y-m-d') ?? '',
-                        $s->monthly_fee ?? '',
-                        $s->monthly_payment_day ?? '',
-                        $s->time_type ?? '',
-                        $s->study_status ? __('app.' . $s->study_status) : __('app.studying'),
-                        $s->payments_count,
-                    ]);
-                }
+            foreach ($students as $s) {
+                fputcsv($handle, [
+                    $s->student_id,
+                    $s->first_name,
+                    $s->last_name,
+                    $s->gender ?? '',
+                    $s->year_level,
+                    $s->subject ?? '',
+                    $s->phone ?? '',
+                    $s->address ?? '',
+                    $s->come_from ?? '',
+                    $s->date_of_birth?->format('Y-m-d') ?? '',
+                    $s->enrollment_date?->format('Y-m-d') ?? '',
+                    $s->monthly_fee ?? '',
+                    $s->monthly_payment_day ?? '',
+                    $s->time_type ?? '',
+                    $s->status ?? 'active',
+                    $s->payments_count,
+                ]);
             }
             fclose($handle);
         };

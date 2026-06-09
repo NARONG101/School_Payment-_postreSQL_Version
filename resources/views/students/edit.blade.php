@@ -116,19 +116,6 @@
                     @error('monthly_fee')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
-            {{-- Study Status --}}
-            <div class="form-group">
-                <label class="form-label" for="study_status">{{ __('app.status') }}</label>
-                <select id="study_status" name="study_status" class="form-control">
-                    <option value="studying" {{ old('study_status', $student->study_status ?? 'studying')==='studying' ? 'selected' : '' }}>
-                        🟢 {{ __('app.studying') }}
-                    </option>
-                    <option value="stopped" {{ old('study_status', $student->study_status ?? 'studying')==='stopped' ? 'selected' : '' }}>
-                        🔴 {{ __('app.stopped') }}
-                    </option>
-                </select>
-            </div>
-
             <div class="form-group">
                 <label class="form-label" for="photo">New Photo <small style="color:var(--text-muted)">(leave blank to keep current)</small></label>
                 <input type="file" id="photo" name="photo" class="form-control" accept="image/*">

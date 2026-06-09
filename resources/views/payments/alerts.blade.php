@@ -64,19 +64,6 @@
 /* ── Table rows by alert level ──────────────────── */
 .row-overdue td { background:rgba(239,68,68,0.06) !important; }
 .row-closely td { background:rgba(245,158,11,0.06) !important; }
-
-/* ── Class type tabs (shared style) ─────────────── */
-.class-type-tab {
-    display:inline-flex; align-items:center; gap:6px;
-    padding:6px 12px; border-radius:8px; border:1px solid var(--border);
-    font-size:12px; font-weight:600; text-decoration:none;
-    color:var(--text-secondary); background:var(--bg-card);
-    transition:all 0.15s;
-}
-.class-type-tab:hover { background:var(--bg-hover); color:var(--text-primary); }
-.class-type-tab.active-all     { background:var(--primary); color:#fff; border-color:var(--primary); }
-.class-type-tab.active-weekday { background:var(--success); color:#fff; border-color:var(--success); }
-.class-type-tab.active-weekend { background:#7c3aed; color:#fff; border-color:#7c3aed; }
 </style>
 @endsection
 
@@ -158,26 +145,6 @@
 
     {{-- Filter + Search bar --}}
     <form method="GET" action="{{ route('payments.alerts') }}" id="alertFilterForm">
-
-        {{-- Class type filter row --}}
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg-muted)">
-            <span style="font-size:12px;font-weight:700;color:var(--text-muted)">
-                <i class="fas fa-filter" aria-hidden="true"></i> Class:
-            </span>
-            <a href="?{{ http_build_query(array_merge(request()->except('class_type'), [])) }}"
-               class="class-type-tab {{ ($classType ?? '') === '' ? 'active-all' : '' }}">
-                <i class="fas fa-users"></i> {{ __('app.all_classes') }}
-            </a>
-            <a href="?{{ http_build_query(array_merge(request()->all(), ['class_type' => 'weekday'])) }}"
-               class="class-type-tab {{ ($classType ?? '') === 'weekday' ? 'active-weekday' : '' }}">
-                <i class="fas fa-calendar-week"></i> {{ __('app.weekday') }}
-            </a>
-            <a href="?{{ http_build_query(array_merge(request()->all(), ['class_type' => 'weekend'])) }}"
-               class="class-type-tab {{ ($classType ?? '') === 'weekend' ? 'active-weekend' : '' }}">
-                <i class="fas fa-calendar-day"></i> {{ __('app.weekend') }}
-            </a>
-        </div>
-
         <div class="alert-filter-bar">
 
             {{-- Status filter pills --}}
@@ -205,9 +172,6 @@
 
             {{-- Search box with submit button --}}
             <input type="hidden" name="filter" value="{{ $filterLevel }}">
-            @if(($classType ?? '') !== '')
-            <input type="hidden" name="class_type" value="{{ $classType }}">
-            @endif
             <div style="display:flex;gap:0">
                 <input type="text" name="search" class="form-control" style="width:200px;flex:none;border-radius:var(--radius-sm) 0 0 var(--radius-sm);border-right:none"
                        placeholder="Search student…" value="{{ $search }}"
@@ -229,7 +193,7 @@
             </select>
 
             @if($filterLevel !== 'all' || $search !== '' || $filterGrade !== '')
-            <a href="{{ route('payments.alerts', ($classType ?? '') ? ['class_type' => $classType] : []) }}" class="btn btn-outline btn-sm">
+            <a href="{{ route('payments.alerts') }}" class="btn btn-outline btn-sm">
                 <i class="fas fa-times" aria-hidden="true"></i> Clear
             </a>
             @endif
@@ -244,7 +208,6 @@
                     <th>Alert</th>
                     <th>Student</th>
                     <th>Grade</th>
-                    <th>Class</th>
                     <th>Subject</th>
                     <th>Last Payment</th>
                     <th>Next Payment</th>
@@ -277,13 +240,6 @@
                         </a>
                     </td>
                     <td style="color:var(--text-secondary)">Grade {{ $data['student']->year_level ?? '—' }}</td>
-                    <td>
-                        @if(str_starts_with($data['student']->time_type ?? '', 'sat-sun'))
-                            <span class="badge" style="background:rgba(124,58,237,0.12);color:#7c3aed">{{ __('app.weekend') }}</span>
-                        @else
-                            <span class="badge badge-success">{{ __('app.weekday') }}</span>
-                        @endif
-                    </td>
                     <td style="color:var(--text-secondary)">{{ $data['student']->subject ?? '—' }}</td>
                     <td style="font-size:12px;color:var(--text-muted)">
                         @if($data['lastPayment']?->due_date)
@@ -330,7 +286,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="10">
+                    <td colspan="9">
                         <div class="empty-state">
                             <i class="fas fa-check-circle" style="color:var(--success);font-size:40px" aria-hidden="true"></i>
                             <p style="margin-top:8px;font-weight:600">

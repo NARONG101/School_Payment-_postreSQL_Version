@@ -139,17 +139,17 @@
             {{-- Gender + Payment Day + Monthly Fee --}}
             <div class="form-row-3">
                 <div class="form-group">
-                    <label class="form-label" for="gender">{{ __('app.gender') }}</label>
+                    <label class="form-label" for="gender">Gender</label>
                     <select id="gender" name="gender" class="form-control">
                         <option value="">Select</option>
-                        <option value="male"   {{ old('gender')==='male'?'selected':'' }}>{{ __('app.male') }}</option>
-                        <option value="female" {{ old('gender')==='female'?'selected':'' }}>{{ __('app.female') }}</option>
-                        <option value="other"  {{ old('gender')==='other'?'selected':'' }}>{{ __('app.other') }}</option>
+                        <option value="male"   {{ old('gender')==='male'?'selected':'' }}>Male</option>
+                        <option value="female" {{ old('gender')==='female'?'selected':'' }}>Female</option>
+                        <option value="other"  {{ old('gender')==='other'?'selected':'' }}>Other</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="paymentDay">
-                        {{ __('app.payment_day') }} <span style="color:var(--danger)">*</span>
+                        Payment Day <span style="color:var(--danger)">*</span>
                     </label>
                     <input type="number" id="paymentDay" name="monthly_payment_day"
                            class="form-control @error('monthly_payment_day') is-invalid @enderror"
@@ -158,26 +158,13 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="monthly_fee">
-                        {{ __('app.monthly_fee') }} <span style="color:var(--danger)">*</span>
+                        Monthly Fee <span style="color:var(--danger)">*</span>
                     </label>
                     <input type="number" id="monthly_fee" name="monthly_fee" step="0.01"
                            class="form-control @error('monthly_fee') is-invalid @enderror"
                            value="{{ old('monthly_fee', 0) }}" min="0" required>
                     @error('monthly_fee')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
-            </div>
-
-            {{-- Study Status --}}
-            <div class="form-group">
-                <label class="form-label" for="study_status">{{ __('app.status') }}</label>
-                <select id="study_status" name="study_status" class="form-control">
-                    <option value="studying" {{ old('study_status', 'studying')==='studying' ? 'selected' : '' }}>
-                        🟢 {{ __('app.studying') }}
-                    </option>
-                    <option value="stopped" {{ old('study_status')==='stopped' ? 'selected' : '' }}>
-                        🔴 {{ __('app.stopped') }}
-                    </option>
-                </select>
             </div>
 
             {{-- Time Type + Payment Method --}}

@@ -15,43 +15,12 @@
 .pay-sort-item:hover { background:var(--bg-hover) !important; color:var(--text-primary) !important; }
 .pay-sort-item:last-child { border-bottom:none !important; }
 .pay-sort-active { color:var(--primary) !important; background:var(--primary-50) !important; }
-
-/* Class type tabs */
-.class-type-tab {
-    display:inline-flex; align-items:center; gap:7px;
-    padding:7px 14px; border-radius:8px; border:1px solid var(--border);
-    font-size:13px; font-weight:600; text-decoration:none;
-    color:var(--text-secondary); background:var(--bg-card);
-    transition:all 0.15s;
-}
-.class-type-tab:hover { background:var(--bg-hover); color:var(--text-primary); }
-.class-type-tab.active-all     { background:var(--primary); color:#fff; border-color:var(--primary); }
-.class-type-tab.active-weekday { background:var(--success); color:#fff; border-color:var(--success); }
-.class-type-tab.active-weekend { background:#7c3aed; color:#fff; border-color:#7c3aed; }
 </style>
 @endsection
 @section('content')
 <div class="card">
     <div class="card-header">
         <div class="card-title">All Payments ({{ $payments->count() }})</div>
-    </div>
-    {{-- Class Type Filter --}}
-    <div style="padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg-muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span style="font-size:12px;font-weight:700;color:var(--text-muted)">
-            <i class="fas fa-filter" aria-hidden="true"></i> Class:
-        </span>
-        <a href="{{ route('payments.index', array_merge(request()->except('class_type'), [])) }}"
-           class="class-type-tab {{ $classType === '' ? 'active-all' : '' }}">
-            <i class="fas fa-users"></i> {{ __('app.all_classes') }}
-        </a>
-        <a href="{{ route('payments.index', array_merge(request()->query(), ['class_type' => 'weekday'])) }}"
-           class="class-type-tab {{ $classType === 'weekday' ? 'active-weekday' : '' }}">
-            <i class="fas fa-calendar-week"></i> {{ __('app.weekday') }}
-        </a>
-        <a href="{{ route('payments.index', array_merge(request()->query(), ['class_type' => 'weekend'])) }}"
-           class="class-type-tab {{ $classType === 'weekend' ? 'active-weekend' : '' }}">
-            <i class="fas fa-calendar-day"></i> {{ __('app.weekend') }}
-        </a>
     </div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
         <form method="GET" action="{{ route('payments.index') }}" class="filter-bar" id="filterForm" role="search">
@@ -85,7 +54,7 @@
                                'date'=>['l'=>'By Month','i'=>'fa-calendar'],
                                'grade'=>['l'=>'By Grade (High→Low)','i'=>'fa-layer-group']] as $k=>$o)
                     @php $isActive = request('sort_by', 'id') === $k; @endphp
-                    <a href="{{ route('payments.index', array_merge(request()->query(), ['sort_by'=>$k])) }}"
+                    <a href="{{ route('payments.index', ['sort_by'=>$k]) }}"
                        class="pay-sort-item{{ $isActive ? ' pay-sort-active' : '' }}"
                        style="display:flex;align-items:center;gap:10px;padding:10px 14px;
                               text-decoration:none;font-size:13px;font-weight:500;
@@ -103,7 +72,7 @@
             </div>
 
             @if(request('sort_by'))
-            <a href="{{ route('payments.index', request()->only('class_type')) }}" class="btn btn-outline btn-sm" title="Reset sort">
+            <a href="{{ route('payments.index') }}" class="btn btn-outline btn-sm" title="Reset sort">
                 <i class="fas fa-times" aria-hidden="true"></i>
             </a>
             @endif
