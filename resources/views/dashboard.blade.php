@@ -144,14 +144,6 @@
                 <div class="qa-icon qa-yellow"><i class="fas fa-bell"></i></div>
                 {{ __('app.deadline_alerts') }}
             </a>
-            <a href="{{ route('students.index', ['class_type' => 'weekday']) }}" class="quick-action-btn">
-                <div class="qa-icon qa-teal"><i class="fas fa-calendar-week"></i></div>
-                {{ __('app.weekday_class') }}
-            </a>
-            <a href="{{ route('students.index', ['class_type' => 'weekend']) }}" class="quick-action-btn">
-                <div class="qa-icon qa-purple"><i class="fas fa-calendar-day"></i></div>
-                {{ __('app.weekend_class') }}
-            </a>
         </div>
     </div>
 </div>
