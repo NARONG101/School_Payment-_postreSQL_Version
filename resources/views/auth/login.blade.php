@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
-    <title>Sign In — CKCK Takhmao School</title>
+    <title>Sign In — CK Takhmao School</title>
     @vite(['resources/js/app.js'])
     <style>
         :root,[data-theme="light"]{--login-bg:#0f172a;--card-bg:#ffffff;--text-h:#111827;--text-s:#6b7280;--text-l:#374151;--border:#e5e7eb;--input-bg:#ffffff;--input-text:#111827;--err-bg:#fde8e8;--err-text:#7f1d1d;--err-border:#fecaca;--check-label:#6b7280;}
@@ -16,6 +16,7 @@
         .login-card{background:var(--card-bg);border-radius:20px;padding:40px 36px;width:100%;max-width:400px;position:relative;z-index:1;box-shadow:0 25px 60px rgba(0,0,0,0.4);border:1px solid var(--border);transition:background 0.25s,border-color 0.25s;}
         .brand{text-align:center;margin-bottom:28px;}
         .brand-icon{width:52px;height:52px;background:linear-gradient(135deg,#1a56db,#7c3aed);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:22px;color:#fff;}
+        .brand-logo{width:120px;height:auto;object-fit:contain;margin:0 auto 12px;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.3));}
         .brand-name{font-size:20px;font-weight:800;color:var(--text-h);}
         .brand-sub{font-size:13px;color:var(--text-s);margin-top:3px;}
         .form-group{margin-bottom:16px;}
@@ -45,11 +46,9 @@
             <i class="fas fa-moon" id="loginThemeIcon"></i>
         </button>
         <div class="brand">
-            <div class="brand-icon" style="background:transparent;padding:0" aria-hidden="true">
-                <img src="/logo.png" alt="CKCK Logo" style="width:52px;height:52px;object-fit:contain;border-radius:10px">
-            </div>
-            <div class="brand-name">CKCK Takhmao School</div>
-            <div class="brand-sub">សាលាបង្វឹក CKCK តាខ្មៅ</div>
+            <img src="/logo.jpg" class="brand-logo" alt="CK Takhmao School Logo">
+            <div class="brand-name">CK Takhmao School</div>
+            <div class="brand-sub">សាលាបង្វឹក CK តាខ្មៅ</div>
         </div>
         @if($errors->any())
         <div class="alert-danger" role="alert" aria-live="polite">

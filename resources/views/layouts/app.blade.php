@@ -7,7 +7,7 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#1a56db" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
-    <title>@yield('title', 'CKCK Takhmao School') — CKCK Takhmao School</title>
+    <title>@yield('title', 'CK Takhmao School') — CK Takhmao School</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     {{-- Kantumruy Pro: handles Khmer characters typed into any input field --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -653,8 +653,8 @@ textarea.form-control { resize:vertical; min-height:80px; }
 <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
     <div class="sidebar-brand">
         <div class="brand-header">
-            <div class="brand-icon" aria-hidden="true">
-                <img src="/logo.png" alt="CKCK Logo" style="width:36px;height:36px;object-fit:contain;border-radius:6px">
+            <div class="brand-icon" style="background:transparent;padding:2px;" aria-hidden="true">
+                <img src="/logo.jpg" alt="CK Logo" style="width:38px;height:38px;object-fit:contain;border-radius:4px;filter:brightness(1.1)">
             </div>
             <button class="sidebar-toggle-btn" id="sidebarToggleBtn"
                     aria-label="Collapse sidebar" aria-expanded="true" aria-controls="sidebar">
@@ -662,8 +662,8 @@ textarea.form-control { resize:vertical; min-height:80px; }
             </button>
         </div>
         <div class="brand-text">
-            <div class="brand-name">CKCK Takhmao</div>
-            <div class="brand-sub">សាលាបង្វឹក CKCK តាខ្មៅ</div>
+            <div class="brand-name">CK Takhmao School</div>
+            <div class="brand-sub">សាលាបង្វឹក CK តាខ្មៅ</div>
         </div>
     </div>
     <nav class="sidebar-nav">

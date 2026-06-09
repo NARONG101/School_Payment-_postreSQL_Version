@@ -160,11 +160,12 @@ body {
 
     {{-- HEADER --}}
     <div class="header">
-        @if(file_exists(public_path('logo.png')))
-        <img src="{{ public_path('logo.png') }}" class="header-logo" alt="CKCK Logo">
+        @php $logoPath = public_path('logo.jpg'); @endphp
+        @if(file_exists($logoPath))
+        <img src="{{ $logoPath }}" class="header-logo" alt="CK Logo">
         @endif
-        <div class="school-name">CKCK Takhmao School</div>
-        <div class="school-sub">សាលាបង្វឹក CKCK តាខ្មៅ</div>
+        <div class="school-name">CK Takhmao School</div>
+        <div class="school-sub">សាលាបង្វឹក CK តាខ្មៅ</div>
         <div><span class="receipt-badge">Receipt</span></div>
         <div class="receipt-num">{{ $payment->receipt_number }}</div>
     </div>
