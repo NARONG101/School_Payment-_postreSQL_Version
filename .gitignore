@@ -28,3 +28,6 @@ Thumbs.db
 /storage/backups
 /storage/fonts/*.gitkeep
 download_font.php
+test_khmer.pdf
+test_mpdf.pdf
+test_final_receipt.pdf

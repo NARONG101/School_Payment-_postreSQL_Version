@@ -393,20 +393,65 @@ class PaymentController extends Controller
 
     // ── PDF Receipt ───────────────────────────────────────────────────────────
 
+    private function buildReceiptMpdf(Payment $payment): \Mpdf\Mpdf
+    {
+        $fontDir  = storage_path('fonts');
+        $tmpDir   = storage_path('framework/cache/mpdf');
+        if (! is_dir($tmpDir)) {
+            mkdir($tmpDir, 0755, true);
+        }
+
+        $config     = new \Mpdf\Config\ConfigVariables();
+        $fontConfig = new \Mpdf\Config\FontVariables();
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'          => 'utf-8',
+            'format'        => 'A5',
+            'margin_top'    => 0,
+            'margin_bottom' => 0,
+            'margin_left'   => 0,
+            'margin_right'  => 0,
+            'tempDir'       => $tmpDir,
+            'fontDir'       => array_merge(
+                $config->getDefaults()['fontDir'],
+                [$fontDir]
+            ),
+            'fontdata' => $fontConfig->getDefaults()['fontdata'] + [
+                'kantumruypro' => [
+                    'R'  => 'KantumruyPro.ttf',
+                    'B'  => 'KantumruyPro.ttf',
+                    'I'  => 'KantumruyPro.ttf',
+                    'BI' => 'KantumruyPro.ttf',
+                ],
+            ],
+            'default_font' => 'kantumruypro',
+        ]);
+
+        $html = view('receipts.payment', compact('payment'))->render();
+        $mpdf->WriteHTML($html);
+        return $mpdf;
+    }
+
     public function receipt(Payment $payment)
     {
         $payment->load(['student', 'paymentType', 'creator']);
-        $pdf = Pdf::loadView('receipts.payment', compact('payment'));
-        $pdf->setPaper('a5', 'portrait');
-        return $pdf->stream('receipt-' . $payment->receipt_number . '.pdf');
+        $mpdf = $this->buildReceiptMpdf($payment);
+        $filename = 'receipt-' . $payment->receipt_number . '.pdf';
+        return response($mpdf->Output($filename, 'S'), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
     }
 
     public function receiptDownload(Payment $payment)
     {
         $payment->load(['student', 'paymentType', 'creator']);
-        $pdf = Pdf::loadView('receipts.payment', compact('payment'));
-        $pdf->setPaper('a5', 'portrait');
-        return $pdf->download('receipt-' . $payment->receipt_number . '.pdf');
+        $mpdf = $this->buildReceiptMpdf($payment);
+        $filename = 'receipt-' . $payment->receipt_number . '.pdf';
+        return response($mpdf->Output($filename, 'S'), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     // ── Alert helpers ─────────────────────────────────────────────────────────
