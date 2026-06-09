@@ -163,11 +163,13 @@ body {
     <div class="header">
         @php
             $logoPath = public_path('logo.png');
-            // mPDF needs forward slashes
-            $logoSrc = str_replace('\\', '/', $logoPath);
+            $logoB64  = '';
+            if (file_exists($logoPath)) {
+                $logoB64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+            }
         @endphp
-        @if(file_exists($logoPath))
-        <img src="{{ $logoSrc }}" class="header-logo" alt="CK Logo"
+        @if($logoB64)
+        <img src="{{ $logoB64 }}" class="header-logo" alt="CK Logo"
              style="width:90px;height:60px;object-fit:contain;display:block;margin:0 auto 6px;">
         @endif
         <div class="school-name">CK Takhmao School</div>
