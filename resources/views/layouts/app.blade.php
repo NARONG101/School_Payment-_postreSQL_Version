@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light" @if(app()->getLocale()==='km') style="font-family:'Kantumruy Pro',sans-serif" @endif>
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
     <title>@yield('title', 'EduPay Manager') — EduPay Manager</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    {{-- Khmer font for web UI --}}
+    {{-- Kantumruy Pro: handles Khmer characters typed into any input field --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -667,36 +667,36 @@ textarea.form-control { resize:vertical; min-height:80px; }
     <nav class="sidebar-nav">
         <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
            aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}">
-            <i class="fas fa-th-large" aria-hidden="true"></i><span>{{ __('app.dashboard') }}</span>
+            <i class="fas fa-th-large" aria-hidden="true"></i><span>Dashboard</span>
         </a>
         <a href="{{ route('revenue.index') }}" class="nav-link {{ request()->routeIs('revenue.*') ? 'active' : '' }}"
            aria-current="{{ request()->routeIs('revenue.*') ? 'page' : 'false' }}">
-            <i class="fas fa-chart-line" aria-hidden="true"></i><span>{{ __('app.revenue_report') }}</span>
+            <i class="fas fa-chart-line" aria-hidden="true"></i><span>Revenue Report</span>
         </a>
-        <div class="nav-section-label" aria-hidden="true">{{ __('app.students') }}</div>
+        <div class="nav-section-label" aria-hidden="true">Students</div>
         <a href="{{ route('students.index') }}" class="nav-link {{ request()->routeIs('students.*') ? 'active' : '' }}"
            aria-current="{{ request()->routeIs('students.*') ? 'page' : 'false' }}">
-            <i class="fas fa-user-graduate" aria-hidden="true"></i><span>{{ __('app.all_students') }}</span>
+            <i class="fas fa-user-graduate" aria-hidden="true"></i><span>All Students</span>
         </a>
         <a href="{{ route('students.create') }}" class="nav-link">
-            <i class="fas fa-user-plus" aria-hidden="true"></i><span>{{ __('app.enroll_student') }}</span>
+            <i class="fas fa-user-plus" aria-hidden="true"></i><span>Enroll Student</span>
         </a>
-        <div class="nav-section-label" aria-hidden="true">{{ __('app.history') }}</div>
+        <div class="nav-section-label" aria-hidden="true">History</div>
         <a href="{{ route('history.monthly') }}" class="nav-link {{ request()->routeIs('history.*') ? 'active' : '' }}"
            aria-current="{{ request()->routeIs('history.*') ? 'page' : 'false' }}">
-            <i class="fas fa-history" aria-hidden="true"></i><span>{{ __('app.monthly_history') }}</span>
+            <i class="fas fa-history" aria-hidden="true"></i><span>Monthly History</span>
         </a>
-        <div class="nav-section-label" aria-hidden="true">{{ __('app.payments') }}</div>
+        <div class="nav-section-label" aria-hidden="true">Payments</div>
         <a href="{{ route('payments.index') }}" class="nav-link {{ request()->routeIs('payments.index') ? 'active' : '' }}"
            aria-current="{{ request()->routeIs('payments.index') ? 'page' : 'false' }}">
-            <i class="fas fa-receipt" aria-hidden="true"></i><span>{{ __('app.all_payments') }}</span>
+            <i class="fas fa-receipt" aria-hidden="true"></i><span>All Payments</span>
         </a>
         <a href="{{ route('payments.create') }}" class="nav-link">
-            <i class="fas fa-plus-circle" aria-hidden="true"></i><span>{{ __('app.new_payment') }}</span>
+            <i class="fas fa-plus-circle" aria-hidden="true"></i><span>New Payment</span>
         </a>
         <a href="{{ route('payments.alerts') }}" class="nav-link {{ request()->routeIs('payments.alerts*') ? 'active' : '' }}"
            aria-current="{{ request()->routeIs('payments.alerts*') ? 'page' : 'false' }}">
-            <i class="fas fa-bell" aria-hidden="true"></i><span>{{ __('app.deadline_alerts') }}</span>
+            <i class="fas fa-bell" aria-hidden="true"></i><span>Deadline Alerts</span>
             @php
                 $alertCount = \App\Models\Student::where(function ($q) {
                     $q->where('status','active')->orWhereNull('status');
@@ -746,23 +746,6 @@ textarea.form-control { resize:vertical; min-height:80px; }
         <h1 class="topbar-title">@yield('page-title', 'Dashboard')</h1>
         <div class="topbar-actions">
             @yield('topbar-actions')
-            {{-- Language switcher --}}
-            <div style="display:flex;gap:2px;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0">
-                <form method="POST" action="{{ route('language.switch', 'en') }}">
-                    @csrf
-                    <button type="submit" title="English"
-                        style="padding:5px 10px;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:background 0.15s;
-                        background:{{ app()->getLocale()==='en' ? 'var(--primary)' : 'transparent' }};
-                        color:{{ app()->getLocale()==='en' ? '#fff' : 'var(--text-secondary)' }}">EN</button>
-                </form>
-                <form method="POST" action="{{ route('language.switch', 'km') }}">
-                    @csrf
-                    <button type="submit" title="ខ្មែរ"
-                        style="padding:5px 10px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:'Kantumruy Pro',sans-serif;transition:background 0.15s;
-                        background:{{ app()->getLocale()==='km' ? 'var(--primary)' : 'transparent' }};
-                        color:{{ app()->getLocale()==='km' ? '#fff' : 'var(--text-secondary)' }}">ខ្មែរ</button>
-                </form>
-            </div>
             {{-- Theme toggle --}}
             <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
                 <i class="fas fa-moon" id="themeIcon" aria-hidden="true"></i>
