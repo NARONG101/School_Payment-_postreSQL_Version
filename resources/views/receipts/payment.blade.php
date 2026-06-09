@@ -161,12 +161,17 @@ body {
 
     {{-- HEADER --}}
     <div class="header">
-        @php $logoPath = public_path('logo.png'); @endphp
+        @php
+            $logoPath = public_path('logo.png');
+            // mPDF needs forward slashes
+            $logoSrc = str_replace('\\', '/', $logoPath);
+        @endphp
         @if(file_exists($logoPath))
-        <img src="{{ $logoPath }}" class="header-logo" alt="CK Logo">
+        <img src="{{ $logoSrc }}" class="header-logo" alt="CK Logo"
+             style="width:90px;height:60px;object-fit:contain;display:block;margin:0 auto 6px;">
         @endif
         <div class="school-name">CK Takhmao School</div>
-        <div class="school-sub">សាលាបង្វឹក CK តាខ្មៅ</div>
+        <div class="school-sub" style="font-family:kantumruypro,sans-serif;font-size:9pt;color:#64748b;margin-top:2px;">សាលាបង្វឹក CK តាខ្មៅ</div>
         <div><span class="receipt-badge">Receipt</span></div>
         <div class="receipt-num">{{ $payment->receipt_number }}</div>
     </div>

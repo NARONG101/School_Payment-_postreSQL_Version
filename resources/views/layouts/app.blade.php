@@ -658,9 +658,9 @@ textarea.form-control { resize:vertical; min-height:80px; }
                 <i class="fas fa-bars" aria-hidden="true"></i>
             </button>
         </div>
-        <div style="text-align:center;padding:6px 0 14px">
+        <div style="text-align:center;padding:4px 0 14px">
             <img src="/logo.png" alt="CK Logo"
-                 style="width:100px;height:auto;max-height:70px;object-fit:contain;display:block;margin:0 auto 8px;">
+                 style="width:110px;height:auto;max-height:72px;object-fit:contain;display:block;margin:0 auto 8px;mix-blend-mode:screen;">
             <div class="brand-name" style="font-size:13px">CK Takhmao School</div>
             <div class="brand-sub">សាលាបង្វឹក CK តាខ្មៅ</div>
         </div>

@@ -424,7 +424,8 @@ class PaymentController extends Controller
                     'BI' => 'KantumruyPro.ttf',
                 ],
             ],
-            'default_font' => 'kantumruypro',
+            'default_font'    => 'kantumruypro',
+            'allowCJKOrphans' => false,
         ]);
 
         // ── Native mPDF watermark — perfectly centered, angle, alpha ──
