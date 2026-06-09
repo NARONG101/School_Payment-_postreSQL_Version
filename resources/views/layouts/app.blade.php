@@ -653,17 +653,19 @@ textarea.form-control { resize:vertical; min-height:80px; }
 <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
     <div class="sidebar-brand">
         <div class="brand-header">
-            <div class="brand-icon" style="background:transparent;padding:2px;" aria-hidden="true">
-                <img src="/logo.png" alt="CK Logo" style="width:38px;height:38px;object-fit:contain;border-radius:4px;filter:brightness(1.1)">
+            {{-- Only show toggle button in brand-header, logo moves to brand-text area --}}
+            <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+                <img src="/logo.png" alt="CK Logo"
+                     style="width:42px;height:42px;object-fit:contain;flex-shrink:0;">
+                <div class="brand-text" style="min-width:0">
+                    <div class="brand-name">CK Takhmao School</div>
+                    <div class="brand-sub">សាលាបង្វឹក CK តាខ្មៅ</div>
+                </div>
             </div>
             <button class="sidebar-toggle-btn" id="sidebarToggleBtn"
                     aria-label="Collapse sidebar" aria-expanded="true" aria-controls="sidebar">
                 <i class="fas fa-bars" aria-hidden="true"></i>
             </button>
-        </div>
-        <div class="brand-text">
-            <div class="brand-name">CK Takhmao School</div>
-            <div class="brand-sub">សាលាបង្វឹក CK តាខ្មៅ</div>
         </div>
     </div>
     <nav class="sidebar-nav">

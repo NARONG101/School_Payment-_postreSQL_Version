@@ -19,7 +19,7 @@
         .login-card{background:var(--card-bg);border-radius:20px;padding:40px 36px;width:100%;max-width:400px;position:relative;z-index:1;box-shadow:0 25px 60px rgba(0,0,0,0.4);border:1px solid var(--border);transition:background 0.25s,border-color 0.25s;}
         .brand{text-align:center;margin-bottom:28px;}
         .brand-icon{width:52px;height:52px;background:linear-gradient(135deg,#1a56db,#7c3aed);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:22px;color:#fff;}
-        .brand-logo{width:120px;height:auto;object-fit:contain;margin:0 auto 12px;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.3));}
+        .brand-logo{width:160px;height:80px;object-fit:contain;margin:0 auto 14px;display:block;}
         .brand-name{font-size:20px;font-weight:800;color:var(--text-h);}
         .brand-sub{font-size:15px;font-family:'Kantumruy Pro',sans-serif;color:var(--text-s);margin-top:4px;line-height:1.5;}
         .form-group{margin-bottom:16px;}

@@ -21,10 +21,11 @@ body {
     margin-bottom:13px;
 }
 .header-logo {
-    width:54px; height:54px;
-    object-fit:contain;
-    margin: 0 auto 6px;
-    display:block;
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin: 0 auto 8px;
+    display: block;
 }
 .school-name {
     font-size:16pt;
