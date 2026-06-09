@@ -23,8 +23,8 @@
 /* ── Quick Actions ── */
 .quick-actions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 14px;
     margin-top: 18px;
 }
 .quick-action-btn {
@@ -32,9 +32,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 20px 12px;
-    border-radius: 12px;
+    gap: 12px;
+    padding: 24px 12px;
+    border-radius: 14px;
     border: 1px solid var(--border);
     background: var(--bg-card);
     color: var(--text-primary);
@@ -44,22 +44,23 @@
     transition: background 0.15s, box-shadow 0.15s, transform 0.1s, border-color 0.15s;
     cursor: pointer;
     text-align: center;
+    min-height: 110px;
 }
 .quick-action-btn:hover {
     background: var(--primary-light);
     border-color: var(--primary);
     box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     color: var(--primary);
 }
 .quick-action-btn .qa-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 22px;
     flex-shrink: 0;
 }
 .qa-blue   { background: var(--primary-50);          color: var(--primary); }
