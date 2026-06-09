@@ -160,7 +160,7 @@ body {
 
     {{-- HEADER --}}
     <div class="header">
-        @php $logoPath = public_path('logo.jpg'); @endphp
+        @php $logoPath = public_path('logo.png'); @endphp
         @if(file_exists($logoPath))
         <img src="{{ $logoPath }}" class="header-logo" alt="CK Logo">
         @endif

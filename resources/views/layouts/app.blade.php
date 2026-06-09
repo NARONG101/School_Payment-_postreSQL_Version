@@ -654,7 +654,7 @@ textarea.form-control { resize:vertical; min-height:80px; }
     <div class="sidebar-brand">
         <div class="brand-header">
             <div class="brand-icon" style="background:transparent;padding:2px;" aria-hidden="true">
-                <img src="/logo.jpg" alt="CK Logo" style="width:38px;height:38px;object-fit:contain;border-radius:4px;filter:brightness(1.1)">
+                <img src="/logo.png" alt="CK Logo" style="width:38px;height:38px;object-fit:contain;border-radius:4px;filter:brightness(1.1)">
             </div>
             <button class="sidebar-toggle-btn" id="sidebarToggleBtn"
                     aria-label="Collapse sidebar" aria-expanded="true" aria-controls="sidebar">
