@@ -1,10 +1,21 @@
+@php
+    // Load KantumruyPro as base64 so DomPDF embeds it directly — this is the
+    // only reliable way to render Khmer Unicode in DomPDF's CPDF backend.
+    $fontB64Css = '';
+    $fontFile   = storage_path('fonts/KantumruyPro.ttf');
+    if (file_exists($fontFile)) {
+        $b64 = base64_encode(file_get_contents($fontFile));
+        $fontB64Css = "@font-face { font-family: 'KantumruyPro'; src: url('data:font/truetype;base64,{$b64}') format('truetype'); }";
+    }
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <style>
+    {!! $fontB64Css !!}
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: KantumruyPro, DejaVu Sans, sans-serif; font-size: 12px; color: #1f2937; background: white; }
+    body { font-family: 'KantumruyPro', 'DejaVu Sans', sans-serif; font-size: 12px; color: #1f2937; background: white; }
     .receipt { width: 100%; padding: 20px; }
     .header { text-align: center; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 2px solid #1a56db; }
     .school-name { font-size: 18px; font-weight: 700; color: #1a56db; margin-bottom: 3px; }
@@ -38,28 +49,32 @@
     <div class="header">
         <div class="school-name">EduPay Manager</div>
         <div class="school-sub">Student Payment Management System</div>
-        <div class="receipt-title">{{ __('app.receipt') }}</div>
+        <div class="receipt-title">Receipt</div>
         <div class="receipt-num">{{ $payment->receipt_number }}</div>
     </div>
 
     <div class="info-grid">
         <div class="info-col">
-            <div class="info-label">{{ __('app.first_name') }} {{ __('app.last_name') }}</div>
-            <div class="info-val">{{ $payment->student?->full_name ?? '—' }} ({{ $payment->student?->gender ? __('app.'.$payment->student->gender) : 'N/A' }})</div>
+            <div class="info-label">First Name Last Name</div>
+            <div class="info-val">{{ $payment->student?->full_name ?? '—' }}
+                @if($payment->student?->gender)
+                    ({{ ucfirst($payment->student->gender) }})
+                @endif
+            </div>
         </div>
         <div class="info-col">
-            <div class="info-label">{{ __('app.student_id') }}</div>
+            <div class="info-label">Student ID</div>
             <div class="info-val">{{ $payment->student?->student_id ?? '—' }}</div>
         </div>
     </div>
     <div class="info-grid">
         <div class="info-col">
-            <div class="info-label">{{ __('app.come_from') }}</div>
+            <div class="info-label">Come From</div>
             <div class="info-val">{{ $payment->student?->come_from ?? '-' }}</div>
         </div>
         <div class="info-col">
-            <div class="info-label">{{ __('app.grade') }}</div>
-            <div class="info-val">{{ __('app.grade') }} {{ $payment->student?->year_level ?? '—' }}</div>
+            <div class="info-label">Grade</div>
+            <div class="info-val">Grade {{ $payment->student?->year_level ?? '—' }}</div>
         </div>
     </div>
 
@@ -67,29 +82,29 @@
 
     <div class="info-grid">
         <div class="info-col">
-            <div class="info-label">{{ __('app.subject') }}</div>
+            <div class="info-label">Subject</div>
             <div class="info-val">{{ $payment->student?->subject ?? '-' }}</div>
         </div>
         <div class="info-col">
-            <div class="info-label">{{ __('app.time_type') }}</div>
+            <div class="info-label">Time Type</div>
             <div class="info-val">{{ ucfirst($payment->time_type ?? 'weekday') }}</div>
         </div>
     </div>
 
     <div class="info-grid" style="margin-top:8px">
         <div class="info-col">
-            <div class="info-label">{{ __('app.for_month') }}</div>
+            <div class="info-label">For Month</div>
             <div class="info-val">{{ $payment->due_date?->format('F Y') ?? '-' }}</div>
         </div>
         <div class="info-col">
-            <div class="info-label">{{ __('app.next_payment') }}</div>
+            <div class="info-label">Next Payment</div>
             <div class="info-val">{{ $payment->next_payment_date?->format('d/m/Y') ?? '-' }}</div>
         </div>
     </div>
 
     <div class="amount-box">
         <div class="amount-row">
-            <span>{{ __('app.monthly_fee') }}</span>
+            <span>Monthly Fee</span>
             <span>${{ number_format($payment->amount_due, 2) }}</span>
         </div>
         @if($payment->admin_fee > 0)
@@ -99,7 +114,7 @@
         </div>
         @endif
         <div class="amount-row paid-amt">
-            <span>{{ __('app.paid') }}</span>
+            <span>Paid</span>
             <span>${{ number_format($payment->amount_paid, 2) }}</span>
         </div>
         @if($payment->balance > 0)
@@ -109,10 +124,10 @@
         </div>
         @endif
         <div class="amount-row total">
-            <span>{{ __('app.status') }}</span>
+            <span>Status</span>
             <span>
                 @if($payment->status === 'paid')
-                    <span class="badge badge-paid">{{ strtoupper(__('app.paid')) }}</span>
+                    <span class="badge badge-paid">PAID</span>
                 @else
                     <span>{{ strtoupper($payment->status) }}</span>
                 @endif
