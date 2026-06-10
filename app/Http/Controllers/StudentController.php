@@ -41,8 +41,8 @@ class StudentController extends Controller
 
         $allStudents = match ($sortBy) {
             'oldest'  => $allQuery->orderBy('id')->get(),
-            'az'      => $allQuery->orderBy('first_name')->orderBy('last_name')->get(),
-            'za'      => $allQuery->orderByDesc('first_name')->orderByDesc('last_name')->get(),
+            'az'      => $allQuery->orderBy('last_name')->orderBy('first_name')->get(),
+            'za'      => $allQuery->orderByDesc('last_name')->orderByDesc('first_name')->get(),
             'enroll'  => $allQuery->orderByDesc('enrollment_date')->get(),
             'grade'   => $allQuery->orderByDesc('year_level')->orderBy('last_name')->get(),
             default   => $allQuery->orderByDesc('id')->get(), // newest
@@ -227,8 +227,8 @@ class StudentController extends Controller
 
         $students = match ($sortBy) {
             'oldest' => $allQuery->orderBy('id')->get(),
-            'az'     => $allQuery->orderBy('first_name')->orderBy('last_name')->get(),
-            'za'     => $allQuery->orderByDesc('first_name')->orderByDesc('last_name')->get(),
+            'az'     => $allQuery->orderBy('last_name')->orderBy('first_name')->get(),
+            'za'     => $allQuery->orderByDesc('last_name')->orderByDesc('first_name')->get(),
             'enroll' => $allQuery->orderByDesc('enrollment_date')->get(),
             'grade'  => $allQuery->orderByDesc('year_level')->orderBy('last_name')->get(),
             default  => $allQuery->orderByDesc('id')->get(),
