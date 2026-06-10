@@ -120,8 +120,8 @@
                 <div class="form-group">
                     <label class="form-label" for="subject">Subject <span style="color:var(--danger)">*</span></label>
                     <input type="text" id="subject" name="subject"
-                           class="form-control @error('subject') is-invalid @enderror"
-                           value="{{ old('subject') }}" required>
+                           class="form-control auto-field @error('subject') is-invalid @enderror"
+                           value="{{ old('subject', 'គណិតវិទ្យា') }}" readonly required>
                     @error('subject')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 <div class="form-group">

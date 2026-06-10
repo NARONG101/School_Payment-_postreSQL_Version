@@ -76,8 +76,8 @@
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label" for="subject">Subject <span style="color:var(--danger)">*</span></label>
-                    <input type="text" id="subject" name="subject" class="form-control"
-                           value="{{ old('subject', $student->subject) }}" required>
+                    <input type="text" id="subject" name="subject" class="form-control auto-field"
+                           value="{{ old('subject', $student->subject) }}" readonly required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="time_type">Time Type <span style="color:var(--danger)">*</span></label>
