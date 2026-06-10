@@ -587,7 +587,8 @@ textarea.form-control { resize:vertical; min-height:80px; }
     .sidebar.collapsed .brand-text,
     .sidebar.collapsed .brand-icon,
     .sidebar.collapsed .sidebar-nav,
-    .sidebar.collapsed .sidebar-footer { display:none; }
+    .sidebar.collapsed .sidebar-footer,
+    .sidebar.collapsed .sidebar-brand > div:not(.brand-header) { display:none; }
 
     /* Keep brand header visible but centered, just for the toggle btn */
     .sidebar.collapsed .sidebar-brand {
