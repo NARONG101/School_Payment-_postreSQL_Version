@@ -15,27 +15,29 @@
 
 .pay-summary{
     background:var(--primary-50);border:1px solid var(--primary-200);
-    border-radius:var(--radius);padding:16px 20px;margin-bottom:18px;
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;
+    border-radius:var(--radius);padding:18px 22px;margin-bottom:20px;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px;
 }
-.pay-summary-label{font-size:10px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
-.pay-summary-val{font-size:17px;font-weight:900;color:var(--primary);}
+.pay-summary-label{font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.pay-summary-val{font-size:18px;font-weight:800;color:var(--primary);}
 
-#noStudentMsg{text-align:center;padding:32px 20px;color:var(--text-muted);font-size:14px;}
-#noStudentMsg i{font-size:32px;display:block;margin-bottom:10px;}
+.pay-summary-val.success{color:var(--success);}
+
+#noStudentMsg{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:14px;}
+#noStudentMsg i{font-size:36px;display:block;margin-bottom:12px;}
 #autoFields{display:none;}
 #autoFields.show{display:block;}
 
-.months-panel{border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;border:1px solid var(--border);}
+.months-panel{border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;border:1px solid var(--border);}
 .months-panel.has-overdue{background:var(--danger-light);border-color:var(--danger);}
 .months-panel.up-to-date{background:var(--success-light);border-color:var(--success);}
-.months-panel-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.months-panel-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
 .months-panel.has-overdue .months-panel-title{color:var(--danger);}
 .months-panel.up-to-date  .months-panel-title{color:var(--success);}
 
-.month-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.month-chips{display:flex;flex-wrap:wrap;gap:8px;}
 .month-chip{
-    padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;
+    padding:7px 16px;border-radius:24px;font-size:12px;font-weight:600;
     cursor:pointer;border:2px solid transparent;transition:all .15s;
     user-select:none;-webkit-tap-highlight-color:transparent;
 }
@@ -48,9 +50,21 @@
 
 .sel-month-box{
     background:var(--warning-light);border:1px solid var(--warning);
-    border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px;
-    font-size:13px;color:var(--warning);font-weight:600;
+    border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:18px;
+    font-size:13px;color:var(--warning);font-weight:700;
+    display:flex;align-items:center;gap:10px;
+}
+
+.section-title{
+    font-size:13px;font-weight:700;color:var(--text-heading);
+    text-transform:uppercase;letter-spacing:.8px;
+    margin:18px 0 12px 0;padding-bottom:8px;
+    border-bottom:1px solid var(--border);
     display:flex;align-items:center;gap:8px;
+}
+
+.form-row {
+    gap:16px;
 }
 </style>
 @endsection
@@ -117,9 +131,10 @@
               enctype="multipart/form-data">
             @csrf
 
-            {{-- Student --}}
+            {{-- Student Selection --}}
             <div class="form-group">
                 <label class="form-label" for="studentSelect">
+                    <i class="fas fa-user-graduate" style="margin-right:6px"></i>
                     Student <span style="color:var(--danger)">*</span>
                 </label>
                 <select id="studentSelect" name="student_id"
@@ -172,7 +187,7 @@
                     </div>
                     <div>
                         <div class="pay-summary-label">Total to Pay</div>
-                        <div class="pay-summary-val" id="sumTotal">$0.00</div>
+                        <div class="pay-summary-val success" id="sumTotal">$0.00</div>
                     </div>
                     <div>
                         <div class="pay-summary-label">Next Due After</div>
@@ -180,10 +195,13 @@
                     </div>
                 </div>
 
-                {{-- Month chips --}}
+                {{-- Month Selection --}}
+                <div class="section-title">
+                    <i class="fas fa-calendar-alt"></i> Month to Pay
+                </div>
                 <div id="monthsPanel" class="months-panel" style="display:none">
                     <div class="months-panel-title">
-                        <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
                         <span id="monthsPanelText">Select month to pay</span>
                     </div>
                     <div class="month-chips" id="monthChips"></div>
@@ -201,11 +219,15 @@
                 <input type="hidden" id="nextPaymentInput" name="next_payment_date"
                        value="{{ old('next_payment_date') }}">
 
-                {{-- Paid Date + Time Type --}}
+                {{-- Payment Details --}}
+                <div class="section-title">
+                    <i class="fas fa-money-bill-wave"></i> Payment Details
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label" for="paidDateInput">
-                            Actual Paid Date <span style="color:var(--danger)">*</span>
+                            <i class="fas fa-calendar-day" style="margin-right:4px"></i>
+                            Paid Date <span style="color:var(--danger)">*</span>
                         </label>
                         <input type="date" id="paidDateInput" name="payment_date"
                                class="form-control @error('payment_date') is-invalid @enderror"
@@ -217,6 +239,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="timeTypeSelect">
+                            <i class="fas fa-clock" style="margin-right:4px"></i>
                             Time Type <span style="color:var(--danger)">*</span>
                             <span style="font-size:11px;color:var(--success);font-weight:500">(auto-filled)</span>
                         </label>
@@ -231,10 +254,11 @@
                     </div>
                 </div>
 
-                {{-- Amount Due + Admin Fee --}}
+                {{-- Amounts --}}
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label" for="amountDueInput">
+                            <i class="fas fa-dollar-sign" style="margin-right:4px"></i>
                             Monthly Fee
                             <span style="font-size:11px;color:var(--success);font-weight:500">(auto-filled)</span>
                         </label>
@@ -245,6 +269,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="adminFeeInput">
+                            <i class="fas fa-cash-register" style="margin-right:4px"></i>
                             Admin Fee
                         </label>
                         <input type="number" id="adminFeeInput" name="admin_fee" step="0.01"
@@ -253,11 +278,10 @@
                         @error('admin_fee')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
-
-                {{-- Discount + Next Payment Date --}}
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label" for="discountInput">
+                            <i class="fas fa-percent" style="margin-right:4px"></i>
                             Discount (%)
                         </label>
                         <input type="number" id="discountInput" name="discount" step="0.01"
@@ -267,6 +291,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">
+                            <i class="fas fa-calendar-arrow-right" style="margin-right:4px"></i>
                             Next Payment Date
                             <span style="font-size:11px;color:var(--success);font-weight:500">(auto-calculated)</span>
                         </label>
@@ -275,9 +300,10 @@
                     </div>
                 </div>
 
-                <hr style="border:none;border-top:1px solid var(--border);margin:4px 0 18px">
-
-                {{-- Payment Method --}}
+                {{-- Payment Method & Photo --}}
+                <div class="section-title">
+                    <i class="fas fa-credit-card"></i> Additional Info
+                </div>
                 <div class="form-group">
                     <label class="form-label" for="payment_method">
                         Payment Method <span style="color:var(--danger)">*</span>
@@ -362,12 +388,15 @@
 
                 {{-- Notes --}}
                 <div class="form-group">
-                    <label class="form-label" for="notes">Notes</label>
+                    <label class="form-label" for="notes">
+                        <i class="fas fa-sticky-note" style="margin-right:4px"></i>
+                        Notes
+                    </label>
                     <textarea id="notes" name="notes" class="form-control"
                               placeholder="Optional notes…" maxlength="500">{{ old('notes') }}</textarea>
                 </div>
 
-                <div style="display:flex;gap:10px;padding-top:4px;flex-wrap:wrap">
+                <div style="display:flex;gap:10px;padding-top:8px;flex-wrap:wrap">
                     <button type="submit" class="btn btn-primary" id="submitBtn">
                         <i class="fas fa-save" aria-hidden="true"></i> Record Payment
                     </button>
