@@ -3,6 +3,8 @@
 @section('page-title','New Payment')
 @section('topbar-back')
     <button type="button" class="btn btn-outline btn-sm"
+            id="backBtn"
+            data-back-url="{{ route('payments.index') }}"
             onclick="goBack()">
         <i class="fas fa-arrow-left" aria-hidden="true"></i>
     </button>
@@ -421,10 +423,11 @@
 @section('scripts')
 <script>
 function goBack() {
+    const backBtn = document.getElementById('backBtn');
     if (history.length > 1) {
         history.back();
-    } else {
-        window.location = '{{ route('payments.index') }}';
+    } else if (backBtn) {
+        window.location = backBtn.dataset.backUrl;
     }
 }
 
