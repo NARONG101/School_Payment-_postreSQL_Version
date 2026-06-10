@@ -258,8 +258,14 @@ body {
         </div>
         @if(($payment->admin_fee ?? 0) > 0)
         <div class="amount-row">
-            <span class="ar-label">Admin Fee <small style="color:#94a3b8;font-size:8pt">(enrollment)</small></span>
+            <span class="ar-label">Admin Fee</span>
             <span class="ar-value">${{ number_format($payment->admin_fee, 2) }}</span>
+        </div>
+        @endif
+        @if(($payment->discount ?? 0) > 0)
+        <div class="amount-row">
+            <span class="ar-label">Discount ({{ number_format($payment->discount, 2) }}%)</span>
+            <span class="ar-value">-${{ number_format(($payment->amount_due + ($payment->admin_fee ?? 0)) * ($payment->discount / 100), 2) }}</span>
         </div>
         @endif
         <div class="amount-row paid">

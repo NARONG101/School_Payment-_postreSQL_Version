@@ -171,8 +171,8 @@
                         <div class="pay-summary-val" id="sumFee">$0.00</div>
                     </div>
                     <div>
-                        <div class="pay-summary-label">Paying For</div>
-                        <div style="font-size:14px;font-weight:700;color:var(--text-primary)" id="sumFor">—</div>
+                        <div class="pay-summary-label">Total to Pay</div>
+                        <div class="pay-summary-val" id="sumTotal">$0.00</div>
                     </div>
                     <div>
                         <div class="pay-summary-label">Next Due After</div>
@@ -231,15 +231,39 @@
                     </div>
                 </div>
 
-                {{-- Fee display + next date display (display-only, not submitted) --}}
+                {{-- Amount Due + Admin Fee --}}
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">
+                        <label class="form-label" for="amountDueInput">
                             Monthly Fee
                             <span style="font-size:11px;color:var(--success);font-weight:500">(auto-filled)</span>
                         </label>
-                        <input type="text" id="feeDisplay" class="form-control auto-field"
-                               value="$0.00" readonly tabindex="-1">
+                        <input type="number" id="amountDueInput" name="amount_due" step="0.01"
+                               class="form-control @error('amount_due') is-invalid @enderror"
+                               value="{{ old('amount_due', 0) }}" min="0">
+                        @error('amount_due')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="adminFeeInput">
+                            Admin Fee
+                        </label>
+                        <input type="number" id="adminFeeInput" name="admin_fee" step="0.01"
+                               class="form-control @error('admin_fee') is-invalid @enderror"
+                               value="{{ old('admin_fee', 0) }}" min="0">
+                        @error('admin_fee')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+
+                {{-- Discount + Next Payment Date --}}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="discountInput">
+                            Discount (%)
+                        </label>
+                        <input type="number" id="discountInput" name="discount" step="0.01"
+                               class="form-control @error('discount') is-invalid @enderror"
+                               value="{{ old('discount', 0) }}" min="0" max="100">
+                        @error('discount')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="form-group">
                         <label class="form-label">
@@ -365,11 +389,14 @@
     var sel          = document.getElementById('studentSelect');
     var autoFields   = document.getElementById('autoFields');
     var noMsg        = document.getElementById('noStudentMsg');
-    var feeDisplay   = document.getElementById('feeDisplay');
+    var amountDueInput = document.getElementById('amountDueInput');
+    var adminFeeInput = document.getElementById('adminFeeInput');
+    var discountInput = document.getElementById('discountInput');
     var nextDisplay  = document.getElementById('nextDateDisplay');
     var ttSelect     = document.getElementById('timeTypeSelect');
     var sumName      = document.getElementById('sumName');
     var sumFee       = document.getElementById('sumFee');
+    var sumTotal     = document.getElementById('sumTotal');
     var sumFor       = document.getElementById('sumFor');
     var sumNext      = document.getElementById('sumNext');
     var monthsPanel  = document.getElementById('monthsPanel');
@@ -383,6 +410,19 @@
 
     var MF = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var ML = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    /* ── Calculate total function ─────────────────────────── */
+    function calculateTotal() {
+        var amountDue = parseFloat(amountDueInput.value) || 0;
+        var adminFee = parseFloat(adminFeeInput.value) || 0;
+        var discount = parseFloat(discountInput.value) || 0;
+        var subtotal = amountDue + adminFee;
+        var discountAmount = subtotal * (discount / 100);
+        var total = subtotal - discountAmount;
+        
+        sumFee.textContent = '$' + amountDue.toFixed(2);
+        sumTotal.textContent = '$' + total.toFixed(2);
+    }
 
     /* ── Date helpers (no overflow) ─────────────────────────── */
     function addOneMonth(y, m) {
@@ -523,9 +563,10 @@
         var name      = opt.dataset.name || opt.text;
         var firstOwed = opt.dataset.firstOwed;
 
-        feeDisplay.value    = '$' + fee.toFixed(2);
+        amountDueInput.value = fee.toFixed(2);
         sumName.textContent = name;
-        sumFee.textContent  = '$' + fee.toFixed(2);
+        
+        calculateTotal();
 
         /* Auto-fill time type */
         for (var i = 0; i < ttSelect.options.length; i++) {
@@ -539,7 +580,12 @@
     }
 
     sel.addEventListener('change', update);
+    amountDueInput.addEventListener('input', calculateTotal);
+    adminFeeInput.addEventListener('input', calculateTotal);
+    discountInput.addEventListener('input', calculateTotal);
+
     if (sel.value) update();
+    else calculateTotal();
 
     /* ── Form submit validation ─────────────────────────────── */
     document.getElementById('paymentForm').addEventListener('submit', function (e) {

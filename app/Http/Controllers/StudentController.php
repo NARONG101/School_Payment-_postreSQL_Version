@@ -81,6 +81,7 @@ class StudentController extends Controller
             'photo'               => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'monthly_payment_day' => 'required|integer|min:1|max:31',
             'monthly_fee'         => 'required|numeric|min:0|max:99999',
+            'discount'            => 'nullable|numeric|min:0|max:100',
             'time_type'           => 'required|in:' . implode(',', self::TIME_SLOTS),
             'payment_method'      => 'required|in:cash,bank_transfer',
             'payment_photo'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
@@ -103,26 +104,33 @@ class StudentController extends Controller
         $timeType      = $validated['time_type'];
         $paymentMethod = $validated['payment_method'];
         $paymentPhoto  = $request->file('payment_photo');
+        $discount      = $validated['discount'] ?? 0;
 
-        unset($validated['payment_method'], $validated['payment_photo']);
+        unset($validated['payment_method'], $validated['payment_photo'], $validated['discount']);
 
         $student = Student::create($validated);
 
-        // Auto-create first payment (enrollment date, with $10 admin fee — one time only)
+        // Auto-create first payment (enrollment date, with $20 admin fee — one time only)
         $enrollDate = Carbon::parse($validated['enrollment_date']);
         $paymentDay = (int) $validated['monthly_payment_day'];
 
         // Next payment = next occurrence of payment_day AFTER enrollment date
         $nextPaymentDate = Student::nextPaymentDateFrom($enrollDate, $paymentDay);
 
-        $adminFee = 10; // $10 admin fee on enrollment only
+        $adminFee = 20; // $20 admin fee on enrollment only
+        
+        // Calculate total with discount
+        $subtotal = $validated['monthly_fee'] + $adminFee;
+        $discountAmount = $subtotal * ($discount / 100);
+        $totalAmount = $subtotal - $discountAmount;
 
         $paymentData = [
             'receipt_number'    => Payment::generateReceiptNumber(),
             'student_id'        => $student->id,
             'amount_due'        => $validated['monthly_fee'],
             'admin_fee'         => $adminFee,
-            'amount_paid'       => $validated['monthly_fee'] + $adminFee,
+            'discount'          => $discount,
+            'amount_paid'       => $totalAmount,
             'balance'           => 0,
             'payment_date'      => $enrollDate,
             'due_date'          => $enrollDate,

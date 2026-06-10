@@ -136,7 +136,7 @@
                 </div>
             </div>
 
-            {{-- Gender + Payment Day + Monthly Fee --}}
+            {{-- Gender + Payment Day + Monthly Fee + Discount --}}
             <div class="form-row-3">
                 <div class="form-group">
                     <label class="form-label" for="gender">{{ __('app.gender') }}</label>
@@ -165,6 +165,17 @@
                            value="{{ old('monthly_fee', 0) }}" min="0" required>
                     @error('monthly_fee')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
+            </div>
+
+            {{-- Discount --}}
+            <div class="form-group">
+                <label class="form-label" for="discount">
+                    Discount (%) <span style="color:var(--text-muted)">(0-100)</span>
+                </label>
+                <input type="number" id="discount" name="discount" step="0.01"
+                       class="form-control @error('discount') is-invalid @enderror"
+                       value="{{ old('discount', 0) }}" min="0" max="100">
+                @error('discount')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
 
             {{-- Study Status --}}
@@ -229,13 +240,18 @@
                         <span class="fee-plus">+</span>
                         <div class="fee-chip">
                             <span>Admin Fee (once)</span>
-                            <span style="color:var(--warning)">$10.00</span>
+                            <span style="color:var(--warning)">$20.00</span>
+                        </div>
+                        <span class="fee-plus">-</span>
+                        <div class="fee-chip">
+                            <span>Discount</span>
+                            <span style="color:var(--success)" id="discountAmountDisplay">$0.00</span>
                         </div>
                         <span class="fee-plus">=</span>
                     </div>
                     <div class="enroll-total-box">
                         <div class="enroll-total-label">Total to Pay Today</div>
-                        <div class="enroll-total-val" id="enrollTotalDisplay">$10.00</div>
+                        <div class="enroll-total-val" id="enrollTotalDisplay">$20.00</div>
                     </div>
                 </div>
                 <div class="next-payment-info">
@@ -260,15 +276,17 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var ADMIN_FEE = 10; // $10 admin fee on enrollment only
+    var ADMIN_FEE = 20; // $20 admin fee on enrollment only
 
-    var enrollDate   = document.getElementById('enrollmentDate');
-    var payDay       = document.getElementById('paymentDay');
-    var feeInput     = document.getElementById('monthly_fee');
-    var feeDisplay   = document.getElementById('monthlyFeeDisplay');
-    var totalDisplay = document.getElementById('enrollTotalDisplay');
-    var nextDisplay  = document.getElementById('nextPaymentDisplay');
-    var nextAmount   = document.getElementById('nextAmountDisplay');
+    var enrollDate        = document.getElementById('enrollmentDate');
+    var payDay            = document.getElementById('paymentDay');
+    var feeInput          = document.getElementById('monthly_fee');
+    var discountInput     = document.getElementById('discount');
+    var feeDisplay        = document.getElementById('monthlyFeeDisplay');
+    var discountAmtDisplay = document.getElementById('discountAmountDisplay');
+    var totalDisplay      = document.getElementById('enrollTotalDisplay');
+    var nextDisplay       = document.getElementById('nextPaymentDisplay');
+    var nextAmount        = document.getElementById('nextAmountDisplay');
 
     function calcNextDate(enrollDateStr, paymentDay) {
         if (!enrollDateStr) return null;
@@ -298,9 +316,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateSummary() {
-        var fee  = parseFloat(feeInput.value) || 0;
-        var day  = parseInt(payDay.value) || null;
-        var next = calcNextDate(enrollDate.value, day);
+        var fee      = parseFloat(feeInput.value) || 0;
+        var discount = parseFloat(discountInput.value) || 0;
+        var day      = parseInt(payDay.value) || null;
+        var next     = calcNextDate(enrollDate.value, day);
 
         // Update payment day from enrollment date automatically
         if (enrollDate.value) {
@@ -310,14 +329,20 @@ document.addEventListener('DOMContentLoaded', function () {
             next = calcNextDate(enrollDate.value, day);
         }
 
-        feeDisplay.textContent   = '$' + fee.toFixed(2);
-        totalDisplay.textContent = '$' + (fee + ADMIN_FEE).toFixed(2);
-        nextDisplay.textContent  = formatDate(next);
-        nextAmount.textContent   = '$' + fee.toFixed(2);
+        var subtotal = fee + ADMIN_FEE;
+        var discountAmt = subtotal * (discount / 100);
+        var total = subtotal - discountAmt;
+
+        feeDisplay.textContent        = '$' + fee.toFixed(2);
+        discountAmtDisplay.textContent = '$' + discountAmt.toFixed(2);
+        totalDisplay.textContent      = '$' + total.toFixed(2);
+        nextDisplay.textContent       = formatDate(next);
+        nextAmount.textContent        = '$' + fee.toFixed(2);
     }
 
     enrollDate.addEventListener('change', updateSummary);
     feeInput.addEventListener('input', updateSummary);
+    discountInput.addEventListener('input', updateSummary);
     payDay.addEventListener('input', updateSummary);
 
     // Run on load

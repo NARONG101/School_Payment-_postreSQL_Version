@@ -101,6 +101,9 @@ class PaymentController extends Controller
             'next_payment_date' => 'nullable|date',
             'time_type'         => 'required|in:' . implode(',', self::TIME_SLOTS),
             'payment_method'    => 'required|in:cash,bank_transfer',
+            'amount_due'        => 'nullable|numeric|min:0',
+            'admin_fee'         => 'nullable|numeric|min:0',
+            'discount'          => 'nullable|numeric|min:0|max:100',
             'photo'             => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'notes'             => 'nullable|string|max:500',
         ]);
@@ -121,10 +124,19 @@ class PaymentController extends Controller
         $lastDayCovering = (int) $coveringMonth->copy()->endOfMonth()->day;
         $dueDate         = $coveringMonth->copy()->day(min($paymentDay, $lastDayCovering));
 
+        // Calculate amounts
+        $amountDue = $validated['amount_due'] ?? (float)$student->monthly_fee;
+        $adminFee = $validated['admin_fee'] ?? 0;
+        $discount = $validated['discount'] ?? 0;
+        $subtotal = $amountDue + $adminFee;
+        $discountAmount = $subtotal * ($discount / 100);
+        $amountPaid = $subtotal - $discountAmount;
+
         $validated['receipt_number']    = Payment::generateReceiptNumber();
-        $validated['amount_due']        = (float) $student->monthly_fee;
-        $validated['admin_fee']         = 0;
-        $validated['amount_paid']       = (float) $student->monthly_fee;
+        $validated['amount_due']        = $amountDue;
+        $validated['admin_fee']         = $adminFee;
+        $validated['discount']          = $discount;
+        $validated['amount_paid']       = $amountPaid;
         $validated['balance']           = 0;
         $validated['status']            = 'paid';
         $validated['created_by']        = Auth::id();
@@ -186,8 +198,39 @@ class PaymentController extends Controller
             'photo'             => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'deadline_date'     => 'required|date',
             'next_payment_date' => 'nullable|date',
+            'amount_due'        => 'nullable|numeric|min:0',
+            'admin_fee'         => 'nullable|numeric|min:0',
+            'discount'          => 'nullable|numeric|min:0|max:100',
+            'amount_paid'       => 'nullable|numeric|min:0',
             'notes'             => 'nullable|string|max:500',
         ]);
+
+        // If amount_due, admin_fee, or discount are provided, recalculate amount_paid and balance
+        if (isset($validated['amount_due']) || isset($validated['admin_fee']) || isset($validated['discount'])) {
+            $amountDue = $validated['amount_due'] ?? $payment->amount_due;
+            $adminFee = $validated['admin_fee'] ?? $payment->admin_fee;
+            $discount = $validated['discount'] ?? $payment->discount;
+            
+            $subtotal = $amountDue + $adminFee;
+            $discountAmount = $subtotal * ($discount / 100);
+            $amountPaid = $validated['amount_paid'] ?? ($subtotal - $discountAmount);
+            $balance = max(0, $subtotal - $discountAmount - $amountPaid);
+            
+            $validated['amount_due'] = $amountDue;
+            $validated['admin_fee'] = $adminFee;
+            $validated['discount'] = $discount;
+            $validated['amount_paid'] = $amountPaid;
+            $validated['balance'] = $balance;
+            
+            // Update status based on balance
+            if ($balance <= 0) {
+                $validated['status'] = 'paid';
+            } elseif ($amountPaid > 0) {
+                $validated['status'] = 'partial';
+            } else {
+                $validated['status'] = 'pending';
+            }
+        }
 
         if ($request->hasFile('photo')) {
             if ($payment->photo) {
@@ -254,7 +297,7 @@ class PaymentController extends Controller
             fputcsv($handle, [
                 __('app.receipt'), __('app.student_id'), __('app.first_name') . ' ' . __('app.last_name'),
                 __('app.grade'), __('app.weekday') . '/' . __('app.weekend'),
-                __('app.amount'), 'Admin Fee', __('app.paid'),
+                __('app.amount'), 'Admin Fee', 'Discount (%)', __('app.paid'),
                 'Balance', 'Payment Date', 'Due Date', 'Next Payment',
                 __('app.status'), __('app.payment_method'), __('app.time_type'), __('app.notes'),
             ]);
@@ -277,6 +320,7 @@ class PaymentController extends Controller
                         $ct,
                         $p->amount_due,
                         $p->admin_fee ?? 0,
+                        $p->discount ?? 0,
                         $p->amount_paid,
                         $p->balance ?? 0,
                         $p->payment_date?->format('Y-m-d') ?? '',

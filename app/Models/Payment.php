@@ -32,7 +32,7 @@ class Payment extends Model
 
     protected $fillable = [
         'receipt_number', 'student_id', 'payment_type_id', 'amount_due',
-        'admin_fee', 'amount_paid', 'balance', 'payment_date', 'deadline_date', 'due_date',
+        'admin_fee', 'discount', 'amount_paid', 'balance', 'payment_date', 'deadline_date', 'due_date',
         'status', 'payment_method', 'reference_number', 'photo', 'notes',
         'semester', 'school_year', 'created_by', 'next_payment_date', 'time_type',
     ];
@@ -43,6 +43,8 @@ class Payment extends Model
         'due_date'           => 'date',
         'next_payment_date'  => 'date',
         'amount_due'         => 'decimal:2',
+        'admin_fee'          => 'decimal:2',
+        'discount'           => 'decimal:2',
         'amount_paid'        => 'decimal:2',
         'balance'            => 'decimal:2',
     ];

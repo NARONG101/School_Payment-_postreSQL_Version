@@ -15,24 +15,37 @@
     </div>
     <div style="padding:14px 20px;background:var(--bg-muted);border-bottom:1px solid var(--border)">
         <div style="font-weight:600;color:var(--text-primary)">{{ $payment->student->full_name }}</div>
-        <div style="font-size:12px;color:var(--text-muted)">Amount Due: <strong style="color:var(--text-primary)">${{ number_format($payment->amount_due,2) }}</strong></div>
     </div>
     <div class="card-body">
         <form action="{{ route('payments.update', $payment) }}" method="POST" enctype="multipart/form-data" novalidate>
             @csrf @method('PUT')
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label">Monthly Fee</label>
-                    <input type="number" class="form-control" value="{{ number_format($payment->amount_due,2) }}" readonly>
+                    <label class="form-label" for="amount_due">Monthly Fee</label>
+                    <input type="number" id="amount_due" name="amount_due" step="0.01" class="form-control @error('amount_due') is-invalid @enderror" 
+                           value="{{ old('amount_due', number_format($payment->amount_due,2,'.','')) }}" min="0">
+                    @error('amount_due')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Admin Fee</label>
-                    <input type="number" class="form-control" value="{{ number_format($payment->admin_fee ?? 0,2) }}" readonly>
+                    <label class="form-label" for="admin_fee">Admin Fee</label>
+                    <input type="number" id="admin_fee" name="admin_fee" step="0.01" class="form-control @error('admin_fee') is-invalid @enderror" 
+                           value="{{ old('admin_fee', number_format($payment->admin_fee ?? 0,2,'.','')) }}" min="0">
+                    @error('admin_fee')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
-            <div class="form-group">
-                <label class="form-label">Total Amount Paid</label>
-                <input type="number" class="form-control" value="{{ number_format($payment->amount_paid,2) }}" readonly>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="discount">Discount (%)</label>
+                    <input type="number" id="discount" name="discount" step="0.01" class="form-control @error('discount') is-invalid @enderror" 
+                           value="{{ old('discount', number_format($payment->discount ?? 0,2,'.','')) }}" min="0" max="100">
+                    @error('discount')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="amount_paid">Total Amount Paid</label>
+                    <input type="number" id="amount_paid" name="amount_paid" step="0.01" class="form-control @error('amount_paid') is-invalid @enderror" 
+                           value="{{ old('amount_paid', number_format($payment->amount_paid,2,'.','')) }}" min="0">
+                    @error('amount_paid')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
