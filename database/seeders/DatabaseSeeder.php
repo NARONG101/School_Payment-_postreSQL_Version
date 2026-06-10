@@ -21,8 +21,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // ── Admin user ────────────────────────────────────────
-        $adminEmail    = env('ADMIN_EMAIL',    'admin@school.edu');
-        $adminPassword = env('ADMIN_PASSWORD', '1234');
+        $adminEmail    = env('ADMIN_EMAIL',    'admin@school.ck');
+        $adminPassword = env('ADMIN_PASSWORD', 'CK_admin168!');
         $adminName     = env('ADMIN_NAME',     'Admin User');
 
         User::firstOrCreate(
