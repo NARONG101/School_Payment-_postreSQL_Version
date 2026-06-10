@@ -3,7 +3,7 @@
 @section('page-title','New Payment')
 @section('topbar-back')
     <button type="button" class="btn btn-outline btn-sm"
-            onclick="if(history.length > 1) history.back(); else window.location='{{ route('payments.index') }}'">
+            onclick="goBack()">
         <i class="fas fa-arrow-left" aria-hidden="true"></i>
     </button>
 @endsection
@@ -420,6 +420,14 @@
 
 @section('scripts')
 <script>
+function goBack() {
+    if (history.length > 1) {
+        history.back();
+    } else {
+        window.location = '{{ route('payments.index') }}';
+    }
+}
+
 (function () {
     'use strict';
 
