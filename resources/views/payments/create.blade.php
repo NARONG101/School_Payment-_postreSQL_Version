@@ -14,71 +14,75 @@
 .auto-field:focus{box-shadow:none!important;border-color:var(--border-input)!important;}
 
 .pay-summary{
-    background:var(--primary-50);border:1px solid var(--primary-200);
-    border-radius:var(--radius);padding:18px 22px;margin-bottom:20px;
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px;
+    background:linear-gradient(135deg,var(--primary-50),white);border:1px solid var(--primary-200);
+    border-radius:16px;padding:22px 26px;margin-bottom:24px;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:18px;
+    box-shadow:0 2px 12px rgba(26,86,219,0.06);
 }
-.pay-summary-label{font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
-.pay-summary-val{font-size:18px;font-weight:800;color:var(--primary);}
+.pay-summary-label{font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.pay-summary-val{font-size:20px;font-weight:800;color:var(--primary);line-height:1.1;}
 
 .pay-summary-val.success{color:var(--success);}
 
-#noStudentMsg{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:14px;}
-#noStudentMsg i{font-size:36px;display:block;margin-bottom:12px;}
+#noStudentMsg{text-align:center;padding:48px 24px;color:var(--text-muted);font-size:14px;}
+#noStudentMsg i{font-size:40px;display:block;margin-bottom:14px;}
 #autoFields{display:none;}
-#autoFields.show{display:block;}
+#autoFields.show{display:block;animation:fadeIn .3s ease;}
 
-.months-panel{border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;border:1px solid var(--border);}
-.months-panel.has-overdue{background:var(--danger-light);border-color:var(--danger);}
-.months-panel.up-to-date{background:var(--success-light);border-color:var(--success);}
-.months-panel-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+@keyframes fadeIn { from {opacity:0; transform: translateY(8px);} to {opacity:1; transform: translateY(0);} }
+
+.months-panel{border-radius:14px;padding:18px 20px;margin-bottom:18px;border:1px solid var(--border);}
+.months-panel.has-overdue{background:linear-gradient(135deg,var(--danger-light),#fff5f5);border-color:var(--danger);}
+.months-panel.up-to-date{background:linear-gradient(135deg,var(--success-light),#f0fdf4);border-color:var(--success);}
+.months-panel-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
 .months-panel.has-overdue .months-panel-title{color:var(--danger);}
-.months-panel.up-to-date  .months-panel-title{color:var(--success);}
+.months-panel.up-to-date .months-panel-title{color:var(--success);}
 
-.month-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.month-chips{display:flex;flex-wrap:wrap;gap:10px;}
 .month-chip{
-    padding:7px 16px;border-radius:24px;font-size:12px;font-weight:600;
+    padding:10px 18px;border-radius:30px;font-size:13px;font-weight:600;
     cursor:pointer;border:2px solid transparent;transition:all .15s;
     user-select:none;-webkit-tap-highlight-color:transparent;
+    box-shadow:0 1px 3px rgba(0,0,0,0.05);
 }
 .month-chip.overdue {background:var(--danger-light);color:var(--danger);border-color:var(--danger);}
 .month-chip.upcoming{background:var(--primary-light);color:var(--primary);border-color:var(--primary);}
 .month-chip.paid    {background:var(--success-light);color:var(--success);border-color:var(--success);cursor:default;opacity:0.7;}
-.month-chip.selected{color:#fff;}
+.month-chip.selected{color:#fff;box-shadow:0 3px 10px rgba(0,0,0,0.12);}
 .month-chip.overdue.selected {background:var(--danger);}
 .month-chip.upcoming.selected{background:var(--primary);}
 
 .sel-month-box{
-    background:var(--warning-light);border:1px solid var(--warning);
-    border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:18px;
+    background:linear-gradient(135deg,var(--warning-light),#fffbeb);border:1px solid var(--warning);
+    border-radius:12px;padding:14px 18px;margin-bottom:20px;
     font-size:13px;color:var(--warning);font-weight:700;
     display:flex;align-items:center;gap:10px;
 }
 
 .section-title{
-    font-size:13px;font-weight:700;color:var(--text-heading);
-    text-transform:uppercase;letter-spacing:.8px;
-    margin:18px 0 12px 0;padding-bottom:8px;
-    border-bottom:1px solid var(--border);
-    display:flex;align-items:center;gap:8px;
+    font-size:12px;font-weight:800;color:var(--text-heading);
+    text-transform:uppercase;letter-spacing:1px;
+    margin:22px 0 14px 0;padding-bottom:10px;
+    border-bottom:2px solid var(--border);
+    display:flex;align-items:center;gap:10px;
 }
 
 .form-row {
-    gap:16px;
+    gap:18px;
 }
 </style>
 @endsection
 
 @section('content')
-<div style="max-width:700px;margin:0 auto">
-<div class="card">
-    <div class="card-header">
+<div style="max-width:740px;margin:0 auto">
+<div class="card" style="border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+    <div class="card-header" style="background:linear-gradient(135deg,var(--primary-50),white);">
         <div class="card-title">
             <i class="fas fa-receipt" style="color:var(--primary)" aria-hidden="true"></i>
             Record Payment
         </div>
     </div>
-    <div class="card-body">
+    <div class="card-body" style="padding:26px;">
 
         {{-- Validation errors --}}
         @if($errors->any())
