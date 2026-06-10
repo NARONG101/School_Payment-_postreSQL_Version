@@ -3,7 +3,7 @@
 @section('page-title','New Payment')
 @section('topbar-back')
     <button type="button" class="btn btn-outline btn-sm"
-            onclick="history.length>1?history.back():window.location='{{ route('payments.index') }}'">
+            onclick="if(history.length > 1) history.back(); else window.location='{{ route('payments.index') }}'">
         <i class="fas fa-arrow-left" aria-hidden="true"></i>
     </button>
 @endsection
