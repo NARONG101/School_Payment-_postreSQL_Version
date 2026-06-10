@@ -166,7 +166,7 @@
                         'newest'=>'Newest','oldest'=>'Oldest',
                         'az'=>'A → Z','za'=>'Z → A',
                         'enroll'=>'Enrollment','grade'=>'Grade'
-                    ][$sortBy] ?? 'Newest' }}</strong>
+                    ][$sortBy] ?? 'Oldest' }}</strong>
                 </span>
                 <i class="fas fa-chevron-down" id="sortChevron" style="font-size:10px;transition:transform 0.2s" aria-hidden="true"></i>
             </button>
