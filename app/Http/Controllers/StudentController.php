@@ -27,7 +27,7 @@ class StudentController extends Controller
     public function index(Request $request)
     {
         // All students for the full table (with sort)
-        $sortBy    = $request->get('sort', 'newest');
+        $sortBy    = $request->get('sort', 'oldest');
         $classType = $request->get('class_type', ''); // 'weekday', 'weekend', or ''
 
         $allQuery = Student::withCount('payments');
@@ -213,7 +213,7 @@ class StudentController extends Controller
 
     public function exportCsv(Request $request)
     {
-        $sortBy    = $request->get('sort', 'newest');
+        $sortBy    = $request->get('sort', 'oldest');
         $classType = $request->get('class_type', '');
 
         $allQuery = Student::withCount('payments');
