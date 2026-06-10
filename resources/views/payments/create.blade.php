@@ -186,6 +186,10 @@
                         <div class="pay-summary-val" id="sumFee">$0.00</div>
                     </div>
                     <div>
+                        <div class="pay-summary-label">Paying For</div>
+                        <div style="font-size:14px;font-weight:700;color:var(--text-heading)" id="sumFor">—</div>
+                    </div>
+                    <div>
                         <div class="pay-summary-label">Total to Pay</div>
                         <div class="pay-summary-val success" id="sumTotal">$0.00</div>
                     </div>
