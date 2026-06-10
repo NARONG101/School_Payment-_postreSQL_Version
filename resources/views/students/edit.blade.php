@@ -54,12 +54,7 @@
                            value="{{ old('come_from', $student->come_from) }}">
                 </div>
             </div>
-            <div class="form-row-3">
-                <div class="form-group">
-                    <label class="form-label" for="date_of_birth">Date of Birth</label>
-                    <input type="date" id="date_of_birth" name="date_of_birth" class="form-control"
-                           value="{{ old('date_of_birth', $student->date_of_birth?->format('Y-m-d')) }}">
-                </div>
+            <div class="form-row">
                 <div class="form-group">
                     <label class="form-label" for="gender">Gender</label>
                     <select id="gender" name="gender" class="form-control">
