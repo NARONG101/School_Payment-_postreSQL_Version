@@ -213,7 +213,7 @@
                 </div>
                 <div style="font-size:11px;color:var(--text-muted)">{{ $data['student']->student_id ?? '—' }}</div>
                 <div style="font-size:13px;font-weight:700;color:var(--primary);margin-top:4px">
-                    Next: {{ $data['nextPaymentDate']->format('M d, Y') }}
+                    Next: {{ $data['nextPaymentDate'] ? $data['nextPaymentDate']->format('M d, Y') : '—' }}
                 </div>
             </a>
             @empty

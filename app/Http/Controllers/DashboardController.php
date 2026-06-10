@@ -71,12 +71,16 @@ class DashboardController extends Controller
             // ── Alert logic using the correct anchored next-date ──
             $lastPayment = $student->payments->first();
             if (!$lastPayment || !$lastPayment->payment_date) {
-                // No payment at all → overdue
+                // No payment at all → calculate from enrollment date
+                $paymentDay = (int) ($student->monthly_payment_day ?? $student->enrollment_date->day);
+                $nextDate = Student::nextPaymentDateFrom($student->enrollment_date, $paymentDay);
+                $daysLeft = (int) $now->diffInDays($nextDate, false);
+                
                 $overdueCount++;
                 $alertData[] = [
                     'student'              => $student,
-                    'nextPaymentDate'      => null,
-                    'daysUntilNextPayment' => null,
+                    'nextPaymentDate'      => $nextDate,
+                    'daysUntilNextPayment' => $daysLeft,
                     'alertLevel'           => 'overdue',
                 ];
                 continue;
