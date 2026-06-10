@@ -8,7 +8,6 @@ use App\Models\PaymentType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
 class PaymentController extends Controller
@@ -261,7 +260,7 @@ class PaymentController extends Controller
             ]);
 
             // Group by grade
-            $byGrade = $payments->groupBy(fn($p) => $p->student?->year_level ?? '?');
+            $byGrade = $payments->groupBy(fn($p) => $p->student?->year_level ?? '?')->toArray();
             ksort($byGrade);
             foreach ($byGrade as $grade => $gradePayments) {
                 fputcsv($handle, []);
@@ -349,7 +348,7 @@ class PaymentController extends Controller
                 __('app.status'), 'Last Payment Date', __('app.monthly_fee'),
             ]);
 
-            $byGrade = $rows->groupBy(fn($d) => $d['student']->year_level ?? '?');
+            $byGrade = $rows->groupBy(fn($d) => $d['student']->year_level ?? '?')->toArray();
             ksort($byGrade);
             foreach ($byGrade as $grade => $gradeRows) {
                 fputcsv($handle, []);
@@ -404,31 +403,51 @@ class PaymentController extends Controller
         // Raise pcre limit — base64 font in HTML can hit the 1MB default
         @ini_set('pcre.backtrack_limit', '5000000');
 
-        $config     = new \Mpdf\Config\ConfigVariables();
-        $fontConfig = new \Mpdf\Config\FontVariables();
+        // Get logo as data URI (base64 encoded)
+        $logoDataUri = '';
+        // Try multiple logo files
+        $logoFiles = [
+            public_path('CK.png'),
+            public_path('logo.png'),
+            storage_path('fonts/logo.png'),
+        ];
+        foreach ($logoFiles as $path) {
+            if (file_exists($path)) {
+                $logoContent = file_get_contents($path);
+                $logoDataUri = 'data:image/png;base64,' . base64_encode($logoContent);
+                break;
+            }
+        }
 
+        $defaultFontConfig = (new \Mpdf\Config\FontVariables())->getDefaults();
+        
         $mpdf = new \Mpdf\Mpdf([
             'mode'          => 'utf-8',
             'format'        => 'A5',
-            'margin_top'    => 0,
-            'margin_bottom' => 0,
-            'margin_left'   => 0,
-            'margin_right'  => 0,
+            'margin_top'    => 10,
+            'margin_bottom' => 5,
+            'margin_left'   => 5,
+            'margin_right'  => 5,
             'tempDir'       => $tmpDir,
             'fontDir'       => array_merge(
-                $config->getDefaults()['fontDir'],
+                (new \Mpdf\Config\ConfigVariables())->getDefaults()['fontDir'],
                 [$fontDir]
             ),
-            'fontdata' => $fontConfig->getDefaults()['fontdata'] + [
-                'kantumruypro' => [
-                    'R'  => 'KantumruyPro.ttf',
-                    'B'  => 'KantumruyPro.ttf',
-                    'I'  => 'KantumruyPro.ttf',
-                    'BI' => 'KantumruyPro.ttf',
-                ],
-            ],
+            'fontdata' => array_merge(
+                $defaultFontConfig['fontdata'],
+                [
+                    'kantumruypro' => [
+                        'R'  => 'KantumruyPro.ttf',
+                        'B'  => 'KantumruyPro.ttf',
+                        'I'  => 'KantumruyPro.ttf',
+                        'BI' => 'KantumruyPro.ttf',
+                    ],
+                ]
+            ),
             'default_font'    => 'kantumruypro',
             'allowCJKOrphans' => false,
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
         ]);
 
         // ── Native mPDF watermark ──────────────────────────────
@@ -439,18 +458,8 @@ class PaymentController extends Controller
             $mpdf->showWatermarkText   = true;
         }
 
-        $html = view('receipts.payment', compact('payment'))->render();
+        $html = view('receipts.payment', compact('payment', 'logoDataUri'))->render();
         $mpdf->WriteHTML($html);
-
-        // ── Inject logo — use small optimized version for PDF ──
-        $logoSmall = storage_path('fonts/logo_small.png');
-        $logoBig   = storage_path('fonts/logo.png');
-        $logoUse   = file_exists($logoSmall) ? $logoSmall : (file_exists($logoBig) ? $logoBig : null);
-
-        if ($logoUse) {
-            // A5 = 148mm wide; 32mm logo centered: x=(148-32)/2=58, y=3mm
-            $mpdf->Image($logoUse, 58, 3, 32, 0, 'PNG');
-        }
 
         return $mpdf;
     }

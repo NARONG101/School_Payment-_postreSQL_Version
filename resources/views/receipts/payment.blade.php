@@ -6,7 +6,7 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
-    font-family: kantumruypro, sans-serif;
+    font-family: 'kantumruypro', sans-serif;
     font-size: 10.5pt;
     color: #1e293b;
     background: #ffffff;
@@ -16,10 +16,18 @@ body {
 /* HEADER */
 .header {
     text-align:center;
-    padding-top:36px; /* space for logo injected above by mPDF */
+    padding-top:10px;
     padding-bottom:11px;
     border-bottom:2.5px solid #1a56db;
     margin-bottom:13px;
+}
+.logo-img {
+    height:50px;
+    margin-bottom:10px;
+    object-fit:contain;
+    display:block;
+    margin-left:0;
+    margin-right:auto;
 }
 .school-name {
     font-size:16pt;
@@ -29,7 +37,7 @@ body {
 }
 .school-sub {
     font-size:11pt;
-    font-family: kantumruypro, sans-serif;
+    font-family: 'kantumruypro', sans-serif;
     color:#475569;
     margin-top:3px;
     line-height:1.6;
@@ -156,13 +164,15 @@ body {
 <div class="page">
 
     {{-- HEADER --}}
-    <div class="header">
-        {{-- Logo is injected by mPDF directly via Image() API, not in HTML --}}
-        <div class="school-name">CK Takhmao School</div>
-        <div class="school-sub"><span style="font-family:kantumruypro;font-size:11pt;">សាលាបង្វឹក CK តាខ្មៅ</span></div>
-        <div><span class="receipt-badge">Receipt</span></div>
-        <div class="receipt-num">{{ $payment->receipt_number }}</div>
-    </div>
+        <div class="header">
+            @if(!empty($logoDataUri))
+                <img src="{{ $logoDataUri }}" alt="Logo" class="logo-img">
+            @endif
+            <div class="school-name">CK Takhmao School</div>
+            <div class="school-sub">សាលាបង្វឹក CK តាខ្មៅ</div>
+            <div><span class="receipt-badge">Receipt</span></div>
+            <div class="receipt-num">{{ $payment->receipt_number }}</div>
+        </div>
 
     {{-- STUDENT INFORMATION --}}
     <div class="section-head">Student Information</div>

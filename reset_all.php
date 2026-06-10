@@ -21,22 +21,33 @@ foreach (Student::withTrashed()->whereNotNull('photo')->pluck('photo') as $p) {
 echo "✓ Storage photos cleaned.\n";
 
 // ── Wipe all tables ───────────────────────────────────────────
-DB::statement('PRAGMA foreign_keys = OFF');
+// Disable foreign key checks for PostgreSQL
+DB::statement('SET CONSTRAINTS ALL DEFERRED');
 
 Payment::withTrashed()->forceDelete();
 Student::withTrashed()->forceDelete();
 PaymentType::query()->delete();
 User::query()->delete();
 
-// Also clear sessions, cache, jobs tables
-DB::table('sessions')->delete();
-DB::table('cache')->delete();
-DB::table('jobs')->delete();
+// Also clear sessions, cache, jobs tables (if they exist)
+$optionalTables = ['sessions', 'cache', 'jobs', 'job_batches', 'failed_jobs'];
+foreach ($optionalTables as $table) {
+    try {
+        DB::table($table)->delete();
+    } catch (\Exception $e) {
+        // Ignore if table doesn't exist
+    }
+}
 
-DB::statement('PRAGMA foreign_keys = ON');
-
-// Reset all auto-increment sequences
-DB::statement("DELETE FROM sqlite_sequence");
+// Reset sequences (PostgreSQL specific)
+$sequences = ['payments_id_seq', 'students_id_seq', 'payment_types_id_seq', 'users_id_seq'];
+foreach ($sequences as $seq) {
+    try {
+        DB::statement("ALTER SEQUENCE {$seq} RESTART WITH 1");
+    } catch (\Exception $e) {
+        // Ignore if sequence doesn't exist
+    }
+}
 
 echo "✓ All tables wiped (payments, students, payment_types, users, sessions, cache, jobs).\n";
 
