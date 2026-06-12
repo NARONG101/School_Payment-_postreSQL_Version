@@ -115,7 +115,6 @@
             @forelse($grades as $grade)
             <div class="grade-card" id="grade-card-{{ $grade }}"
                  data-grade="{{ $grade }}"
-                 onclick="filterGrade({{ json_encode($grade) }})"
                  role="button" tabindex="0"
                  aria-label="Filter by Grade {{ $grade }}">
                 <i class="fas fa-users grade-card-icon" aria-hidden="true"></i>
@@ -361,6 +360,14 @@ document.addEventListener('DOMContentLoaded', function () {
         applyFilter();
         document.querySelector('.card:last-of-type').scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
+
+    // Event delegation for grade cards
+    document.querySelector('.card-body').addEventListener('click', function (e) {
+        var card = e.target.closest('.grade-card');
+        if (card) {
+            filterGrade(parseInt(card.dataset.grade));
+        }
+    });
 
     document.querySelectorAll('.grade-card').forEach(function (card) {
         card.addEventListener('keydown', function (e) {
