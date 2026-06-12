@@ -99,7 +99,9 @@ class PaymentController extends Controller
             'payment_date'      => 'required|date',
             'covering_month'    => 'required|date',
             'next_payment_date' => 'nullable|date',
-            'time_type'         => 'required|in:' . implode(',', self::TIME_SLOTS),
+            'time_types'        => 'required|array|min:1',
+            'time_types.*'      => 'in:' . implode(',', self::TIME_SLOTS),
+            'months_covered'    => 'required|integer|min:1|max:12',
             'payment_method'    => 'required|in:cash,bank_transfer',
             'amount_due'        => 'nullable|numeric|min:0',
             'admin_fee'         => 'nullable|numeric|min:0',
@@ -112,33 +114,36 @@ class PaymentController extends Controller
         $paidDate      = Carbon::parse($validated['payment_date']);
         $coveringMonth = Carbon::parse($validated['covering_month'])->startOfMonth();
         $paymentDay    = (int) ($student->monthly_payment_day ?? $paidDate->day);
+        $monthsCovered = $validated['months_covered'];
 
-        // Next due = payment_day of month AFTER the covering month
+        // Next due = payment_day of month AFTER the covering month plus months covered
         if (!empty($validated['next_payment_date'])) {
             $nextDate = Carbon::parse($validated['next_payment_date']);
         } else {
-            $nextDate = Student::nextPaymentDateFrom($coveringMonth, $paymentDay);
+            $lastCoveringMonth = $coveringMonth->copy()->addMonths($monthsCovered - 1);
+            $nextDate = Student::nextPaymentDateFrom($lastCoveringMonth, $paymentDay);
         }
 
         // due_date = payment_day within the covering month (safe clamp)
         $lastDayCovering = (int) $coveringMonth->copy()->endOfMonth()->day;
         $dueDate         = $coveringMonth->copy()->day(min($paymentDay, $lastDayCovering));
 
-        // Calculate amounts
-        $amountDue = $validated['amount_due'] ?? (float)$student->monthly_fee;
-        $adminFee = $validated['admin_fee'] ?? 0;
-        $discount = $validated['discount'] ?? 0;
-        $subtotal = $amountDue + $adminFee;
-        $discountAmount = $subtotal * ($discount / 100);
-        $amountPaid = $subtotal - $discountAmount;
+        // Calculate amounts (multiply by months covered, discount on monthly fee only)
+        $amountDue = $validated['amount_due'] ?? (float)$student->monthly_fee * $monthsCovered;
+        $adminFee = 0;
+        $discount = $validated['discount'] ?? ($student->discount ?? 0);
+        $discountAmount = $amountDue * ($discount / 100);
+        $totalDue = ($amountDue - $discountAmount) + $adminFee;
+        $amountPaid = $totalDue; // Always fully paid
+        $balance = max(0, $totalDue - $amountPaid);
 
         $validated['receipt_number']    = Payment::generateReceiptNumber();
         $validated['amount_due']        = $amountDue;
         $validated['admin_fee']         = $adminFee;
         $validated['discount']          = $discount;
-        $validated['amount_paid']       = $amountPaid;
-        $validated['balance']           = 0;
-        $validated['status']            = 'paid';
+        $validated['amount_paid']        = $amountPaid;
+        $validated['balance']           = $balance;
+        $validated['status']            = $balance <= 0 ? 'paid' : ($amountPaid > 0 ? 'partial' : 'pending');
         $validated['created_by']        = Auth::id();
         $validated['due_date']          = $dueDate;
         $validated['deadline_date']     = $dueDate;
@@ -146,10 +151,18 @@ class PaymentController extends Controller
         $validated['payment_date']      = $paidDate;
 
         if (empty($validated['notes'])) {
-            $validated['notes'] = 'Payment for ' . $coveringMonth->format('F Y');
+            if ($monthsCovered == 1) {
+                $validated['notes'] = 'Payment for ' . $coveringMonth->format('F Y');
+            } else {
+                $lastMonth = $coveringMonth->copy()->addMonths($monthsCovered -1);
+                $validated['notes'] = 'Payment for ' . $coveringMonth->format('F Y') . ' - ' . $lastMonth->format('F Y');
+            }
         }
 
         unset($validated['covering_month']);
+        if (isset($validated['time_type'])) {
+            unset($validated['time_type']);
+        }
 
         if ($request->hasFile('photo')) {
             $validated['photo'] = $request->file('photo')->store('payments/photos', 'public');
@@ -194,7 +207,9 @@ class PaymentController extends Controller
         $validated = $request->validate([
             'payment_date'      => 'nullable|date',
             'payment_method'    => 'required|in:cash,bank_transfer',
-            'time_type'         => 'required|in:' . implode(',', self::TIME_SLOTS),
+            'time_types'        => 'required|array|min:1',
+            'time_types.*'      => 'in:' . implode(',', self::TIME_SLOTS),
+            'months_covered'    => 'required|integer|min:1|max:12',
             'photo'             => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'deadline_date'     => 'required|date',
             'next_payment_date' => 'nullable|date',
@@ -430,7 +445,7 @@ class PaymentController extends Controller
             Storage::disk('public')->delete($payment->photo);
         }
         $payment->delete();
-        return redirect()->route('payments.index')
+        return redirect()->back()
             ->with('success', 'Payment deleted successfully!');
     }
 
@@ -540,7 +555,7 @@ class PaymentController extends Controller
             'lastPayment'          => $lastPayment,
             'nextPaymentDate'      => null,
             'daysUntilNextPayment' => null,
-            'alertLevel'           => 'overdue',
+            'alertLevel'           => 'upcoming',
         ];
 
         if ($lastPayment && $lastPayment->payment_date) {
@@ -554,6 +569,15 @@ class PaymentController extends Controller
                     Carbon::parse($lastPayment->payment_date),
                     $paymentDay
                 );
+            }
+
+            // If next payment date is before June 2026, treat as normal
+            $juneStart = Carbon::parse('2026-06-01');
+            if ($next->lt($juneStart)) {
+                $data['nextPaymentDate']      = $next;
+                $data['daysUntilNextPayment'] = (int) $now->diffInDays($next, false);
+                $data['alertLevel']           = 'upcoming';
+                return $data;
             }
 
             $days = (int) $now->diffInDays($next, false);

@@ -213,6 +213,8 @@
                     <th>Subject</th>
                     <th>Come From</th>
                     <th>Time Slot</th>
+                    <th>Monthly Fee</th>
+                    <th>Discount</th>
                     <th>Enrolled</th>
                     <th>Payments</th>
                     <th>Actions</th>
@@ -232,16 +234,11 @@
                 @endphp
                 <tr data-search="{{ $search }}" data-grade="{{ $student->year_level }}">
                     <td>
-                        <div style="display:flex;align-items:center;gap:10px">
-                            <div class="stu-avatar" aria-hidden="true">
-                                {{ strtoupper(substr($student->first_name,0,1).substr($student->last_name,0,1)) }}
-                            </div>
-                            <div>
-                                <div style="font-weight:600;color:var(--text-primary)">{{ $student->full_name }}</div>
-                                @if($student->status !== 'active')
-                                    <span class="badge badge-gray" style="font-size:10px">{{ ucfirst($student->status ?? 'inactive') }}</span>
-                                @endif
-                            </div>
+                        <div>
+                            <div style="font-weight:600;color:var(--text-heading)">{{ $student->full_name }}</div>
+                            @if($student->status !== 'active')
+                                <span class="badge badge-gray" style="font-size:10px">{{ ucfirst($student->status ?? 'inactive') }}</span>
+                            @endif
                         </div>
                     </td>
                     <td><span class="mono" style="font-size:12px;color:var(--text-secondary)">{{ $student->student_id }}</span></td>
@@ -258,6 +255,14 @@
                     <td style="color:var(--text-secondary)">{{ $student->subject ?? '—' }}</td>
                     <td style="color:var(--text-secondary)">{{ $student->come_from ?? '—' }}</td>
                     <td style="color:var(--text-secondary);font-size:12px">{{ $student->time_type ?? '—' }}</td>
+                    <td style="color:var(--text-secondary);font-size:12px">${{ number_format($student->monthly_fee, 2) }}</td>
+                    <td style="color:var(--text-secondary);font-size:12px">
+                        @if($student->discount > 0)
+                            <span class="badge" style="background:rgba(34,197,94,0.12);color:var(--success)">{{ $student->discount }}%</span>
+                        @else
+                            —
+                        @endif
+                    </td>
                     <td style="font-size:12px;color:var(--text-muted)">{{ $student->enrollment_date->format('M d, Y') }}</td>
                     <td>
                         <span class="badge {{ $student->payments_count > 0 ? 'badge-success' : 'badge-gray' }}">
@@ -289,7 +294,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="10">
+                <tr><td colspan="12">
                     <div class="empty-state">
                         <i class="fas fa-user-graduate" aria-hidden="true"></i>
                         <p>No students found. <a href="{{ route('students.create') }}" style="color:var(--primary)">Enroll one</a></p>

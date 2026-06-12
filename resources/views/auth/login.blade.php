@@ -16,29 +16,29 @@
         html{-webkit-text-size-adjust:100%;}
         body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--login-bg);min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:16px;transition:background 0.25s;}
         .bg-pattern{position:fixed;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(26,86,219,0.18) 0%,transparent 50%),radial-gradient(ellipse at 80% 50%,rgba(124,58,237,0.12) 0%,transparent 50%);pointer-events:none;}
-        .login-card{background:var(--card-bg);border-radius:20px;padding:40px 36px;width:100%;max-width:400px;position:relative;z-index:1;box-shadow:0 25px 60px rgba(0,0,0,0.4);border:1px solid var(--border);transition:background 0.25s,border-color 0.25s;}
-        .brand{text-align:center;margin-bottom:28px;}
+        .login-card{background:var(--card-bg);border-radius:20px;padding:48px 44px;width:100%;max-width:480px;position:relative;z-index:1;box-shadow:0 25px 60px rgba(0,0,0,0.4);border:1px solid var(--border);transition:background 0.25s,border-color 0.25s;}
+        .brand{text-align:center;margin-bottom:32px;}
         .brand-icon{width:52px;height:52px;background:linear-gradient(135deg,#1a56db,#7c3aed);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:22px;color:#fff;}
-        .brand-logo{width:200px;height:100px;object-fit:contain;margin:0 auto 16px;display:block;}
-        .brand-name{font-size:20px;font-weight:800;color:var(--text-h);}
-        .brand-sub{font-size:15px;font-family:'Kantumruy Pro',sans-serif;color:var(--text-s);margin-top:4px;line-height:1.5;}
-        .form-group{margin-bottom:16px;}
-        .form-label{display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:var(--text-l);}
-        .form-control{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:15px;color:var(--input-text);background:var(--input-bg);font-family:inherit;outline:none;transition:border 0.15s,box-shadow 0.15s;-webkit-appearance:none;appearance:none;}
+        .brand-logo{width:240px;height:120px;object-fit:contain;margin:0 auto 18px;display:block;}
+        .brand-name{font-size:24px;font-weight:800;color:var(--text-h);}
+        .brand-sub{font-size:17px;font-family:'Kantumruy Pro',sans-serif;color:var(--text-s);margin-top:4px;line-height:1.5;}
+        .form-group{margin-bottom:20px;}
+        .form-label{display:block;margin-bottom:8px;font-size:14px;font-weight:600;color:var(--text-l);}
+        .form-control{width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;color:var(--input-text);background:var(--input-bg);font-family:inherit;outline:none;transition:border 0.15s,box-shadow 0.15s;-webkit-appearance:none;appearance:none;}
         .form-control:focus{border-color:#1a56db;box-shadow:0 0 0 3px rgba(26,86,219,0.15);}
         .form-control.is-invalid{border-color:#ef4444;}
-        .invalid-feedback{color:#ef4444;font-size:12px;margin-top:4px;}
-        .remember-row{display:flex;align-items:center;gap:8px;margin-bottom:20px;}
-        .remember-row input[type="checkbox"]{width:16px;height:16px;accent-color:#1a56db;cursor:pointer;}
-        .remember-row label{font-size:13px;color:var(--check-label);cursor:pointer;}
-        .btn-login{width:100%;padding:13px;background:linear-gradient(135deg,#1a56db,#1342b0);color:#fff;border:none;border-radius:9px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform 0.1s,box-shadow 0.1s;-webkit-tap-highlight-color:transparent;}
+        .invalid-feedback{color:#ef4444;font-size:13px;margin-top:5px;}
+        .remember-row{display:flex;align-items:center;gap:8px;margin-bottom:24px;}
+        .remember-row input[type="checkbox"]{width:18px;height:18px;accent-color:#1a56db;cursor:pointer;}
+        .remember-row label{font-size:14px;color:var(--check-label);cursor:pointer;}
+        .btn-login{width:100%;padding:15px;background:linear-gradient(135deg,#1a56db,#1342b0);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform 0.1s,box-shadow 0.1s;-webkit-tap-highlight-color:transparent;}
         .btn-login:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,86,219,0.4);}
         .btn-login:active{transform:translateY(0);box-shadow:none;}
         .btn-login:focus-visible{outline:2px solid #1a56db;outline-offset:2px;}
         .alert-danger{background:var(--err-bg);color:var(--err-text);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;border:1px solid var(--err-border);display:flex;align-items:flex-start;gap:8px;}
         .theme-btn{position:absolute;top:16px;right:16px;background:none;border:1px solid var(--border);border-radius:8px;width:34px;height:34px;cursor:pointer;color:var(--text-s);font-size:14px;display:flex;align-items:center;justify-content:center;transition:background 0.15s;}
         .theme-btn:hover{background:rgba(0,0,0,0.05);}
-        @media(max-width:480px){.login-card{padding:28px 20px;}}
+        @media(max-width:576px){.login-card{padding:32px 24px;max-width:100%;} .brand-logo{width:200px;height:100px;} .brand-name{font-size:20px;} .brand-sub{font-size:15px;}}
     </style>
 </head>
 <body>

@@ -34,7 +34,7 @@ class Payment extends Model
         'receipt_number', 'student_id', 'payment_type_id', 'amount_due',
         'admin_fee', 'discount', 'amount_paid', 'balance', 'payment_date', 'deadline_date', 'due_date',
         'status', 'payment_method', 'reference_number', 'photo', 'notes',
-        'semester', 'school_year', 'created_by', 'next_payment_date', 'time_type',
+        'semester', 'school_year', 'created_by', 'next_payment_date', 'time_type', 'time_types', 'months_covered',
     ];
 
     protected $casts = [
@@ -47,6 +47,7 @@ class Payment extends Model
         'discount'           => 'decimal:2',
         'amount_paid'        => 'decimal:2',
         'balance'            => 'decimal:2',
+        'time_types'         => 'array',
     ];
 
     public function student()
@@ -55,11 +56,55 @@ class Payment extends Model
     }
 
     /**
-     * Always store time_type as lowercase.
+     * Always store time_type as lowercase, and sync with time_types.
      */
     public function setTimeTypeAttribute(?string $value): void
     {
         $this->attributes['time_type'] = $value ? strtolower(trim($value)) : null;
+        if ($value) {
+            $this->attributes['time_types'] = json_encode([strtolower(trim($value))]);
+        } else {
+            $this->attributes['time_types'] = null;
+        }
+    }
+
+    /**
+     * Get time_type from time_types if available (backward compatibility).
+     */
+    public function getTimeTypeAttribute(?string $value): ?string
+    {
+        if ($this->time_types && is_array($this->time_types) && !empty($this->time_types)) {
+            return $this->time_types[0];
+        }
+        return $value;
+    }
+
+    /**
+     * Sync time_type when time_types is set.
+     *
+     * @param mixed $value
+     */
+    public function setTimeTypesAttribute(mixed $value): void
+    {
+        if (is_array($value)) {
+            $this->attributes['time_types'] = json_encode(array_map('strtolower', array_map('trim', $value)));
+            if (!empty($value)) {
+                $this->attributes['time_type'] = strtolower(trim($value[0]));
+            } else {
+                $this->attributes['time_type'] = null;
+            }
+        } elseif (is_string($value)) {
+            $this->attributes['time_types'] = $value;
+            $decoded = json_decode($value, true);
+            if (is_array($decoded) && !empty($decoded)) {
+                $this->attributes['time_type'] = strtolower(trim($decoded[0]));
+            } else {
+                $this->attributes['time_type'] = null;
+            }
+        } else {
+            $this->attributes['time_types'] = null;
+            $this->attributes['time_type'] = null;
+        }
     }
 
     public function paymentType()

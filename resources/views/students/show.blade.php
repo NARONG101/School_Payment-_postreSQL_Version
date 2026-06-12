@@ -2,10 +2,25 @@
 @section('title', $student->full_name)
 @section('page-title', $student->full_name)
 @section('topbar-back')
-    <button type="button" class="btn btn-outline btn-sm"
-            onclick="history.length>1?history.back():window.location='{{ route('students.index') }}'">
+    <button type="button" class="btn btn-outline btn-sm" id="back-btn" data-url="{{ route('students.index') }}">
         <i class="fas fa-arrow-left" aria-hidden="true"></i>
     </button>
+@endsection
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', function() {
+            if (history.length > 1) {
+                history.back();
+            } else {
+                window.location = backBtn.dataset.url;
+            }
+        });
+    }
+});
+</script>
 @endsection
 @section('topbar-actions')
     <a href="{{ route('payments.create', ['student_id'=>$student->id]) }}" class="btn btn-primary btn-sm">
@@ -22,6 +37,11 @@
     </button>
 @endsection
 @section('styles')
+@php
+    $nextPay = $student->next_payment_date;
+    $daysLeft = $student->days_until_next_payment;
+    $statusColor = $daysLeft < 0 ? 'var(--danger)' : ($daysLeft <= 7 ? 'var(--warning)' : 'var(--success)');
+@endphp
 <style>
 .student-avatar {
     width:72px; height:72px; background:var(--primary-light);
@@ -34,6 +54,16 @@
     background:var(--bg-card); border:1px solid var(--border);
     border-radius:var(--radius);
 }
+.next-payment-icon {
+    width:16px;
+    margin-top:2px;
+    font-size:13px;
+    flex-shrink:0;
+    color: {!! $statusColor !!};
+}
+.next-payment-text {
+    color: {!! $statusColor !!};
+}
 </style>
 @endsection
 @section('content')
@@ -42,9 +72,6 @@
     <div>
         <div class="card" style="margin-bottom:14px">
             <div class="card-body" style="text-align:center;padding:24px 20px">
-                <div class="student-avatar" aria-hidden="true">
-                    {{ strtoupper(substr($student->first_name,0,1).substr($student->last_name,0,1)) }}
-                </div>
                 <div style="font-size:18px;font-weight:800;color:var(--text-heading)">{{ $student->full_name }}</div>
                 <div class="mono" style="font-size:13px;color:var(--primary);margin:4px 0">{{ $student->student_id }}</div>
                 @if($student->status === 'active')
@@ -63,6 +90,8 @@
                     ['icon'=>'fas fa-phone',        'label'=>'Phone',     'val'=>$student->phone ?: 'N/A'],
                     ['icon'=>'fas fa-calendar',     'label'=>'Enrolled',  'val'=>$student->enrollment_date->format('M d, Y')],
                     ['icon'=>'fas fa-clock',        'label'=>'Time Slot', 'val'=>$student->time_type ?: 'N/A'],
+                    ['icon'=>'fas fa-dollar-sign',  'label'=>'Monthly Fee', 'val'=>'$'.number_format($student->monthly_fee, 2)],
+                    ['icon'=>'fas fa-percent',      'label'=>'Discount',  'val'=>($student->discount ?? 0).'%'],
                 ] as $info)
                 <div class="info-row">
                     <i class="{{ $info['icon'] }}" style="color:var(--text-muted);width:16px;margin-top:2px;font-size:13px;flex-shrink:0" aria-hidden="true"></i>
@@ -75,15 +104,15 @@
 
                 {{-- Next payment date with countdown --}}
                 @php
-                    $nextPay  = $student->next_payment_date;
+                    $nextPay = $student->next_payment_date;
                     $daysLeft = $student->days_until_next_payment;
                 @endphp
                 @if($nextPay)
                 <div class="info-row" style="border-bottom:none">
-                    <i class="fas fa-calendar-check" style="color:{{ $daysLeft < 0 ? 'var(--danger)' : ($daysLeft <= 7 ? 'var(--warning)' : 'var(--success)') }};width:16px;margin-top:2px;font-size:13px;flex-shrink:0" aria-hidden="true"></i>
+                    <i class="fas fa-calendar-check next-payment-icon" aria-hidden="true"></i>
                     <div>
                         <div class="info-label-sm">Next Payment</div>
-                        <div class="info-val-sm" style="color:{{ $daysLeft < 0 ? 'var(--danger)' : ($daysLeft <= 7 ? 'var(--warning)' : 'var(--success)') }}">
+                        <div class="info-val-sm next-payment-text">
                             {{ $nextPay->format('d M Y') }}
                             <span style="font-size:11px;font-weight:600;margin-left:4px">
                                 ({{ $daysLeft < 0 ? abs($daysLeft).'d overdue' : $daysLeft.'d left' }})
@@ -142,7 +171,7 @@
                         <td><span class="mono" style="font-size:12px;color:var(--primary)">{{ $payment->receipt_number }}</span></td>
                         <td style="color:var(--text-primary)">${{ number_format($payment->amount_due,2) }}</td>
                         <td style="color:var(--success);font-weight:600">${{ number_format($payment->amount_paid,2) }}</td>
-                        <td style="color:{{ $payment->balance > 0 ? 'var(--danger)' : 'var(--success)' }};font-weight:600">${{ number_format($payment->balance,2) }}</td>
+                        <td class="{{ $payment->balance > 0 ? 'payment-balance-positive' : 'payment-balance-zero' }}" style="font-weight:600">${{ number_format($payment->balance,2) }}</td>
                         <td style="font-size:12px;color:var(--text-muted)">
                             {{ $payment->due_date?->format('M d, Y') ?? $payment->payment_date?->format('M d, Y') ?? '—' }}
                             @if($payment->payment_date && $payment->due_date && $payment->payment_date->format('Y-m-d') !== $payment->due_date->format('Y-m-d'))
@@ -171,7 +200,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="8"><div class="empty-state"><i class="fas fa-receipt" aria-hidden="true"></i><p>No payments yet</p></div></td></tr>
+                    <tr><td colspan="12"><div class="empty-state"><i class="fas fa-receipt" aria-hidden="true"></i><p>No payments yet</p></div></td></tr>
                     @endforelse
                 </tbody>
             </table>

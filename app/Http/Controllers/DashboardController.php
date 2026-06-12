@@ -97,6 +97,13 @@ class DashboardController extends Controller
                 );
             }
 
+            // If next payment date is before June 2026, treat as normal
+            $juneStart = Carbon::parse('2026-06-01');
+            if ($nextDate->lt($juneStart)) {
+                $upcomingCount++;
+                continue;
+            }
+
             $daysLeft = (int) $now->diffInDays($nextDate, false);
 
             $alertLevel = match (true) {

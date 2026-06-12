@@ -30,7 +30,7 @@ class PaymentTypeController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         PaymentType::create($validated);
 
-        return redirect()->route('payment-types.index')
+        return redirect()->back()
             ->with('success', 'Payment type created successfully!');
     }
 
@@ -51,7 +51,7 @@ class PaymentTypeController extends Controller
         $validated['is_active'] = $request->boolean('is_active', false);
         $paymentType->update($validated);
 
-        return redirect()->route('payment-types.index')
+        return redirect()->back()
             ->with('success', 'Payment type updated successfully!');
     }
 
@@ -61,7 +61,7 @@ class PaymentTypeController extends Controller
             return back()->with('error', 'Cannot delete: this payment type has existing payments.');
         }
         $paymentType->delete();
-        return redirect()->route('payment-types.index')
+        return redirect()->back()
             ->with('success', 'Payment type deleted successfully!');
     }
 }

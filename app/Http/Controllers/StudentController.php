@@ -82,7 +82,8 @@ class StudentController extends Controller
             'monthly_payment_day' => 'required|integer|min:1|max:31',
             'monthly_fee'         => 'required|numeric|min:0|max:99999',
             'discount'            => 'nullable|numeric|min:0|max:100',
-            'time_type'           => 'required|in:' . implode(',', self::TIME_SLOTS),
+            'time_types'          => 'required|array|min:1',
+            'time_types.*'        => 'in:' . implode(',', self::TIME_SLOTS),
             'payment_method'      => 'required|in:cash,bank_transfer',
             'payment_photo'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'study_status'        => 'nullable|in:studying,stopped',
@@ -101,12 +102,12 @@ class StudentController extends Controller
         $validated['status'] = 'active';
 
         // Extract fields not in the students table
-        $timeType      = $validated['time_type'];
+        $timeTypes      = $validated['time_types'];
         $paymentMethod = $validated['payment_method'];
         $paymentPhoto  = $request->file('payment_photo');
         $discount      = $validated['discount'] ?? 0;
 
-        unset($validated['payment_method'], $validated['payment_photo'], $validated['discount']);
+        unset($validated['payment_method'], $validated['payment_photo'], $validated['time_type']);
 
         $student = Student::create($validated);
 
@@ -130,7 +131,7 @@ class StudentController extends Controller
             'amount_due'        => $validated['monthly_fee'],
             'admin_fee'         => $adminFee,
             'discount'          => $discount,
-            'amount_paid'       => $totalAmount,
+            'amount_paid'        => $totalAmount,
             'balance'           => 0,
             'payment_date'      => $enrollDate,
             'due_date'          => $enrollDate,
@@ -138,7 +139,7 @@ class StudentController extends Controller
             'next_payment_date' => $nextPaymentDate,
             'status'            => 'paid',
             'payment_method'    => $paymentMethod,
-            'time_type'         => $timeType,
+            'time_types'         => $timeTypes,
             'created_by'        => Auth::id(),
         ];
 
@@ -148,7 +149,7 @@ class StudentController extends Controller
 
         Payment::create($paymentData);
 
-        return redirect()->route('students.index')
+        return redirect()->back()
             ->with('success', 'Student enrolled successfully! First payment created.');
     }
 
@@ -192,7 +193,9 @@ class StudentController extends Controller
             'photo'               => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'monthly_payment_day' => 'required|integer|min:1|max:31',
             'monthly_fee'         => 'required|numeric|min:0|max:99999',
-            'time_type'           => 'required|in:' . implode(',', self::TIME_SLOTS),
+            'discount'            => 'nullable|numeric|min:0|max:100',
+            'time_types'          => 'required|array|min:1',
+            'time_types.*'        => 'in:' . implode(',', self::TIME_SLOTS),
             'study_status'        => 'nullable|in:studying,stopped',
         ]);
 
@@ -266,7 +269,7 @@ class StudentController extends Controller
                 __('app.grade'), __('app.weekday') . '/' . __('app.weekend'),
                 __('app.subject'), __('app.phone'), __('app.address'), __('app.come_from'),
                 __('app.date_of_birth'), __('app.enrollment_date'), __('app.monthly_fee'),
-                __('app.payment_day'), __('app.time_type'), __('app.status'), 'Total Payments',
+                'Discount', __('app.payment_day'), __('app.time_type'), __('app.status'), 'Total Payments',
             ]);
 
             // Group by grade
@@ -293,6 +296,7 @@ class StudentController extends Controller
                         $s->date_of_birth?->format('Y-m-d') ?? '',
                         $s->enrollment_date?->format('Y-m-d') ?? '',
                         $s->monthly_fee ?? '',
+                        $s->discount ?? 0,
                         $s->monthly_payment_day ?? '',
                         $s->time_type ?? '',
                         $s->study_status ? __('app.' . $s->study_status) : __('app.studying'),
@@ -322,7 +326,7 @@ class StudentController extends Controller
         $student->payments()->delete();
         $student->delete();
 
-        return redirect()->route('students.index')
+        return redirect()->back()
             ->with('success', 'Student removed successfully!');
     }
 }

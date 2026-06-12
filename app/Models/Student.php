@@ -14,12 +14,13 @@ class Student extends Model
         'student_id', 'first_name', 'last_name', 'phone',
         'address', 'come_from', 'subject', 'date_of_birth', 'gender',
         'year_level', 'enrollment_date', 'photo', 'monthly_payment_day',
-        'monthly_fee', 'time_type', 'status', 'study_status',
+        'monthly_fee', 'time_type', 'time_types', 'status', 'study_status', 'discount',
     ];
 
     protected $casts = [
         'enrollment_date' => 'date',
         'date_of_birth'   => 'date',
+        'time_types' => 'array',
     ];
 
     public function payments()
@@ -34,10 +35,55 @@ class Student extends Model
 
     /**
      * Always store time_type as lowercase to prevent case-mismatch bugs.
+     * Also sync with time_types.
      */
     public function setTimeTypeAttribute(?string $value): void
     {
         $this->attributes['time_type'] = $value ? strtolower(trim($value)) : null;
+        if ($value) {
+            $this->attributes['time_types'] = json_encode([strtolower(trim($value))]);
+        } else {
+            $this->attributes['time_types'] = null;
+        }
+    }
+
+    /**
+     * Get time_type from time_types if available (backward compatibility).
+     */
+    public function getTimeTypeAttribute(?string $value): ?string
+    {
+        if ($this->time_types && is_array($this->time_types) && !empty($this->time_types)) {
+            return $this->time_types[0];
+        }
+        return $value;
+    }
+
+    /**
+     * Sync time_type when time_types is set.
+     *
+     * @param mixed $value
+     */
+    public function setTimeTypesAttribute(mixed $value): void
+    {
+        if (is_array($value)) {
+            $this->attributes['time_types'] = json_encode(array_map('strtolower', array_map('trim', $value)));
+            if (!empty($value)) {
+                $this->attributes['time_type'] = strtolower(trim($value[0]));
+            } else {
+                $this->attributes['time_type'] = null;
+            }
+        } elseif (is_string($value)) {
+            $this->attributes['time_types'] = $value;
+            $decoded = json_decode($value, true);
+            if (is_array($decoded) && !empty($decoded)) {
+                $this->attributes['time_type'] = strtolower(trim($decoded[0]));
+            } else {
+                $this->attributes['time_type'] = null;
+            }
+        } else {
+            $this->attributes['time_types'] = null;
+            $this->attributes['time_type'] = null;
+        }
     }
 
     public function getTotalPaidAttribute(): float
@@ -155,12 +201,19 @@ class Student extends Model
         $prefix = 'STU-' . date('Y') . '-';
         $last = static::withTrashed()
             ->where('student_id', 'like', $prefix . '%')
-            ->latest()
+            ->orderBy('student_id', 'desc')
             ->first();
 
         $number = $last
             ? str_pad((int) substr($last->student_id, -5) + 1, 5, '0', STR_PAD_LEFT)
             : '00001';
+
+        // Ensure the generated ID is unique
+        $attempts = 0;
+        while (static::withTrashed()->where('student_id', $prefix . $number)->exists() && $attempts < 1000) {
+            $number = str_pad((int) $number + 1, 5, '0', STR_PAD_LEFT);
+            $attempts++;
+        }
 
         return $prefix . $number;
     }
