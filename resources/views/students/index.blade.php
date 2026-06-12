@@ -115,7 +115,7 @@
             @forelse($grades as $grade)
             <div class="grade-card" id="grade-card-{{ $grade }}"
                  data-grade="{{ $grade }}"
-                 onclick="filterGrade({{ $grade }})"
+                 onclick="filterGrade({{ json_encode($grade) }})"
                  role="button" tabindex="0"
                  aria-label="Filter by Grade {{ $grade }}">
                 <i class="fas fa-users grade-card-icon" aria-hidden="true"></i>
