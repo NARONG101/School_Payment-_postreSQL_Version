@@ -14,7 +14,7 @@ class LoginController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect('http://127.0.0.1:8000/');
+            return redirect()->route('dashboard');
         }
         return view('auth.login');
     }
@@ -41,7 +41,7 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
-            return redirect()->intended('http://127.0.0.1:8000/');
+            return redirect()->intended(route('dashboard'));
         }
 
         RateLimiter::hit($throttleKey, 60); // decay 60 seconds
@@ -56,6 +56,6 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('http://127.0.0.1:8000/login');
+        return redirect()->route('login');
     }
 }

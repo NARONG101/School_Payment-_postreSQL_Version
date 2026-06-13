@@ -10,6 +10,11 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    server: {
+        https: false, // FORCE NO HTTPS, ONLY HTTP!
+        host: 'localhost',
+        port: 5173,
+    },
     css: {
         preprocessorOptions: {
             scss: {

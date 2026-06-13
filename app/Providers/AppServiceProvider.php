@@ -20,13 +20,16 @@ class AppServiceProvider extends ServiceProvider
         if (! is_dir(storage_path('fonts'))) {
             @mkdir(storage_path('fonts'), 0755, true);
         }
-        // ── Force HTTPS ONLY on Render / production ─────────────
+        // ── URL Configuration ────────────────────────────────────────────────
         if (env('RENDER') || $this->app->environment('production')) {
+            // For Render/production - use HTTPS
             URL::forceScheme('https');
         } else {
-            // STRICTLY HTTP for local dev, NO HTTPS allowed!
+            // For LOCAL DEVELOPMENT ONLY - 100% FORCE HTTP
             URL::forceScheme('http');
             URL::forceRootUrl('http://127.0.0.1:8000');
+            $this->app['config']->set('app.url', 'http://127.0.0.1:8000');
+            $this->app['config']->set('session.secure', false);
         }
 
         // ── Strict model behaviour (catches N+1 & mass-assignment in dev) ──
