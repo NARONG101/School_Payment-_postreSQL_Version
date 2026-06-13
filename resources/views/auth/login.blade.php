@@ -59,7 +59,7 @@
             <span>{{ $errors->first() }}</span>
         </div>
         @endif
-        <form action="{{ route('login') }}" method="POST" novalidate>
+        <form action="http://127.0.0.1:8000/login" method="POST" novalidate>
             @csrf
             <div class="form-group">
                 <label class="form-label" for="email">Email Address</label>
