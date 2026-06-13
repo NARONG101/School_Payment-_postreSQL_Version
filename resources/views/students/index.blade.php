@@ -110,7 +110,7 @@
             {{ $allStudents->count() }} students total
         </div>
     </div>
-    <div class="card-body">
+    <div class="card-body" id="gradeCardsContainer">
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px">
             @forelse($grades as $grade)
             <div class="grade-card" id="grade-card-{{ $grade }}"
@@ -184,7 +184,7 @@
                     'enroll' => ['label'=>'Enrollment',  'icon'=>'fa-calendar'],
                     'grade'  => ['label'=>'Grade',       'icon'=>'fa-layer-group'],
                 ] as $key => $opt)
-                <a href="{{ route('students.index', ['sort' => $key, 'class_type' => $classType]) }}"
+                <a href="{{ route('students.index', array_merge(request()->query(), ['sort' => $key, 'class_type' => $classType])) }}"
                    class="sort-menu-item {{ $sortBy === $key ? 'sort-menu-active' : '' }}"
                    style="display:flex;align-items:center;gap:10px;padding:10px 14px;
                           text-decoration:none;color:var(--text-primary);font-size:13px;font-weight:500;
@@ -362,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // Event delegation for grade cards
-    document.querySelector('.card-body').addEventListener('click', function (e) {
+    document.getElementById('gradeCardsContainer').addEventListener('click', function (e) {
         var card = e.target.closest('.grade-card');
         if (card) {
             filterGrade(parseInt(card.dataset.grade));
