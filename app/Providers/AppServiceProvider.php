@@ -23,14 +23,16 @@ class AppServiceProvider extends ServiceProvider
         // ── Force HTTPS in production / on Render ─────────────
         if ($this->app->environment('production') || env('RENDER')) {
             URL::forceScheme('https');
+        } else {
+            URL::forceScheme('http');
         }
 
         // ── Strict model behaviour (catches N+1 & mass-assignment in dev) ──
-        Model::shouldBeStrict(! $this->app->isProduction());
+        Model::shouldBeStrict(! $this->app->environment('production'));
 
         // ── Global password rules ─────────────────────────────
         Password::defaults(function () {
-            return $this->app->isProduction()
+            return $this->app->environment('production')
                 ? Password::min(8)->mixedCase()->numbers()
                 : Password::min(6);
         });
