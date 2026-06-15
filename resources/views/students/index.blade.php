@@ -2,7 +2,7 @@
 @section('title', 'Students')
 @section('page-title', 'Students')
 @section('topbar-actions')
-    <a href="{{ route('students.export.csv', request()->query()) }}" class="btn btn-outline btn-sm">
+    <a href="#" id="csv-export-link" class="btn btn-outline btn-sm">
         <i class="fas fa-download" aria-hidden="true"></i> <span>CSV</span>
     </a>
     <a href="{{ route('students.create') }}" class="btn btn-primary btn-sm">
@@ -67,7 +67,13 @@
 
 @section('content')
 
-{{-- ── Class Type Filter ────────────────────────────────────── --}}
+{{-- Hidden div to store route URLs --}}
+<div id="route-storage"
+     data-students-index="{{ route('students.index') }}"
+     data-students-csv-export="{{ route('students.export.csv') }}"
+     style="display: none;"></div>
+
+{{-- ── Class Type Filter ───────────────────────────────────── --}}
 <div class="card" style="margin-bottom:14px">
     <div class="card-body" style="padding:14px 16px">
         <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
@@ -75,7 +81,8 @@
                 <i class="fas fa-filter" aria-hidden="true"></i> {{ __('app.all_classes') }}:
             </span>
             <div class="class-type-tabs">
-                <a href="{{ route('students.index', array_merge(request()->query(), ['class_type' => '', 'sort' => $sortBy])) }}"
+                <a href="#"
+                   data-class-type=""
                    class="class-type-tab {{ $classType === '' ? 'active' : '' }}">
                     <i class="fas fa-users"></i> {{ __('app.all_classes') }}
                     <span style="font-size:11px;opacity:0.8">({{ $allStudents->count() }})</span>
@@ -84,12 +91,14 @@
                     $weekdayCount = \App\Models\Student::where(function ($q) { $q->where('status','active')->orWhereNull('status'); })->where('time_type','like','mon-fri%')->count();
                     $weekendCount = \App\Models\Student::where(function ($q) { $q->where('status','active')->orWhereNull('status'); })->where('time_type','like','sat-sun%')->count();
                 @endphp
-                <a href="{{ route('students.index', array_merge(request()->query(), ['class_type' => 'weekday', 'sort' => $sortBy])) }}"
+                <a href="#"
+                   data-class-type="weekday"
                    class="class-type-tab {{ $classType === 'weekday' ? 'active-weekday' : '' }}">
                     <i class="fas fa-calendar-week"></i> {{ __('app.weekday') }}
                     <span style="font-size:11px;opacity:0.8">({{ $weekdayCount }})</span>
                 </a>
-                <a href="{{ route('students.index', array_merge(request()->query(), ['class_type' => 'weekend', 'sort' => $sortBy])) }}"
+                <a href="#"
+                   data-class-type="weekend"
                    class="class-type-tab {{ $classType === 'weekend' ? 'active-weekend' : '' }}">
                     <i class="fas fa-calendar-day"></i> {{ __('app.weekend') }}
                     <span style="font-size:11px;opacity:0.8">({{ $weekendCount }})</span>
@@ -112,15 +121,15 @@
     </div>
     <div class="card-body" id="gradeCardsContainer">
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px">
-            @forelse($grades as $grade)
-            <div class="grade-card" id="grade-card-{{ $grade }}"
-                 data-grade="{{ $grade }}"
+            @forelse($grades as $g)
+            <div class="grade-card" id="grade-card-{{ $g }}"
+                 data-grade="{{ $g }}"
                  role="button" tabindex="0"
-                 aria-label="Filter by Grade {{ $grade }}">
+                 aria-label="Filter by Grade {{ $g }}">
                 <i class="fas fa-users grade-card-icon" aria-hidden="true"></i>
-                <div class="grade-card-name">Grade {{ $grade }}</div>
+                <div class="grade-card-name">Grade {{ $g }}</div>
                 <div class="grade-card-count">
-                    {{ $byGrade->get($grade, collect())->count() }} students
+                    {{ $byGrade->get($g, collect())->count() }} students
                 </div>
             </div>
             @empty
@@ -184,11 +193,13 @@
                     'enroll' => ['label'=>'Enrollment',  'icon'=>'fa-calendar'],
                     'grade'  => ['label'=>'Grade',       'icon'=>'fa-layer-group'],
                 ] as $key => $opt)
-                <a href="{{ route('students.index', array_merge(request()->query(), ['sort' => $key, 'class_type' => $classType])) }}"
+                <a href="#"
+                   data-sort="{{ $key }}"
+                   data-class-type="{{ $classType }}"
                    class="sort-menu-item {{ $sortBy === $key ? 'sort-menu-active' : '' }}"
                    style="display:flex;align-items:center;gap:10px;padding:10px 14px;
                           text-decoration:none;color:var(--text-primary);font-size:13px;font-weight:500;
-                          border-bottom:1px solid var(--border);transition:background 0.1s">
+                          border-bottom:1px solid var(--border);transition:background 0.1s;cursor:pointer">
                     <i class="fas {{ $opt['icon'] }}" style="width:14px;color:var(--text-muted)" aria-hidden="true"></i>
                     {{ $opt['label'] }}
                     @if($sortBy === $key)
@@ -314,7 +325,32 @@ document.addEventListener('DOMContentLoaded', function () {
     var allRows    = Array.prototype.slice.call(document.querySelectorAll('#studentsTable tbody tr[data-search]'));
     var titleEl    = document.getElementById('tableTitle');
     var totalCount = allRows.length;
-    var activeGrade = null;
+    
+    // Read route URLs from data attributes
+    var routeStorage = document.getElementById('route-storage');
+    var studentsIndexRoute = routeStorage.dataset.studentsIndex;
+    var studentsCsvExportRoute = routeStorage.dataset.studentsCsvExport;
+    
+    // Helper to get URL params
+    function getUrlParam(name) {
+        var urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    // Helper to update URL params without reloading
+    function updateUrlParam(name, value) {
+        var url = new URL(window.location);
+        if (value) {
+            url.searchParams.set(name, value);
+        } else {
+            url.searchParams.delete(name);
+        }
+        window.history.replaceState({}, '', url);
+    }
+
+    // Initialize activeGrade from URL
+    var urlGrade = getUrlParam('grade');
+    var activeGrade = urlGrade ? parseInt(urlGrade) : null;
 
     /* ── Sort dropdown toggle ──────────────────────────── */
     var sortBtn  = document.getElementById('sortBtn');
@@ -345,17 +381,92 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Handle sort menu item clicks
+    sortMenu.addEventListener('click', function (e) {
+        var sortItem = e.target.closest('.sort-menu-item');
+        if (sortItem) {
+            e.preventDefault();
+            var sort = sortItem.dataset.sort;
+            var classType = sortItem.dataset.classType;
+            
+            // Build the new URL
+            var url = new URL(studentsIndexRoute);
+            url.searchParams.set('sort', sort);
+            if (classType) {
+                url.searchParams.set('class_type', classType);
+            } else {
+                url.searchParams.delete('class_type');
+            }
+            // Add the current grade from the browser's URL
+            var currentGrade = getUrlParam('grade');
+            if (currentGrade) {
+                url.searchParams.set('grade', currentGrade);
+            }
+            
+            // Navigate to the new URL
+            window.location.href = url.toString();
+        }
+    });
+
+    // Handle class type tab clicks
+    var classTypeTabsContainer = document.querySelector('.class-type-tabs');
+    classTypeTabsContainer.addEventListener('click', function (e) {
+        var tab = e.target.closest('.class-type-tab');
+        if (tab) {
+            e.preventDefault();
+            var classType = tab.dataset.classType;
+            
+            // Build the new URL
+            var url = new URL(studentsIndexRoute);
+            if (classType) {
+                url.searchParams.set('class_type', classType);
+            } else {
+                url.searchParams.delete('class_type');
+            }
+            // Add current sort
+            var currentSort = getUrlParam('sort');
+            if (currentSort) {
+                url.searchParams.set('sort', currentSort);
+            }
+            // Add current grade
+            var currentGrade = getUrlParam('grade');
+            if (currentGrade) {
+                url.searchParams.set('grade', currentGrade);
+            }
+            
+            // Navigate to the new URL
+            window.location.href = url.toString();
+        }
+    });
+
+    // Handle CSV export link click
+    var csvExportLink = document.getElementById('csv-export-link');
+    csvExportLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        // Build the CSV export URL with current parameters
+        var url = new URL(studentsCsvExportRoute);
+        // Add all current query parameters
+        var currentParams = new URLSearchParams(window.location.search);
+        for (var pair of currentParams.entries()) {
+            url.searchParams.set(pair[0], pair[1]);
+        }
+        // Navigate to the CSV URL
+        window.location.href = url.toString();
+    });
+
     /* ── Grade card filter ─────────────────────────────── */
     window.filterGrade = function (grade) {
         var cards = document.querySelectorAll('.grade-card');
         if (activeGrade === grade) {
             activeGrade = null;
             cards.forEach(function (c) { c.classList.remove('active'); });
+            updateUrlParam('grade', '');
         } else {
             activeGrade = grade;
             cards.forEach(function (c) {
                 c.classList.toggle('active', parseInt(c.dataset.grade) === grade);
             });
+            updateUrlParam('grade', grade);
         }
         applyFilter();
         document.querySelector('.card:last-of-type').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -392,6 +503,15 @@ document.addEventListener('DOMContentLoaded', function () {
         var gradeLabel = activeGrade !== null ? ' — Grade ' + activeGrade : '';
         titleEl.textContent = 'All Students' + gradeLabel +
             ' (' + (shown === totalCount ? totalCount : shown + ' of ' + totalCount) + ')';
+    }
+
+    // Initialize active grade on load
+    if (activeGrade !== null) {
+        var cards = document.querySelectorAll('.grade-card');
+        cards.forEach(function (c) {
+            c.classList.toggle('active', parseInt(c.dataset.grade) === activeGrade);
+        });
+        applyFilter();
     }
 
     /* Live search */

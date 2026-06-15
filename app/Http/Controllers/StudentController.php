@@ -27,8 +27,9 @@ class StudentController extends Controller
     public function index(Request $request)
     {
         // All students for the full table (with sort)
-        $sortBy    = $request->get('sort', 'oldest');
-        $classType = $request->get('class_type', ''); // 'weekday', 'weekend', or ''
+        $sortBy        = $request->get('sort', 'oldest');
+        $classType     = $request->get('class_type', ''); // 'weekday', 'weekend', or ''
+        $selectedGrade = $request->get('grade', '');
 
         $allQuery = Student::withCount('payments');
 
@@ -41,18 +42,18 @@ class StudentController extends Controller
 
         $allStudents = match ($sortBy) {
             'oldest'  => $allQuery->orderBy('id')->get(),
-            'az'      => $allQuery->orderBy('last_name')->orderBy('first_name')->get(),
-            'za'      => $allQuery->orderByDesc('last_name')->orderByDesc('first_name')->get(),
+            'az'     => $allQuery->orderBy('last_name')->orderBy('first_name')->get(),
+            'za'     => $allQuery->orderByDesc('last_name')->orderByDesc('first_name')->get(),
             'enroll'  => $allQuery->orderByDesc('enrollment_date')->get(),
-            'grade'   => $allQuery->orderByDesc('year_level')->orderBy('last_name')->get(),
-            default   => $allQuery->orderByDesc('id')->get(), // newest
+            'grade'  => $allQuery->orderByDesc('year_level')->orderBy('last_name')->get(),
+            default  => $allQuery->orderByDesc('id')->get(), // newest
         };
 
         // Grade cards — always grouped by grade
         $grades  = $allStudents->pluck('year_level')->unique()->sort()->values();
         $byGrade = $allStudents->groupBy('year_level');
 
-        return view('students.index', compact('allStudents', 'grades', 'byGrade', 'sortBy', 'classType'));
+        return view('students.index', compact('allStudents', 'grades', 'byGrade', 'sortBy', 'classType', 'selectedGrade'));
     }
 
     // ── Create ────────────────────────────────────────────────────────────────
@@ -216,8 +217,9 @@ class StudentController extends Controller
 
     public function exportCsv(Request $request)
     {
-        $sortBy    = $request->get('sort', 'oldest');
-        $classType = $request->get('class_type', '');
+        $sortBy        = $request->get('sort', 'oldest');
+        $classType     = $request->get('class_type', '');
+        $selectedGrade = $request->get('grade', '');
 
         $allQuery = Student::withCount('payments');
 
@@ -236,6 +238,11 @@ class StudentController extends Controller
             'grade'  => $allQuery->orderByDesc('year_level')->orderBy('last_name')->get(),
             default  => $allQuery->orderByDesc('id')->get(),
         };
+
+        // Filter by grade if provided (for CSV export)
+        if ($selectedGrade) {
+            $students = $students->where('year_level', $selectedGrade);
+        }
 
         $classLabel = match($classType) {
             'weekday' => '_weekday',
