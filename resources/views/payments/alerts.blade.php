@@ -264,7 +264,7 @@
     </form>
 </div>
 
-{{-- ── Month Folders for All Students ───────────────────────────────── --}}
+{{-- ── Month Cards ───────────────────────────────── --}}
 @if($allByMonth->isEmpty())
 <div class="card" style="margin-top:16px;">
     <div class="empty-state" style="padding:32px;">
@@ -280,113 +280,216 @@
     </div>
 </div>
 @else
-@foreach($allByMonth as $month)
-<div class="month-folder" style="margin-top:16px;">
-    <div class="month-folder-header">
-        <h3><i class="fas fa-folder-open"></i> {{ $month['monthLabel'] }} <span style="font-weight:400;color:var(--text-muted);font-size:13px">({{ count($month['students']) }})</span></h3>
-        @if($month['monthKey'] == $currentMonthKey)
-            <span class="badge badge-primary">Current Month</span>
-        @endif
+<div class="card" style="margin-top:16px;">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="card-title">
+            <i class="fas fa-calendar-alt" aria-hidden="true"></i> Select a Month
+        </div>
+        <span style="font-size:13px;color:var(--text-muted);">{{ $allByMonth->count() }} months with students</span>
     </div>
-    <div class="month-folder-content">
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Alert</th>
-                        <th>Student</th>
-                        <th>Grade</th>
-                        <th>Class</th>
-                        <th>Subject</th>
-                        <th>Last Payment</th>
-                        <th>Next Payment</th>
-                        <th>Days Left</th>
-                        <th>Monthly Fee</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($month['students'] as $data)
-                    @php
-                        $al       = $data['alertLevel'];
-                        $rowCls   = match($al) { 'overdue'=>'row-overdue','closely'=>'row-closely', default=>'' };
-                        $pillCls  = match($al) { 'overdue'=>'deadline-overdue','closely'=>'deadline-critical','upcoming'=>'deadline-normal', default=>'' };
-                        $pillLbl  = match($al) { 'overdue'=>'Overdue','closely'=>'Closely','upcoming'=>'Upcoming', default=>'Normal' };
-                    @endphp
-                    <tr class="{{ $rowCls }}">
-                        <td>
-                            <span class="deadline-pill {{ $pillCls }}">{{ $pillLbl }}</span>
-                        </td>
-                        <td>
-                            <a href="{{ route('students.show', $data['student']) }}" style="text-decoration:none">
-                                <div style="font-weight:600;color:var(--text-primary)">
-                                    {{ $data['student']->full_name }}
-                                    @if($data['student']->gender)
-                                        ({{ ucfirst($data['student']->gender) }})
-                                    @endif
-                                </div>
-                                <div style="font-size:11px;color:var(--text-muted)">{{ $data['student']->student_id }}</div>
-                            </a>
-                        </td>
-                        <td style="color:var(--text-secondary)">Grade {{ $data['student']->year_level ?? '—' }}</td>
-                        <td>
-                            @if(str_starts_with($data['student']->time_type ?? '', 'sat-sun'))
-                                <span class="badge" style="background:rgba(124,58,237,0.12);color:#7c3aed">{{ __('app.weekend') }}</span>
-                            @else
-                                <span class="badge badge-success">{{ __('app.weekday') }}</span>
-                            @endif
-                        </td>
-                        <td style="color:var(--text-secondary)">{{ $data['student']->subject ?? '—' }}</td>
-                        <td style="font-size:12px;color:var(--text-muted)">
-                            @if($data['lastPayment']?->due_date)
-                                {{ $data['lastPayment']->due_date->format('M d, Y') }}
-                                @if($data['lastPayment']->payment_date &&
-                                    $data['lastPayment']->payment_date->format('Y-m-d') !== $data['lastPayment']->due_date->format('Y-m-d'))
-                                    <div style="font-size:10px;color:var(--text-muted)">
-                                        paid {{ $data['lastPayment']->payment_date->format('M d, Y') }}
-                                    </div>
-                                @endif
-                            @else
-                                {{ $data['lastPayment']?->payment_date?->format('M d, Y') ?? '—' }}
-                            @endif
-                        </td>
-                        <td style="font-size:12px;font-weight:600;color:{{ ($data['daysUntilNextPayment'] ?? 1) < 0 ? 'var(--danger)' : (($data['daysUntilNextPayment'] ?? 99) <= 7 ? 'var(--warning)' : 'var(--primary)') }}">
-                            {{ $data['nextPaymentDate']?->format('M d, Y') ?? '—' }}
-                        </td>
-                        <td style="font-weight:700;min-width:80px">
-                            @if($data['daysUntilNextPayment'] !== null)
-                                @if($data['daysUntilNextPayment'] < 0)
-                                    <span class="text-danger">{{ abs($data['daysUntilNextPayment']) }}d late</span>
-                                @elseif($data['daysUntilNextPayment'] <= 7)
-                                    <span class="text-warning">{{ $data['daysUntilNextPayment'] }}d</span>
-                                @else
-                                    <span class="text-success">{{ $data['daysUntilNextPayment'] }}d</span>
-                                @endif
-                            @else
-                                <span class="text-muted">—</span>
-                            @endif
-                        </td>
-                        <td style="font-weight:600;color:var(--text-primary)">${{ number_format($data['student']->monthly_fee ?? 0, 2) }}</td>
-                        <td>
-                            <div style="display:flex;gap:4px">
-                                <a href="{{ route('students.show', $data['student']) }}"
-                                   class="btn btn-icon btn-outline" title="View student">
-                                    <i class="fas fa-user" style="font-size:11px" aria-hidden="true"></i>
-                                </a>
-                                <a href="{{ route('payments.create') }}?student_id={{ $data['student']->id }}"
-                                   class="btn btn-icon btn-outline" title="Add payment" style="color:var(--primary)">
-                                    <i class="fas fa-plus" style="font-size:11px" aria-hidden="true"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;">
+            @foreach($allByMonth as $index => $month)
+            <div class="month-card" 
+                 data-month-key="{{ $month['monthKey'] }}"
+                 data-month-index="{{ $index }}"
+                 style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg-card);"
+                 onmouseover="this.style.borderColor='var(--primary)';this.style.boxShadow='var(--shadow-md)'"
+                 onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+                <div style="position:relative;display:inline-block;">
+                    <i class="fas fa-folder-open" style="font-size:32px;color:var(--primary);"></i>
+                    @if(count($month['students']) > 0)
+                    <span style="position:absolute;top:-8px;right:-12px;background:var(--primary);color:#fff;font-size:10px;font-weight:900;padding:2px 8px;border-radius:20px;">
+                        {{ count($month['students']) }}
+                    </span>
+                    @endif
+                </div>
+                <div style="font-weight:700;margin-top:10px;">{{ $month['monthLabel'] }}</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+                    @if($month['monthKey'] == $currentMonthKey)
+                        <span style="color:var(--primary);font-weight:600;">Current Month</span>
+                    @else
+                        {{ count($month['students']) }} student{{ count($month['students']) != 1 ? 's' : '' }}
+                    @endif
+                </div>
+            </div>
+            @endforeach
         </div>
     </div>
 </div>
-@endforeach
+
+{{-- ── Selected Month's Students ───────────────────────────────── --}}
+<div id="selected-month-container" style="display:none;margin-top:16px;"></div>
+
+<script id="month-students-template" type="text/html">
+<div class="card">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="card-title" id="selected-month-title">
+            <i class="fas fa-folder-open" aria-hidden="true"></i> <span id="selected-month-name"></span>
+            <span style="font-size:13px;font-weight:400;color:var(--text-muted);margin-left:6px;" id="selected-month-count"></span>
+        </div>
+        <button id="back-to-months" class="btn btn-outline btn-sm">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i> Back to Months
+        </button>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Alert</th>
+                    <th>Student</th>
+                    <th>Grade</th>
+                    <th>Class</th>
+                    <th>Subject</th>
+                    <th>Last Payment</th>
+                    <th>Next Payment</th>
+                    <th>Days Left</th>
+                    <th>Monthly Fee</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="selected-month-tbody"></tbody>
+        </table>
+    </div>
+</div>
+</script>
+
+<script>
+// Store month data in JavaScript
+const allMonthsData = @json($allByMonth);
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Bind month card clicks
+    document.querySelectorAll('.month-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const index = parseInt(this.dataset.monthIndex);
+            showMonthStudents(index);
+        });
+    });
+
+    // Bind back button click
+    document.body.addEventListener('click', function(e) {
+        if (e.target.id === 'back-to-months' || e.target.closest('#back-to-months')) {
+            document.getElementById('selected-month-container').style.display = 'none';
+        }
+    });
+});
+
+function showMonthStudents(index) {
+    const month = allMonthsData[index];
+    const container = document.getElementById('selected-month-container');
+    const template = document.getElementById('month-students-template').innerHTML;
+
+    container.innerHTML = template;
+    container.style.display = 'block';
+
+    // Populate month title
+    document.getElementById('selected-month-name').textContent = month.monthLabel;
+    document.getElementById('selected-month-count').textContent = 
+        `(${month.students.length} student${month.students.length !== 1 ? 's' : ''})`;
+
+    // Populate students table
+    const tbody = document.getElementById('selected-month-tbody');
+    tbody.innerHTML = '';
+
+    month.students.forEach(data => {
+        const row = document.createElement('tr');
+        
+        // Determine row class and badge
+        let rowCls = '';
+        let pillCls = '';
+        let pillLbl = 'Normal';
+        
+        if (data.alertLevel === 'overdue') {
+            rowCls = 'row-overdue';
+            pillCls = 'deadline-overdue';
+            pillLbl = 'Overdue';
+        } else if (data.alertLevel === 'closely') {
+            rowCls = 'row-closely';
+            pillCls = 'deadline-critical';
+            pillLbl = 'Closely';
+        } else {
+            pillCls = 'deadline-normal';
+            pillLbl = 'Upcoming';
+        }
+        
+        row.className = rowCls;
+        
+        // Build days left display
+        let daysLeftHtml = '<span class="text-muted">—</span>';
+        if (data.daysUntilNextPayment !== null) {
+            if (data.daysUntilNextPayment < 0) {
+                daysLeftHtml = `<span class="text-danger">${Math.abs(data.daysUntilNextPayment)}d late</span>`;
+            } else if (data.daysUntilNextPayment <= 7) {
+                daysLeftHtml = `<span class="text-warning">${data.daysUntilNextPayment}d</span>`;
+            } else {
+                daysLeftHtml = `<span class="text-success">${data.daysUntilNextPayment}d</span>`;
+            }
+        }
+        
+        // Build class badge
+        let classBadge = '';
+        if (data.student.time_type && data.student.time_type.startsWith('sat-sun')) {
+            classBadge = '<span class="badge" style="background:rgba(124,58,237,0.12);color:#7c3aed">Weekend</span>';
+        } else {
+            classBadge = '<span class="badge badge-success">Weekday</span>';
+        }
+        
+        // Build last payment text
+        let lastPaymentText = '—';
+        if (data.lastPayment) {
+            if (data.lastPayment.due_date_formatted) {
+                lastPaymentText = data.lastPayment.due_date_formatted;
+                if (data.lastPayment.payment_date_formatted) {
+                    lastPaymentText += `<div style="font-size:10px;color:var(--text-muted)">paid ${data.lastPayment.payment_date_formatted}</div>`;
+                }
+            } else if (data.lastPayment.payment_date_formatted) {
+                lastPaymentText = data.lastPayment.payment_date_formatted;
+            }
+        }
+        
+        // Build next payment color
+        const nextPaymentColor = (data.daysUntilNextPayment ?? 1) < 0 
+            ? 'var(--danger)' 
+            : ((data.daysUntilNextPayment ?? 99) <= 7 ? 'var(--warning)' : 'var(--primary)');
+        
+        // Build gender text
+        const genderText = data.student.gender 
+            ? ` (${data.student.gender.charAt(0).toUpperCase() + data.student.gender.slice(1)})` 
+            : '';
+        
+        // Build row HTML
+        row.innerHTML = `
+            <td><span class="deadline-pill ${pillCls}">${pillLbl}</span></td>
+            <td>
+                <a href="/students/${data.student.id}" style="text-decoration:none">
+                    <div style="font-weight:600;color:var(--text-primary)">${data.student.full_name}${genderText}</div>
+                    <div style="font-size:11px;color:var(--text-muted)">${data.student.student_id || ''}</div>
+                </a>
+            </td>
+            <td style="color:var(--text-secondary)">Grade ${data.student.year_level || '—'}</td>
+            <td>${classBadge}</td>
+            <td style="color:var(--text-secondary)">${data.student.subject || '—'}</td>
+            <td style="font-size:12px;color:var(--text-muted)">${lastPaymentText}</td>
+            <td style="font-size:12px;font-weight:600;color:${nextPaymentColor}">${data.nextPaymentDateFormatted || '—'}</td>
+            <td style="font-weight:700;min-width:80px">${daysLeftHtml}</td>
+            <td style="font-weight:600;color:var(--text-primary)">$${(data.student.monthly_fee || 0).toFixed(2)}</td>
+            <td>
+                <div style="display:flex;gap:4px">
+                    <a href="/students/${data.student.id}" class="btn btn-icon btn-outline" title="View student">
+                        <i class="fas fa-user" style="font-size:11px" aria-hidden="true"></i>
+                    </a>
+                    <a href="/payments/create?student_id=${data.student.id}" class="btn btn-icon btn-outline" title="Add payment" style="color:var(--primary)">
+                        <i class="fas fa-plus" style="font-size:11px" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+</script>
 @endif
 
 @endsection

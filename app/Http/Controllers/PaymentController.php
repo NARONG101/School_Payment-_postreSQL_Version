@@ -554,8 +554,14 @@ class PaymentController extends Controller
         $lastPayment = $student->payments->first();
         $data = [
             'student'              => $student,
-            'lastPayment'          => $lastPayment,
+            'lastPayment'          => $lastPayment ? [
+                'due_date' => $lastPayment->due_date,
+                'due_date_formatted' => $lastPayment->due_date?->format('M d, Y'),
+                'payment_date' => $lastPayment->payment_date,
+                'payment_date_formatted' => $lastPayment->payment_date?->format('M d, Y'),
+            ] : null,
             'nextPaymentDate'      => null,
+            'nextPaymentDateFormatted' => null,
             'daysUntilNextPayment' => null,
             'alertLevel'           => 'upcoming',
             'overdueMonth'         => null,
@@ -579,6 +585,7 @@ class PaymentController extends Controller
             $days = (int) $now->diffInDays($next, false);
 
             $data['nextPaymentDate']      = $next;
+            $data['nextPaymentDateFormatted'] = $next->format('M d, Y');
             $data['daysUntilNextPayment'] = $days;
             $data['alertLevel']           = match (true) {
                 $days < 0  => 'overdue',
