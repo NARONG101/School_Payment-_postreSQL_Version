@@ -559,6 +559,8 @@ class PaymentController extends Controller
             'daysUntilNextPayment' => null,
             'alertLevel'           => 'upcoming',
             'overdueMonth'         => null,
+            'monthKey'             => null,
+            'monthLabel'           => null,
         ];
 
         if ($lastPayment && $lastPayment->payment_date) {
@@ -581,9 +583,11 @@ class PaymentController extends Controller
             $data['alertLevel']           = match (true) {
                 $days < 0  => 'overdue',
                 $days <= 7 => 'closely',
-                default    => 'upcoming',
+                default   => 'upcoming',
             };
             $data['overdueMonth']         = $days < 0 ? $next->format('F Y') : null;
+            $data['monthKey']             = $next->format('Y-m');
+            $data['monthLabel']           = $next->format('F Y');
         }
 
         return $data;
@@ -593,9 +597,10 @@ class PaymentController extends Controller
 
     public function deadlineAlerts(Request $request)
     {
-        $now       = Carbon::now();
-        $classType = $request->get('class_type', '');
-        $students  = $this->activeStudentsWithLastPayment()->get();
+        $now               = Carbon::now();
+        $currentMonthKey   = $now->format('Y-m');
+        $classType         = $request->get('class_type', '');
+        $students          = $this->activeStudentsWithLastPayment()->get();
 
         // Apply class type filter
         if ($classType === 'weekday') {
@@ -604,10 +609,11 @@ class PaymentController extends Controller
             $students = $students->filter(fn ($s) => str_starts_with($s->time_type ?? '', 'sat-sun'));
         }
 
-        $overdue  = collect();
-        $closely  = collect();
-        $upcoming = collect();
-        $all      = collect();
+        $overdue         = collect();
+        $overdueByMonth  = collect();
+        $closely         = collect();
+        $upcoming        = collect();
+        $all             = collect();
 
         foreach ($students as $student) {
             $data = $this->buildStudentAlertData($student, $now);
@@ -618,6 +624,15 @@ class PaymentController extends Controller
                 default   => $upcoming->push($data),
             };
         }
+
+        // Group overdue by month
+        $overdueByMonth = $overdue->groupBy('monthKey')->map(function ($items, $monthKey) {
+            return [
+                'monthKey' => $monthKey,
+                'monthLabel' => $items->first()['monthLabel'],
+                'students' => $items,
+            ];
+        })->sortByDesc('monthKey')->values();
 
         // Sort: overdue (most days late first) → closely (soonest first) → upcoming (soonest first)
         $all = $all->sortBy(function ($d) {
@@ -651,6 +666,8 @@ class PaymentController extends Controller
 
         return view('payments.alerts', [
             'overdue'         => $overdue,
+            'overdueByMonth'  => $overdueByMonth,
+            'currentMonthKey' => $currentMonthKey,
             'closely'         => $closely,
             'upcoming'        => $upcoming,
             'allStudentData'  => $filtered,
