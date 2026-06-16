@@ -637,14 +637,14 @@ class PaymentController extends Controller
             };
         }
 
-        // Group ALL students by month
+        // Group ALL students by month, sorted descending
         $allByMonth = $all->groupBy('monthKey')->map(function ($items, $monthKey) {
             return [
                 'monthKey' => $monthKey,
                 'monthLabel' => $items->first()['monthLabel'],
                 'students' => $items,
             ];
-        })->sortBy('monthKey')->values();
+        })->sortByDesc('monthKey')->values();
 
         // ── Filter / search for all students ────────────
         $filterLevel = $request->get('filter', 'all'); // all | overdue | closely | upcoming
@@ -665,14 +665,14 @@ class PaymentController extends Controller
             return true;
         })->values();
 
-        // Re-group filtered students by month
+        // Re-group filtered students by month, sorted descending
         $filteredByMonth = $filtered->groupBy('monthKey')->map(function ($items, $monthKey) {
             return [
                 'monthKey' => $monthKey,
                 'monthLabel' => $items->first()['monthLabel'],
                 'students' => $items,
             ];
-        })->sortBy('monthKey')->values();
+        })->sortByDesc('monthKey')->values();
 
         $availableGrades = $all->pluck('student.year_level')->unique()->filter()->sort()->values();
 
