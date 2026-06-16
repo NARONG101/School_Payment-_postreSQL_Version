@@ -280,7 +280,7 @@
     </div>
 </div>
 @else
-<div id="month-data-container" style="display:none;" data-months="{{ htmlspecialchars(json_encode($allByMonth), ENT_QUOTES) }}"></div>
+<div id="month-data-container" style="display:none;" data-months='{{ json_encode($allByMonth, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) }}'></div>
 <div class="card" style="margin-top:16px;">
     <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
         <div class="card-title">
