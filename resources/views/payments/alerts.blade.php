@@ -372,8 +372,11 @@ document.addEventListener('DOMContentLoaded', function () {
     let allMonthsData = [];
     if (monthDataContainer) {
         try {
+            console.log('Raw month data:', monthDataContainer.dataset.months);
             allMonthsData = JSON.parse(monthDataContainer.dataset.months || '[]');
+            console.log('Parsed month data:', allMonthsData);
         } catch (e) {
+            console.error('Error parsing month data:', e);
             allMonthsData = [];
         }
     }
