@@ -379,11 +379,26 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     
+    // Function to update URL without reloading
+    function updateUrl(params) {
+        const url = new URL(window.location);
+        Object.keys(params).forEach(key => {
+            if (params[key] === null) {
+                url.searchParams.delete(key);
+            } else {
+                url.searchParams.set(key, params[key]);
+            }
+        });
+        window.history.replaceState({}, '', url);
+    }
+
     // Bind month card clicks
     document.querySelectorAll('.month-card').forEach(card => {
         card.addEventListener('click', function() {
             const index = parseInt(this.dataset.monthIndex);
+            const monthKey = this.dataset.monthKey;
             showMonthStudents(index);
+            updateUrl({ selected_month: monthKey });
         });
     });
 
@@ -391,8 +406,19 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.addEventListener('click', function(e) {
         if (e.target.id === 'back-to-months' || e.target.closest('#back-to-months')) {
             document.getElementById('selected-month-container').style.display = 'none';
+            updateUrl({ selected_month: null });
         }
     });
+
+    // Check URL for selected month on page load
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedMonthKey = urlParams.get('selected_month');
+    if (selectedMonthKey) {
+        const monthIndex = allMonthsData.findIndex(month => month.monthKey === selectedMonthKey);
+        if (monthIndex !== -1) {
+            showMonthStudents(monthIndex);
+        }
+    }
     
     /* ── Client-side live search + grade filter ─────────────── */
     function filterRows() {
