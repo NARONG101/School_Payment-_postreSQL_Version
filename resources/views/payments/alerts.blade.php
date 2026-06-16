@@ -3,6 +3,9 @@
 @section('page-title', 'Deadline Alerts')
 
 @section('topbar-actions')
+    <a href="{{ route('history.monthly') }}" class="btn btn-outline btn-sm">
+        <i class="fas fa-folder-open" aria-hidden="true"></i> <span>Monthly History</span>
+    </a>
     <a href="{{ route('payments.alerts.export.csv', request()->query()) }}" class="btn btn-outline btn-sm">
         <i class="fas fa-download" aria-hidden="true"></i> <span>CSV</span>
     </a>
