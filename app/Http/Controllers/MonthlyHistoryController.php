@@ -9,22 +9,21 @@ use Carbon\Exceptions\InvalidFormatException;
 
 class MonthlyHistoryController extends Controller
 {
-    // ── Index: list all months that have payments + current month if unpaid students exist ─────────────────────────────
+    // ── Index: list all months that have payments + months with overdue students ─────────────────────────────
 
     public function index()
     {
         $months = collect();
 
-        // Get active students with their paid payments
+        // Get active students with all their payments
         $activeStudents = Student::where(function ($q) {
             $q->where('status', 'active')->orWhereNull('status');
-        })->with(['payments' => fn ($q) => $q->select('id', 'student_id', 'due_date', 'payment_date', 'status')
-            ->where('status', 'paid')
-            ->whereNotNull('due_date')])->get();
+        })->with(['payments' => fn ($q) => $q->select('id', 'student_id', 'due_date', 'payment_date', 'status', 'next_payment_date')
+            ->orderByDesc('due_date')])->get();
 
         // Process paid payments to build months
         $activeStudents->each(function ($student) use (&$months) {
-            foreach ($student->payments as $payment) {
+            foreach ($student->payments->where('status', 'paid') as $payment) {
                 // Use due_date (covering month) instead of payment_date
                 $d     = $payment->due_date ?? $payment->payment_date;
                 if (!$d) continue;
@@ -48,36 +47,45 @@ class MonthlyHistoryController extends Controller
             }
         });
 
-        // Check if there are any active students who haven't paid for current month
+        // Now check for overdue students to add their unpaid month
         $now = Carbon::now();
-        $currentMonthStart = $now->copy()->startOfMonth();
-        $currentMonthEnd = $now->copy()->endOfMonth();
-        $hasUnpaidStudentsForCurrentMonth = false;
-
         foreach ($activeStudents as $student) {
-            // Check if student has any paid payment for current month
-            $hasPaidForCurrentMonth = $student->payments->contains(function ($payment) use ($currentMonthStart, $currentMonthEnd) {
-                $paymentDate = $payment->due_date ?? $payment->payment_date;
-                if (!$paymentDate) return false;
-                return $paymentDate->between($currentMonthStart, $currentMonthEnd);
-            });
+            // Get last paid payment or use enrollment date
+            $lastPaidPayment = $student->payments->where('status', 'paid')->first();
+            $paymentDay = (int) ($student->monthly_payment_day ?? 1);
 
-            if (!$hasPaidForCurrentMonth) {
-                $hasUnpaidStudentsForCurrentMonth = true;
-                break;
+            if ($lastPaidPayment && $lastPaidPayment->next_payment_date) {
+                $nextPaymentDate = Carbon::parse($lastPaidPayment->next_payment_date);
+            } elseif ($lastPaidPayment) {
+                $nextPaymentDate = Student::nextPaymentDateFrom(
+                    Carbon::parse($lastPaidPayment->payment_date),
+                    $paymentDay
+                );
+            } elseif ($student->enrollment_date) {
+                $nextPaymentDate = Student::nextPaymentDateFrom(
+                    Carbon::parse($student->enrollment_date),
+                    $paymentDay
+                );
+            } else {
+                continue;
             }
-        }
 
-        // Add current month only if there are unpaid students
-        $currentKey = "{$now->year}-{$now->month}";
-        if ($hasUnpaidStudentsForCurrentMonth && !$months->has($currentKey)) {
-            $months->put($currentKey, [
-                'year'  => $now->year,
-                'month' => $now->month,
-                'label' => $now->format('F Y'),
-                'slug'  => $now->format('Y-m'),
-                'count' => 0,
-            ]);
+            // Check if next payment date is in the past (overdue)
+            if ($nextPaymentDate->lt($now)) {
+                $year = $nextPaymentDate->year;
+                $month = $nextPaymentDate->month;
+                $key = "{$year}-{$month}";
+                if (! $months->has($key)) {
+                    $date = Carbon::create($year, $month, 1);
+                    $months->put($key, [
+                        'year'  => $year,
+                        'month' => $month,
+                        'label' => $date->format('F Y'),
+                        'slug'  => $date->format('Y-m'),
+                        'count' => 0,
+                    ]);
+                }
+            }
         }
 
         // Sort newest first
@@ -86,7 +94,7 @@ class MonthlyHistoryController extends Controller
         return view('history.monthly', compact('months'));
     }
 
-    // ── Show: skip grade picker — show ALL students for current month, paid for others ─
+    // ── Show: skip grade picker — show ALL students for month if overdue or current, else paid only ─
 
     public function show(string $yearMonth)
     {
@@ -94,20 +102,47 @@ class MonthlyHistoryController extends Controller
         $now = Carbon::now();
         $isCurrentMonth = ($date->year === $now->year && $date->month === $now->month);
 
-        // Get students: if current month, show all active students; otherwise show only paid students
+        // Get students: show all active students if month is current or has overdue students, else only paid students
         $studentsQuery = Student::where(function ($q) {
             $q->where('status', 'active')->orWhereNull('status');
-        })
-        ->with(['payments' => function ($q) use ($date) {
+        })->with(['payments' => function ($q) use ($date) {
             $q->whereYear('due_date',  $date->year)
               ->whereMonth('due_date', $date->month)
               ->orderByDesc('id');
-        }])
-        ->orderBy('year_level')
-        ->orderBy('last_name')
-        ->get();
+        }])->orderBy('year_level')->orderBy('last_name')->get();
 
-        if (!$isCurrentMonth) {
+        // Check if this month has any overdue students
+        $monthStart = $date->copy()->startOfMonth();
+        $monthEnd = $date->copy()->endOfMonth();
+        $hasOverdueStudentsForThisMonth = false;
+
+        foreach ($studentsQuery as $student) {
+            $lastPaidPayment = $student->payments->where('status', 'paid')->first();
+            $paymentDay = (int) ($student->monthly_payment_day ?? 1);
+
+            if ($lastPaidPayment && $lastPaidPayment->next_payment_date) {
+                $nextPaymentDate = Carbon::parse($lastPaidPayment->next_payment_date);
+            } elseif ($lastPaidPayment) {
+                $nextPaymentDate = Student::nextPaymentDateFrom(
+                    Carbon::parse($lastPaidPayment->payment_date),
+                    $paymentDay
+                );
+            } elseif ($student->enrollment_date) {
+                $nextPaymentDate = Student::nextPaymentDateFrom(
+                    Carbon::parse($student->enrollment_date),
+                    $paymentDay
+                );
+            } else {
+                continue;
+            }
+
+            if ($nextPaymentDate->between($monthStart, $monthEnd) && $nextPaymentDate->lt($now)) {
+                $hasOverdueStudentsForThisMonth = true;
+                break;
+            }
+        }
+
+        if (!$isCurrentMonth && !$hasOverdueStudentsForThisMonth) {
             $students = $studentsQuery->filter(fn ($s) => $s->payments->where('status', 'paid')->isNotEmpty());
         } else {
             $students = $studentsQuery;
