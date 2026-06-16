@@ -60,10 +60,10 @@
     <div class="card-header">
         <div class="card-title">
             <i class="fas fa-layer-group" aria-hidden="true"></i>
-            Grades with Payments
+            {{ $isCurrentMonth ? 'All Grades' : 'Grades with Payments' }}
         </div>
         <div style="font-size:13px;color:var(--text-muted)">
-            {{ $students->count() }} students paid in {{ $date->format('F Y') }}
+            {{ $students->count() }} {{ $isCurrentMonth ? 'students' : 'students paid' }} in {{ $date->format('F Y') }}
         </div>
     </div>
     <div class="card-body">
@@ -168,72 +168,125 @@
             </thead>
             <tbody id="histBody">
                 @forelse($students as $student)
-                @foreach($student->payments as $payment)
-                <tr data-name="{{ strtolower($student->full_name) }}"
-                    data-grade="{{ $student->year_level }}"
-                    data-amount="{{ $payment->amount_paid }}"
-                    data-paid-id="{{ $payment->id }}"
-                    data-search="{{ strtolower(implode(' ', array_filter([
-                        $student->full_name,
-                        $student->student_id,
-                        $student->subject ?? '',
-                        'grade '.$student->year_level,
-                    ]))) }}">
-                    <td>
-                        <div style="display:flex;align-items:center;gap:10px">
-                            <div class="stu-avatar" aria-hidden="true">
-                                {{ strtoupper(substr($student->first_name,0,1).substr($student->last_name,0,1)) }}
-                            </div>
-                            <div>
-                                <div style="font-weight:600;color:var(--text-primary)">
-                                    {{ $student->full_name }}
-                                    @if($student->gender)
-                                    ({{ ucfirst($student->gender) }})
-                                    @endif
+                    @if($student->payments->isNotEmpty())
+                        @foreach($student->payments as $payment)
+                        <tr data-name="{{ strtolower($student->full_name) }}"
+                            data-grade="{{ $student->year_level }}"
+                            data-amount="{{ $payment->amount_paid }}"
+                            data-paid-id="{{ $payment->id }}"
+                            data-search="{{ strtolower(implode(' ', array_filter([
+                                $student->full_name,
+                                $student->student_id,
+                                $student->subject ?? '',
+                                'grade '.$student->year_level,
+                            ]))) }}">
+                            <td>
+                                <div style="display:flex;align-items:center;gap:10px">
+                                    <div class="stu-avatar" aria-hidden="true">
+                                        {{ strtoupper(substr($student->first_name,0,1).substr($student->last_name,0,1)) }}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:600;color:var(--text-primary)">
+                                            {{ $student->full_name }}
+                                            @if($student->gender)
+                                            ({{ ucfirst($student->gender) }})
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="mono" style="font-size:12px;color:var(--text-secondary)">
-                            {{ $student->student_id }}
-                        </span>
-                    </td>
-                    <td><span class="badge badge-primary">Grade {{ $student->year_level }}</span></td>
-                    <td style="color:var(--text-secondary)">{{ $student->subject ?? '—' }}</td>
-                    <td style="font-size:12px;color:var(--text-secondary)">{{ $payment->time_type ?? '—' }}</td>
-                    <td style="font-size:12px;color:var(--text-muted)">
-                        {{ $payment->payment_date?->format('M d, Y') ?? '—' }}
-                    </td>
-                    <td style="font-size:12px;color:var(--text-muted)">
-                        {{ $payment->due_date?->format('M d, Y') ?? '—' }}
-                    </td>
-                    <td style="font-weight:700;color:var(--success)">
-                        ${{ number_format($payment->amount_paid, 2) }}
-                    </td>
-                    <td style="font-size:12px;color:var(--text-muted)">
-                        {{ $payment->next_payment_date?->format('M d, Y') ?? '—' }}
-                    </td>
-                    <td>
-                        <div style="display:flex;gap:4px">
-                            <a href="{{ route('payments.show', $payment) }}"
-                               class="btn btn-icon btn-outline" title="View payment">
-                                <i class="fas fa-eye" style="font-size:12px" aria-hidden="true"></i>
-                            </a>
-                            <a href="{{ route('payments.receipt', $payment) }}"
-                               class="btn btn-icon btn-outline" title="Receipt"
-                               target="_blank" rel="noopener">
-                                <i class="fas fa-file-pdf" style="font-size:12px" aria-hidden="true"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
+                            </td>
+                            <td>
+                                <span class="mono" style="font-size:12px;color:var(--text-secondary)">
+                                    {{ $student->student_id }}
+                                </span>
+                            </td>
+                            <td><span class="badge badge-primary">Grade {{ $student->year_level }}</span></td>
+                            <td style="color:var(--text-secondary)">{{ $student->subject ?? '—' }}</td>
+                            <td style="font-size:12px;color:var(--text-secondary)">{{ $payment->time_type ?? '—' }}</td>
+                            <td style="font-size:12px;color:var(--text-muted)">
+                                {{ $payment->payment_date?->format('M d, Y') ?? '—' }}
+                            </td>
+                            <td style="font-size:12px;color:var(--text-muted)">
+                                {{ $payment->due_date?->format('M d, Y') ?? '—' }}
+                            </td>
+                            <td style="font-weight:700;color:var(--success)">
+                                ${{ number_format($payment->amount_paid, 2) }}
+                            </td>
+                            <td style="font-size:12px;color:var(--text-muted)">
+                                {{ $payment->next_payment_date?->format('M d, Y') ?? '—' }}
+                            </td>
+                            <td>
+                                <div style="display:flex;gap:4px">
+                                    <a href="{{ route('payments.show', $payment) }}"
+                                       class="btn btn-icon btn-outline" title="View payment">
+                                        <i class="fas fa-eye" style="font-size:12px" aria-hidden="true"></i>
+                                    </a>
+                                    <a href="{{ route('payments.receipt', $payment) }}"
+                                       class="btn btn-icon btn-outline" title="Receipt"
+                                       target="_blank" rel="noopener">
+                                        <i class="fas fa-file-pdf" style="font-size:12px" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    @else
+                        <tr data-name="{{ strtolower($student->full_name) }}"
+                            data-grade="{{ $student->year_level }}"
+                            data-amount="0"
+                            data-paid-id="0"
+                            data-search="{{ strtolower(implode(' ', array_filter([
+                                $student->full_name,
+                                $student->student_id,
+                                $student->subject ?? '',
+                                'grade '.$student->year_level,
+                            ]))) }}">
+                            <td>
+                                <div style="display:flex;align-items:center;gap:10px">
+                                    <div class="stu-avatar" aria-hidden="true">
+                                        {{ strtoupper(substr($student->first_name,0,1).substr($student->last_name,0,1)) }}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:600;color:var(--text-primary)">
+                                            {{ $student->full_name }}
+                                            @if($student->gender)
+                                            ({{ ucfirst($student->gender) }})
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="mono" style="font-size:12px;color:var(--text-secondary)">
+                                    {{ $student->student_id }}
+                                </span>
+                            </td>
+                            <td><span class="badge badge-primary">Grade {{ $student->year_level }}</span></td>
+                            <td style="color:var(--text-secondary)">{{ $student->subject ?? '—' }}</td>
+                            <td style="font-size:12px;color:var(--text-secondary)">{{ $student->time_type ?? '—' }}</td>
+                            <td style="font-size:12px;color:var(--danger)"><strong>Not Paid Yet</strong></td>
+                            <td style="font-size:12px;color:var(--text-muted)">{{ $date->format('M Y') }}</td>
+                            <td style="font-weight:700;color:var(--text-muted)">$0.00</td>
+                            <td style="font-size:12px;color:var(--text-muted)">{{ $student->payments->first()?->next_payment_date?->format('M d, Y') ?? '—' }}</td>
+                            <td>
+                                <div style="display:flex;gap:4px">
+                                    <a href="{{ route('payments.create') }}?student_id={{ $student->id }}"
+                                       class="btn btn-icon btn-primary" title="Record Payment">
+                                        <i class="fas fa-plus" style="font-size:12px" aria-hidden="true"></i>
+                                    </a>
+                                    <a href="{{ route('students.show', $student) }}"
+                                       class="btn btn-icon btn-outline" title="View Student">
+                                        <i class="fas fa-user" style="font-size:12px" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @endif
                 @empty
                 <tr><td colspan="10">
                     <div class="empty-state">
                         <i class="fas fa-calendar-times" aria-hidden="true"></i>
-                        <p>No paid students for {{ $date->format('F Y') }}</p>
+                        <p>No students for {{ $date->format('F Y') }}</p>
                     </div>
                 </td></tr>
                 @endforelse

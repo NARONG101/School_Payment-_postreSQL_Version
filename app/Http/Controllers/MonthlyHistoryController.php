@@ -9,7 +9,7 @@ use Carbon\Exceptions\InvalidFormatException;
 
 class MonthlyHistoryController extends Controller
 {
-    // ── Index: list all months that have payments ─────────────────────────────
+    // ── Index: list all months that have payments + current month ─────────────────────────────
 
     public function index()
     {
@@ -45,36 +45,55 @@ class MonthlyHistoryController extends Controller
             }
         });
 
+        // Add current month even if there are no paid payments yet
+        $now = Carbon::now();
+        $currentKey = "{$now->year}-{$now->month}";
+        if (! $months->has($currentKey)) {
+            $months->put($currentKey, [
+                'year'  => $now->year,
+                'month' => $now->month,
+                'label' => $now->format('F Y'),
+                'slug'  => $now->format('Y-m'),
+                'count' => 0,
+            ]);
+        }
+
         // Sort newest first
         $months = $months->sortByDesc('year')->sortByDesc('month')->values();
 
         return view('history.monthly', compact('months'));
     }
 
-    // ── Show: skip grade picker — show ALL paid students for this month directly ─
+    // ── Show: skip grade picker — show ALL students for current month, paid for others ─
 
     public function show(string $yearMonth)
     {
         $date = $this->parseYearMonth($yearMonth);
+        $now = Carbon::now();
+        $isCurrentMonth = ($date->year === $now->year && $date->month === $now->month);
 
-        // Get all paid students for this month, sorted by payment id DESC (most recent first)
-        $students = Student::where(function ($q) {
+        // Get students: if current month, show all active students; otherwise show only paid students
+        $studentsQuery = Student::where(function ($q) {
             $q->where('status', 'active')->orWhereNull('status');
         })
         ->with(['payments' => function ($q) use ($date) {
             $q->whereYear('due_date',  $date->year)
               ->whereMonth('due_date', $date->month)
-              ->where('status', 'paid')
               ->orderByDesc('id');
         }])
         ->orderBy('year_level')
         ->orderBy('last_name')
-        ->get()
-        ->filter(fn ($s) => $s->payments->isNotEmpty());
+        ->get();
+
+        if (!$isCurrentMonth) {
+            $students = $studentsQuery->filter(fn ($s) => $s->payments->where('status', 'paid')->isNotEmpty());
+        } else {
+            $students = $studentsQuery;
+        }
 
         $gradeLevels = $students->pluck('year_level')->unique()->sort()->values();
 
-        return view('history.month-students', compact('yearMonth', 'date', 'students', 'gradeLevels'));
+        return view('history.month-students', compact('yearMonth', 'date', 'students', 'gradeLevels', 'isCurrentMonth'));
     }
 
     // ── Students: list paid students for a month + grade ─────────────────────
