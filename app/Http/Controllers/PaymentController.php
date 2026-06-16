@@ -637,12 +637,13 @@ class PaymentController extends Controller
             };
         }
 
-        // Group ALL students by month, sorted descending
+        // Group ALL students by month, sorted descending, and sort students within month
         $allByMonth = $all->groupBy('monthKey')->map(function ($items, $monthKey) {
+            $sortedStudents = $items->sortBy('daysUntilNextPayment')->values();
             return [
                 'monthKey' => $monthKey,
                 'monthLabel' => $items->first()['monthLabel'],
-                'students' => $items,
+                'students' => $sortedStudents,
             ];
         })->sortByDesc('monthKey')->values();
 
@@ -665,12 +666,13 @@ class PaymentController extends Controller
             return true;
         })->values();
 
-        // Re-group filtered students by month, sorted descending
+        // Re-group filtered students by month, sorted descending, and sort students within month
         $filteredByMonth = $filtered->groupBy('monthKey')->map(function ($items, $monthKey) {
+            $sortedStudents = $items->sortBy('daysUntilNextPayment')->values();
             return [
                 'monthKey' => $monthKey,
                 'monthLabel' => $items->first()['monthLabel'],
-                'students' => $items,
+                'students' => $sortedStudents,
             ];
         })->sortByDesc('monthKey')->values();
 
