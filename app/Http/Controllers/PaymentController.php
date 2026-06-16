@@ -560,16 +560,13 @@ class PaymentController extends Controller
                 'year_level'        => $student->year_level,
                 'time_type'         => $student->time_type,
                 'subject'           => $student->subject,
-                'monthly_fee'       => $student->monthly_fee,
+                'monthly_fee'       => (float) ($student->monthly_fee ?? 0),
                 'gender'            => $student->gender,
             ],
             'lastPayment'          => $lastPayment ? [
-                'due_date' => $lastPayment->due_date,
                 'due_date_formatted' => $lastPayment->due_date?->format('M d, Y'),
-                'payment_date' => $lastPayment->payment_date,
                 'payment_date_formatted' => $lastPayment->payment_date?->format('M d, Y'),
             ] : null,
-            'nextPaymentDate'      => null,
             'nextPaymentDateFormatted' => null,
             'daysUntilNextPayment' => null,
             'alertLevel'           => 'upcoming',
@@ -593,7 +590,6 @@ class PaymentController extends Controller
 
             $days = (int) $now->diffInDays($next, false);
 
-            $data['nextPaymentDate']      = $next;
             $data['nextPaymentDateFormatted'] = $next->format('M d, Y');
             $data['daysUntilNextPayment'] = $days;
             $data['alertLevel']           = match (true) {
