@@ -280,6 +280,7 @@
     </div>
 </div>
 @else
+<div id="month-data-container" style="display:none;" data-months="{{ htmlspecialchars(json_encode($allByMonth), ENT_QUOTES) }}"></div>
 <div class="card" style="margin-top:16px;">
     <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
         <div class="card-title">
@@ -353,12 +354,30 @@
     </div>
 </div>
 </script>
+@endif
 
+@endsection
+
+@section('scripts')
 <script>
-// Store month data in JavaScript
-const allMonthsData = @json($allByMonth);
-
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
+    var form      = document.getElementById('alertFilterForm');
+    var searchInp = document.getElementById('alertSearch');
+    var gradeEl   = document.getElementById('alertGrade');
+    var countEl   = document.querySelector('.card-title');
+    var totalCount = {{ $totalCount }};
+    
+    // Get month data from data attribute
+    const monthDataContainer = document.getElementById('month-data-container');
+    let allMonthsData = [];
+    if (monthDataContainer) {
+        try {
+            allMonthsData = JSON.parse(monthDataContainer.dataset.months || '[]');
+        } catch (e) {
+            allMonthsData = [];
+        }
+    }
+    
     // Bind month card clicks
     document.querySelectorAll('.month-card').forEach(card => {
         card.addEventListener('click', function() {
@@ -373,142 +392,14 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('selected-month-container').style.display = 'none';
         }
     });
-});
-
-function showMonthStudents(index) {
-    const month = allMonthsData[index];
-    const container = document.getElementById('selected-month-container');
-    const template = document.getElementById('month-students-template').innerHTML;
-
-    container.innerHTML = template;
-    container.style.display = 'block';
-
-    // Populate month title
-    document.getElementById('selected-month-name').textContent = month.monthLabel;
-    document.getElementById('selected-month-count').textContent = 
-        `(${month.students.length} student${month.students.length !== 1 ? 's' : ''})`;
-
-    // Populate students table
-    const tbody = document.getElementById('selected-month-tbody');
-    tbody.innerHTML = '';
-
-    month.students.forEach(data => {
-        const row = document.createElement('tr');
-        
-        // Determine row class and badge
-        let rowCls = '';
-        let pillCls = '';
-        let pillLbl = 'Normal';
-        
-        if (data.alertLevel === 'overdue') {
-            rowCls = 'row-overdue';
-            pillCls = 'deadline-overdue';
-            pillLbl = 'Overdue';
-        } else if (data.alertLevel === 'closely') {
-            rowCls = 'row-closely';
-            pillCls = 'deadline-critical';
-            pillLbl = 'Closely';
-        } else {
-            pillCls = 'deadline-normal';
-            pillLbl = 'Upcoming';
-        }
-        
-        row.className = rowCls;
-        
-        // Build days left display
-        let daysLeftHtml = '<span class="text-muted">—</span>';
-        if (data.daysUntilNextPayment !== null) {
-            if (data.daysUntilNextPayment < 0) {
-                daysLeftHtml = `<span class="text-danger">${Math.abs(data.daysUntilNextPayment)}d late</span>`;
-            } else if (data.daysUntilNextPayment <= 7) {
-                daysLeftHtml = `<span class="text-warning">${data.daysUntilNextPayment}d</span>`;
-            } else {
-                daysLeftHtml = `<span class="text-success">${data.daysUntilNextPayment}d</span>`;
-            }
-        }
-        
-        // Build class badge
-        let classBadge = '';
-        if (data.student.time_type && data.student.time_type.startsWith('sat-sun')) {
-            classBadge = '<span class="badge" style="background:rgba(124,58,237,0.12);color:#7c3aed">Weekend</span>';
-        } else {
-            classBadge = '<span class="badge badge-success">Weekday</span>';
-        }
-        
-        // Build last payment text
-        let lastPaymentText = '—';
-        if (data.lastPayment) {
-            if (data.lastPayment.due_date_formatted) {
-                lastPaymentText = data.lastPayment.due_date_formatted;
-                if (data.lastPayment.payment_date_formatted) {
-                    lastPaymentText += `<div style="font-size:10px;color:var(--text-muted)">paid ${data.lastPayment.payment_date_formatted}</div>`;
-                }
-            } else if (data.lastPayment.payment_date_formatted) {
-                lastPaymentText = data.lastPayment.payment_date_formatted;
-            }
-        }
-        
-        // Build next payment color
-        const nextPaymentColor = (data.daysUntilNextPayment ?? 1) < 0 
-            ? 'var(--danger)' 
-            : ((data.daysUntilNextPayment ?? 99) <= 7 ? 'var(--warning)' : 'var(--primary)');
-        
-        // Build gender text
-        const genderText = data.student.gender 
-            ? ` (${data.student.gender.charAt(0).toUpperCase() + data.student.gender.slice(1)})` 
-            : '';
-        
-        // Build row HTML
-        row.innerHTML = `
-            <td><span class="deadline-pill ${pillCls}">${pillLbl}</span></td>
-            <td>
-                <a href="/students/${data.student.id}" style="text-decoration:none">
-                    <div style="font-weight:600;color:var(--text-primary)">${data.student.full_name}${genderText}</div>
-                    <div style="font-size:11px;color:var(--text-muted)">${data.student.student_id || ''}</div>
-                </a>
-            </td>
-            <td style="color:var(--text-secondary)">Grade ${data.student.year_level || '—'}</td>
-            <td>${classBadge}</td>
-            <td style="color:var(--text-secondary)">${data.student.subject || '—'}</td>
-            <td style="font-size:12px;color:var(--text-muted)">${lastPaymentText}</td>
-            <td style="font-size:12px;font-weight:600;color:${nextPaymentColor}">${data.nextPaymentDateFormatted || '—'}</td>
-            <td style="font-weight:700;min-width:80px">${daysLeftHtml}</td>
-            <td style="font-weight:600;color:var(--text-primary)">$${(data.student.monthly_fee || 0).toFixed(2)}</td>
-            <td>
-                <div style="display:flex;gap:4px">
-                    <a href="/students/${data.student.id}" class="btn btn-icon btn-outline" title="View student">
-                        <i class="fas fa-user" style="font-size:11px" aria-hidden="true"></i>
-                    </a>
-                    <a href="/payments/create?student_id=${data.student.id}" class="btn btn-icon btn-outline" title="Add payment" style="color:var(--primary)">
-                        <i class="fas fa-plus" style="font-size:11px" aria-hidden="true"></i>
-                    </a>
-                </div>
-            </td>
-        `;
-        
-        tbody.appendChild(row);
-    });
-}
-</script>
-@endif
-
-@endsection
-
-@section('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var form      = document.getElementById('alertFilterForm');
-    var searchInp = document.getElementById('alertSearch');
-    var gradeEl   = document.getElementById('alertGrade');
-    var tableRows = document.querySelectorAll('tbody tr');
-    var countEl   = document.querySelector('.card-title');
-    var totalCount = {{ $totalCount }};
-
+    
     /* ── Client-side live search + grade filter ─────────────── */
     function filterRows() {
         var term  = searchInp ? searchInp.value.trim().toLowerCase() : '';
         var grade = gradeEl   ? gradeEl.value : '';
         var shown = 0;
+        
+        var tableRows = document.querySelectorAll('#selected-month-container tbody tr');
 
         tableRows.forEach(function (row) {
             var text      = row.textContent.toLowerCase();
@@ -549,6 +440,131 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* Status pills (All/Overdue/Closely/Upcoming) still do server-side filter
        since they need to rebuild the sorted list */
+    
+    function showMonthStudents(index) {
+        const month = allMonthsData[index];
+        if (!month) return;
+        
+        const container = document.getElementById('selected-month-container');
+        const template = document.getElementById('month-students-template');
+        if (!template) return;
+        
+        container.innerHTML = template.innerHTML;
+        container.style.display = 'block';
+
+        // Populate month title
+        const selectedMonthName = document.getElementById('selected-month-name');
+        const selectedMonthCount = document.getElementById('selected-month-count');
+        
+        if (selectedMonthName) selectedMonthName.textContent = month.monthLabel;
+        if (selectedMonthCount) selectedMonthCount.textContent = 
+            `(${month.students.length} student${month.students.length !== 1 ? 's' : ''})`;
+
+        // Populate students table
+        const tbody = document.getElementById('selected-month-tbody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+
+        month.students.forEach(data => {
+            const row = document.createElement('tr');
+            
+            // Determine row class and badge
+            let rowCls = '';
+            let pillCls = '';
+            let pillLbl = 'Normal';
+            
+            if (data.alertLevel === 'overdue') {
+                rowCls = 'row-overdue';
+                pillCls = 'deadline-overdue';
+                pillLbl = 'Overdue';
+            } else if (data.alertLevel === 'closely') {
+                rowCls = 'row-closely';
+                pillCls = 'deadline-critical';
+                pillLbl = 'Closely';
+            } else {
+                pillCls = 'deadline-normal';
+                pillLbl = 'Upcoming';
+            }
+            
+            row.className = rowCls;
+            
+            // Build days left display
+            let daysLeftHtml = '<span class="text-muted">—</span>';
+            if (data.daysUntilNextPayment !== null) {
+                if (data.daysUntilNextPayment < 0) {
+                    daysLeftHtml = `<span class="text-danger">${Math.abs(data.daysUntilNextPayment)}d late</span>`;
+                } else if (data.daysUntilNextPayment <= 7) {
+                    daysLeftHtml = `<span class="text-warning">${data.daysUntilNextPayment}d</span>`;
+                } else {
+                    daysLeftHtml = `<span class="text-success">${data.daysUntilNextPayment}d</span>`;
+                }
+            }
+            
+            // Build class badge
+            let classBadge = '';
+            if (data.student.time_type && data.student.time_type.startsWith('sat-sun')) {
+                classBadge = '<span class="badge" style="background:rgba(124,58,237,0.12);color:#7c3aed">Weekend</span>';
+            } else {
+                classBadge = '<span class="badge badge-success">Weekday</span>';
+            }
+            
+            // Build last payment text
+            let lastPaymentText = '—';
+            if (data.lastPayment) {
+                if (data.lastPayment.due_date_formatted) {
+                    lastPaymentText = data.lastPayment.due_date_formatted;
+                    if (data.lastPayment.payment_date_formatted) {
+                        lastPaymentText += `<div style="font-size:10px;color:var(--text-muted)">paid ${data.lastPayment.payment_date_formatted}</div>`;
+                    }
+                } else if (data.lastPayment.payment_date_formatted) {
+                    lastPaymentText = data.lastPayment.payment_date_formatted;
+                }
+            }
+            
+            // Build next payment color
+            const nextPaymentColor = (data.daysUntilNextPayment ?? 1) < 0 
+                ? 'var(--danger)' 
+                : ((data.daysUntilNextPayment ?? 99) <= 7 ? 'var(--warning)' : 'var(--primary)');
+            
+            // Build gender text
+            const genderText = data.student.gender 
+                ? ` (${data.student.gender.charAt(0).toUpperCase() + data.student.gender.slice(1)})` 
+                : '';
+            
+            // Build row HTML
+            row.innerHTML = `
+                <td><span class="deadline-pill ${pillCls}">${pillLbl}</span></td>
+                <td>
+                    <a href="/students/${data.student.id}" style="text-decoration:none">
+                        <div style="font-weight:600;color:var(--text-primary)">${data.student.full_name}${genderText}</div>
+                        <div style="font-size:11px;color:var(--text-muted)">${data.student.student_id || ''}</div>
+                    </a>
+                </td>
+                <td style="color:var(--text-secondary)">Grade ${data.student.year_level || '—'}</td>
+                <td>${classBadge}</td>
+                <td style="color:var(--text-secondary)">${data.student.subject || '—'}</td>
+                <td style="font-size:12px;color:var(--text-muted)">${lastPaymentText}</td>
+                <td style="font-size:12px;font-weight:600;color:${nextPaymentColor}">${data.nextPaymentDateFormatted || '—'}</td>
+                <td style="font-weight:700;min-width:80px">${daysLeftHtml}</td>
+                <td style="font-weight:600;color:var(--text-primary)">$${(data.student.monthly_fee || 0).toFixed(2)}</td>
+                <td>
+                    <div style="display:flex;gap:4px">
+                        <a href="/students/${data.student.id}" class="btn btn-icon btn-outline" title="View student">
+                            <i class="fas fa-user" style="font-size:11px" aria-hidden="true"></i>
+                        </a>
+                        <a href="/payments/create?student_id=${data.student.id}" class="btn btn-icon btn-outline" title="Add payment" style="color:var(--primary)">
+                            <i class="fas fa-plus" style="font-size:11px" aria-hidden="true"></i>
+                        </a>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+        
+        filterRows();
+    }
 });
 </script>
 @endsection
