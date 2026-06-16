@@ -9,18 +9,21 @@ use Carbon\Exceptions\InvalidFormatException;
 
 class MonthlyHistoryController extends Controller
 {
-    // ── Index: list all months that have payments + current month ─────────────────────────────
+    // ── Index: list all months that have payments + current month if unpaid students exist ─────────────────────────────
 
     public function index()
     {
         $months = collect();
 
-        Student::where(function ($q) {
+        // Get active students with their paid payments
+        $activeStudents = Student::where(function ($q) {
             $q->where('status', 'active')->orWhereNull('status');
         })->with(['payments' => fn ($q) => $q->select('id', 'student_id', 'due_date', 'payment_date', 'status')
             ->where('status', 'paid')
-            ->whereNotNull('due_date')])->get()
-        ->each(function ($student) use (&$months) {
+            ->whereNotNull('due_date')])->get();
+
+        // Process paid payments to build months
+        $activeStudents->each(function ($student) use (&$months) {
             foreach ($student->payments as $payment) {
                 // Use due_date (covering month) instead of payment_date
                 $d     = $payment->due_date ?? $payment->payment_date;
@@ -45,10 +48,29 @@ class MonthlyHistoryController extends Controller
             }
         });
 
-        // Add current month even if there are no paid payments yet
+        // Check if there are any active students who haven't paid for current month
         $now = Carbon::now();
+        $currentMonthStart = $now->copy()->startOfMonth();
+        $currentMonthEnd = $now->copy()->endOfMonth();
+        $hasUnpaidStudentsForCurrentMonth = false;
+
+        foreach ($activeStudents as $student) {
+            // Check if student has any paid payment for current month
+            $hasPaidForCurrentMonth = $student->payments->contains(function ($payment) use ($currentMonthStart, $currentMonthEnd) {
+                $paymentDate = $payment->due_date ?? $payment->payment_date;
+                if (!$paymentDate) return false;
+                return $paymentDate->between($currentMonthStart, $currentMonthEnd);
+            });
+
+            if (!$hasPaidForCurrentMonth) {
+                $hasUnpaidStudentsForCurrentMonth = true;
+                break;
+            }
+        }
+
+        // Add current month only if there are unpaid students
         $currentKey = "{$now->year}-{$now->month}";
-        if (! $months->has($currentKey)) {
+        if ($hasUnpaidStudentsForCurrentMonth && !$months->has($currentKey)) {
             $months->put($currentKey, [
                 'year'  => $now->year,
                 'month' => $now->month,
