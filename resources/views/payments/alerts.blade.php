@@ -250,6 +250,7 @@
                     <th>Class</th>
                     <th>Subject</th>
                     <th>Last Payment</th>
+                    <th>Overdue Month</th>
                     <th>Next Payment</th>
                     <th>Days Left</th>
                     <th>Monthly Fee</th>
@@ -301,6 +302,9 @@
                             {{ $data['lastPayment']?->payment_date?->format('M d, Y') ?? '—' }}
                         @endif
                     </td>
+                    <td style="font-size:12px;color:var(--text-secondary)">
+                        {{ $data['overdueMonth'] ?? '—' }}
+                    </td>
                     <td style="font-size:12px;font-weight:600;color:{{ ($data['daysUntilNextPayment'] ?? 1) < 0 ? 'var(--danger)' : (($data['daysUntilNextPayment'] ?? 99) <= 7 ? 'var(--warning)' : 'var(--primary)') }}">
                         {{ $data['nextPaymentDate']?->format('M d, Y') ?? '—' }}
                     </td>
@@ -333,7 +337,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="10">
+                    <td colspan="11">
                         <div class="empty-state">
                             <i class="fas fa-check-circle" style="color:var(--success);font-size:40px" aria-hidden="true"></i>
                             <p style="margin-top:8px;font-weight:600">

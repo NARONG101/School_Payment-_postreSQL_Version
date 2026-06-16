@@ -558,6 +558,7 @@ class PaymentController extends Controller
             'nextPaymentDate'      => null,
             'daysUntilNextPayment' => null,
             'alertLevel'           => 'upcoming',
+            'overdueMonth'         => null,
         ];
 
         if ($lastPayment && $lastPayment->payment_date) {
@@ -582,6 +583,7 @@ class PaymentController extends Controller
                 $days <= 7 => 'closely',
                 default    => 'upcoming',
             };
+            $data['overdueMonth']         = $days < 0 ? $next->format('F Y') : null;
         }
 
         return $data;
