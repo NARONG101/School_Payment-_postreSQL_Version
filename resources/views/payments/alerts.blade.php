@@ -172,120 +172,11 @@
 
 </div>
 
-{{-- ── Month Folders for Overdue Students ───────────────────────────────── --}}
-@foreach($overdueByMonth as $month)
-    <div class="month-folder">
-        <div class="month-folder-header">
-            <h3><i class="fas fa-folder-open"></i> {{ $month['monthLabel'] }} <span style="font-weight:400;color:var(--text-muted);font-size:13px">({{ count($month['students']) }})</span></h3>
-            @if($month['monthKey'] == $currentMonthKey)
-                <span class="badge badge-primary">Current Month</span>
-            @endif
-        </div>
-        <div class="month-folder-content">
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Alert</th>
-                            <th>Student</th>
-                            <th>Grade</th>
-                            <th>Class</th>
-                            <th>Subject</th>
-                            <th>Last Payment</th>
-                            <th>Next Payment</th>
-                            <th>Days Left</th>
-                            <th>Monthly Fee</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($month['students'] as $data)
-                        @php
-                            $al       = $data['alertLevel'];
-                            $rowCls   = match($al) { 'overdue'=>'row-overdue','closely'=>'row-closely', default=>'' };
-                            $pillCls  = match($al) { 'overdue'=>'deadline-overdue','closely'=>'deadline-critical','upcoming'=>'deadline-normal', default=>'' };
-                            $pillLbl  = match($al) { 'overdue'=>'Overdue','closely'=>'Closely','upcoming'=>'Upcoming', default=>'Normal' };
-                        @endphp
-                        <tr class="{{ $rowCls }}">
-                            <td>
-                                <span class="deadline-pill {{ $pillCls }}">{{ $pillLbl }}</span>
-                            </td>
-                            <td>
-                                <a href="{{ route('students.show', $data['student']) }}" style="text-decoration:none">
-                                    <div style="font-weight:600;color:var(--text-primary)">
-                                        {{ $data['student']->full_name }}
-                                        @if($data['student']->gender)
-                                            ({{ ucfirst($data['student']->gender) }})
-                                        @endif
-                                    </div>
-                                    <div style="font-size:11px;color:var(--text-muted)">{{ $data['student']->student_id }}</div>
-                                </a>
-                            </td>
-                            <td style="color:var(--text-secondary)">Grade {{ $data['student']->year_level ?? '—' }}</td>
-                            <td>
-                                @if(str_starts_with($data['student']->time_type ?? '', 'sat-sun'))
-                                    <span class="badge" style="background:rgba(124,58,237,0.12);color:#7c3aed">{{ __('app.weekend') }}</span>
-                                @else
-                                    <span class="badge badge-success">{{ __('app.weekday') }}</span>
-                                @endif
-                            </td>
-                            <td style="color:var(--text-secondary)">{{ $data['student']->subject ?? '—' }}</td>
-                            <td style="font-size:12px;color:var(--text-muted)">
-                                @if($data['lastPayment']?->due_date)
-                                    {{ $data['lastPayment']->due_date->format('M d, Y') }}
-                                    @if($data['lastPayment']->payment_date &&
-                                        $data['lastPayment']->payment_date->format('Y-m-d') !== $data['lastPayment']->due_date->format('Y-m-d'))
-                                        <div style="font-size:10px;color:var(--text-muted)">
-                                            paid {{ $data['lastPayment']->payment_date->format('M d, Y') }}
-                                        </div>
-                                    @endif
-                                @else
-                                    {{ $data['lastPayment']?->payment_date?->format('M d, Y') ?? '—' }}
-                                @endif
-                            </td>
-                            <td style="font-size:12px;font-weight:600;color:{{ ($data['daysUntilNextPayment'] ?? 1) < 0 ? 'var(--danger)' : (($data['daysUntilNextPayment'] ?? 99) <= 7 ? 'var(--warning)' : 'var(--primary)') }}">
-                                {{ $data['nextPaymentDate']?->format('M d, Y') ?? '—' }}
-                            </td>
-                            <td style="font-weight:700;min-width:80px">
-                                @if($data['daysUntilNextPayment'] !== null)
-                                    @if($data['daysUntilNextPayment'] < 0)
-                                        <span class="text-danger">{{ abs($data['daysUntilNextPayment']) }}d late</span>
-                                    @elseif($data['daysUntilNextPayment'] <= 7)
-                                        <span class="text-warning">{{ $data['daysUntilNextPayment'] }}d</span>
-                                    @else
-                                        <span class="text-success">{{ $data['daysUntilNextPayment'] }}d</span>
-                                    @endif
-                                @else
-                                    <span class="text-muted">—</span>
-                                @endif
-                            </td>
-                            <td style="font-weight:600;color:var(--text-primary)">${{ number_format($data['student']->monthly_fee ?? 0, 2) }}</td>
-                            <td>
-                                <div style="display:flex;gap:4px">
-                                    <a href="{{ route('students.show', $data['student']) }}"
-                                       class="btn btn-icon btn-outline" title="View student">
-                                        <i class="fas fa-user" style="font-size:11px" aria-hidden="true"></i>
-                                    </a>
-                                    <a href="{{ route('payments.create') }}?student_id={{ $data['student']->id }}"
-                                       class="btn btn-icon btn-outline" title="Add payment" style="color:var(--primary)">
-                                        <i class="fas fa-plus" style="font-size:11px" aria-hidden="true"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-@endforeach
-
-{{-- ── All Students Table (Closely/Upcoming) ───────────────────────────────── --}}
-<div class="card" style="margin-top: 16px;">
+{{-- ── Filter + Search bar --}}
+<div class="card">
     <div class="card-header">
         <div class="card-title">
-            All Students
+            Deadline Alerts
             <span style="font-size:13px;font-weight:400;color:var(--text-muted);margin-left:6px">
                 ({{ count($allStudentData) }}
                 @if(count($allStudentData) !== $totalCount)
@@ -295,10 +186,7 @@
             </span>
         </div>
     </div>
-
-    {{-- Filter + Search bar --}}
     <form method="GET" action="{{ route('payments.alerts') }}" id="alertFilterForm">
-
         {{-- Class type filter row --}}
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg-muted)">
             <span style="font-size:12px;font-weight:700;color:var(--text-muted)">
@@ -319,7 +207,6 @@
         </div>
 
         <div class="alert-filter-bar">
-
             {{-- Status filter pills --}}
             <div style="display:flex;gap:6px;flex-wrap:wrap">
                 <a href="?{{ http_build_query(array_merge(request()->except('filter'), ['filter'=>'all'])) }}"
@@ -375,125 +262,132 @@
             @endif
         </div>
     </form>
+</div>
 
-    {{-- Table --}}
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Alert</th>
-                    <th>Student</th>
-                    <th>Grade</th>
-                    <th>Class</th>
-                    <th>Subject</th>
-                    <th>Last Payment</th>
-                    <th>Overdue Month</th>
-                    <th>Next Payment</th>
-                    <th>Days Left</th>
-                    <th>Monthly Fee</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($allStudentData as $data)
-                @php
-                    $al       = $data['alertLevel'];
-                    if ($al === 'overdue') continue; // Skip overdue students as they're already in month folders
-                    $rowCls   = match($al) { 'overdue'=>'row-overdue','closely'=>'row-closely', default=>'' };
-                    $pillCls  = match($al) { 'overdue'=>'deadline-overdue','closely'=>'deadline-critical','upcoming'=>'deadline-normal', default=>'' };
-                    $pillLbl  = match($al) { 'overdue'=>'Overdue','closely'=>'Closely','upcoming'=>'Upcoming', default=>'Normal' };
-                @endphp
-                <tr class="{{ $rowCls }}">
-                    <td>
-                        <span class="deadline-pill {{ $pillCls }}">{{ $pillLbl }}</span>
-                    </td>
-                    <td>
-                        <a href="{{ route('students.show', $data['student']) }}" style="text-decoration:none">
-                            <div style="font-weight:600;color:var(--text-primary)">
-                                {{ $data['student']->full_name }}
-                                @if($data['student']->gender)
-                                    ({{ ucfirst($data['student']->gender) }})
-                                @endif
-                            </div>
-                            <div style="font-size:11px;color:var(--text-muted)">{{ $data['student']->student_id }}</div>
-                        </a>
-                    </td>
-                    <td style="color:var(--text-secondary)">Grade {{ $data['student']->year_level ?? '—' }}</td>
-                    <td>
-                        @if(str_starts_with($data['student']->time_type ?? '', 'sat-sun'))
-                            <span class="badge" style="background:rgba(124,58,237,0.12);color:#7c3aed">{{ __('app.weekend') }}</span>
-                        @else
-                            <span class="badge badge-success">{{ __('app.weekday') }}</span>
-                        @endif
-                    </td>
-                    <td style="color:var(--text-secondary)">{{ $data['student']->subject ?? '—' }}</td>
-                    <td style="font-size:12px;color:var(--text-muted)">
-                        @if($data['lastPayment']?->due_date)
-                            {{ $data['lastPayment']->due_date->format('M d, Y') }}
-                            @if($data['lastPayment']->payment_date &&
-                                $data['lastPayment']->payment_date->format('Y-m-d') !== $data['lastPayment']->due_date->format('Y-m-d'))
-                                <div style="font-size:10px;color:var(--text-muted)">
-                                    paid {{ $data['lastPayment']->payment_date->format('M d, Y') }}
-                                </div>
-                            @endif
-                        @else
-                            {{ $data['lastPayment']?->payment_date?->format('M d, Y') ?? '—' }}
-                        @endif
-                    </td>
-                    <td style="font-size:12px;color:var(--text-secondary)">
-                        {{ $data['overdueMonth'] ?? '—' }}
-                    </td>
-                    <td style="font-size:12px;font-weight:600;color:{{ ($data['daysUntilNextPayment'] ?? 1) < 0 ? 'var(--danger)' : (($data['daysUntilNextPayment'] ?? 99) <= 7 ? 'var(--warning)' : 'var(--primary)') }}">
-                        {{ $data['nextPaymentDate']?->format('M d, Y') ?? '—' }}
-                    </td>
-                    <td style="font-weight:700;min-width:80px">
-                        @if($data['daysUntilNextPayment'] !== null)
-                            @if($data['daysUntilNextPayment'] < 0)
-                                <span class="text-danger">{{ abs($data['daysUntilNextPayment']) }}d late</span>
-                            @elseif($data['daysUntilNextPayment'] <= 7)
-                                <span class="text-warning">{{ $data['daysUntilNextPayment'] }}d</span>
-                            @else
-                                <span class="text-success">{{ $data['daysUntilNextPayment'] }}d</span>
-                            @endif
-                        @else
-                            <span class="text-muted">—</span>
-                        @endif
-                    </td>
-                    <td style="font-weight:600;color:var(--text-primary)">${{ number_format($data['student']->monthly_fee ?? 0, 2) }}</td>
-                    <td>
-                        <div style="display:flex;gap:4px">
-                            <a href="{{ route('students.show', $data['student']) }}"
-                               class="btn btn-icon btn-outline" title="View student">
-                                <i class="fas fa-user" style="font-size:11px" aria-hidden="true"></i>
-                            </a>
-                            <a href="{{ route('payments.create') }}?student_id={{ $data['student']->id }}"
-                               class="btn btn-icon btn-outline" title="Add payment" style="color:var(--primary)">
-                                <i class="fas fa-plus" style="font-size:11px" aria-hidden="true"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="11">
-                        <div class="empty-state">
-                            <i class="fas fa-check-circle" style="color:var(--success);font-size:40px" aria-hidden="true"></i>
-                            <p style="margin-top:8px;font-weight:600">
-                                @if($search || $filterGrade || $filterLevel !== 'all')
-                                    No students match your filter.
-                                    <a href="{{ route('payments.alerts') }}" style="color:var(--primary)">Clear filters</a>
-                                @else
-                                    No students found!
-                                @endif
-                            </p>
-                        </div>
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+{{-- ── Month Folders for All Students ───────────────────────────────── --}}
+@if($allByMonth->isEmpty())
+<div class="card" style="margin-top:16px;">
+    <div class="empty-state" style="padding:32px;">
+        <i class="fas fa-check-circle" style="color:var(--success);font-size:40px" aria-hidden="true"></i>
+        <p style="margin-top:8px;font-weight:600">
+            @if($search || $filterGrade || $filterLevel !== 'all')
+                No students match your filter.
+                <a href="{{ route('payments.alerts') }}" style="color:var(--primary)">Clear filters</a>
+            @else
+                No students found!
+            @endif
+        </p>
     </div>
 </div>
+@else
+@foreach($allByMonth as $month)
+<div class="month-folder" style="margin-top:16px;">
+    <div class="month-folder-header">
+        <h3><i class="fas fa-folder-open"></i> {{ $month['monthLabel'] }} <span style="font-weight:400;color:var(--text-muted);font-size:13px">({{ count($month['students']) }})</span></h3>
+        @if($month['monthKey'] == $currentMonthKey)
+            <span class="badge badge-primary">Current Month</span>
+        @endif
+    </div>
+    <div class="month-folder-content">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Alert</th>
+                        <th>Student</th>
+                        <th>Grade</th>
+                        <th>Class</th>
+                        <th>Subject</th>
+                        <th>Last Payment</th>
+                        <th>Next Payment</th>
+                        <th>Days Left</th>
+                        <th>Monthly Fee</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($month['students'] as $data)
+                    @php
+                        $al       = $data['alertLevel'];
+                        $rowCls   = match($al) { 'overdue'=>'row-overdue','closely'=>'row-closely', default=>'' };
+                        $pillCls  = match($al) { 'overdue'=>'deadline-overdue','closely'=>'deadline-critical','upcoming'=>'deadline-normal', default=>'' };
+                        $pillLbl  = match($al) { 'overdue'=>'Overdue','closely'=>'Closely','upcoming'=>'Upcoming', default=>'Normal' };
+                    @endphp
+                    <tr class="{{ $rowCls }}">
+                        <td>
+                            <span class="deadline-pill {{ $pillCls }}">{{ $pillLbl }}</span>
+                        </td>
+                        <td>
+                            <a href="{{ route('students.show', $data['student']) }}" style="text-decoration:none">
+                                <div style="font-weight:600;color:var(--text-primary)">
+                                    {{ $data['student']->full_name }}
+                                    @if($data['student']->gender)
+                                        ({{ ucfirst($data['student']->gender) }})
+                                    @endif
+                                </div>
+                                <div style="font-size:11px;color:var(--text-muted)">{{ $data['student']->student_id }}</div>
+                            </a>
+                        </td>
+                        <td style="color:var(--text-secondary)">Grade {{ $data['student']->year_level ?? '—' }}</td>
+                        <td>
+                            @if(str_starts_with($data['student']->time_type ?? '', 'sat-sun'))
+                                <span class="badge" style="background:rgba(124,58,237,0.12);color:#7c3aed">{{ __('app.weekend') }}</span>
+                            @else
+                                <span class="badge badge-success">{{ __('app.weekday') }}</span>
+                            @endif
+                        </td>
+                        <td style="color:var(--text-secondary)">{{ $data['student']->subject ?? '—' }}</td>
+                        <td style="font-size:12px;color:var(--text-muted)">
+                            @if($data['lastPayment']?->due_date)
+                                {{ $data['lastPayment']->due_date->format('M d, Y') }}
+                                @if($data['lastPayment']->payment_date &&
+                                    $data['lastPayment']->payment_date->format('Y-m-d') !== $data['lastPayment']->due_date->format('Y-m-d'))
+                                    <div style="font-size:10px;color:var(--text-muted)">
+                                        paid {{ $data['lastPayment']->payment_date->format('M d, Y') }}
+                                    </div>
+                                @endif
+                            @else
+                                {{ $data['lastPayment']?->payment_date?->format('M d, Y') ?? '—' }}
+                            @endif
+                        </td>
+                        <td style="font-size:12px;font-weight:600;color:{{ ($data['daysUntilNextPayment'] ?? 1) < 0 ? 'var(--danger)' : (($data['daysUntilNextPayment'] ?? 99) <= 7 ? 'var(--warning)' : 'var(--primary)') }}">
+                            {{ $data['nextPaymentDate']?->format('M d, Y') ?? '—' }}
+                        </td>
+                        <td style="font-weight:700;min-width:80px">
+                            @if($data['daysUntilNextPayment'] !== null)
+                                @if($data['daysUntilNextPayment'] < 0)
+                                    <span class="text-danger">{{ abs($data['daysUntilNextPayment']) }}d late</span>
+                                @elseif($data['daysUntilNextPayment'] <= 7)
+                                    <span class="text-warning">{{ $data['daysUntilNextPayment'] }}d</span>
+                                @else
+                                    <span class="text-success">{{ $data['daysUntilNextPayment'] }}d</span>
+                                @endif
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td style="font-weight:600;color:var(--text-primary)">${{ number_format($data['student']->monthly_fee ?? 0, 2) }}</td>
+                        <td>
+                            <div style="display:flex;gap:4px">
+                                <a href="{{ route('students.show', $data['student']) }}"
+                                   class="btn btn-icon btn-outline" title="View student">
+                                    <i class="fas fa-user" style="font-size:11px" aria-hidden="true"></i>
+                                </a>
+                                <a href="{{ route('payments.create') }}?student_id={{ $data['student']->id }}"
+                                   class="btn btn-icon btn-outline" title="Add payment" style="color:var(--primary)">
+                                    <i class="fas fa-plus" style="font-size:11px" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@endforeach
+@endif
 
 @endsection
 

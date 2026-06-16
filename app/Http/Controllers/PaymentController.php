@@ -610,7 +610,7 @@ class PaymentController extends Controller
         }
 
         $overdue         = collect();
-        $overdueByMonth  = collect();
+        $allByMonth      = collect();
         $closely         = collect();
         $upcoming        = collect();
         $all             = collect();
@@ -625,26 +625,17 @@ class PaymentController extends Controller
             };
         }
 
-        // Group overdue by month
-        $overdueByMonth = $overdue->groupBy('monthKey')->map(function ($items, $monthKey) {
+        // Group ALL students by month
+        $allByMonth = $all->groupBy('monthKey')->map(function ($items, $monthKey) {
             return [
                 'monthKey' => $monthKey,
                 'monthLabel' => $items->first()['monthLabel'],
                 'students' => $items,
             ];
-        })->sortByDesc('monthKey')->values();
+        })->sortBy('monthKey')->values();
 
-        // Sort: overdue (most days late first) → closely (soonest first) → upcoming (soonest first)
-        $all = $all->sortBy(function ($d) {
-            $days  = $d['daysUntilNextPayment'] ?? 0;
-            $level = $d['alertLevel'];
-            if ($level === 'overdue')  return $days;
-            if ($level === 'closely')  return 1000 + $days;
-            return 2000 + $days;
-        })->values();
-
-        // ── Filter / search for the All Students table ────────────
-        $filterLevel = $request->get('filter', 'all');   // all | overdue | closely | upcoming
+        // ── Filter / search for all students ────────────
+        $filterLevel = $request->get('filter', 'all'); // all | overdue | closely | upcoming
         $search      = trim($request->get('search', ''));
         $filterGrade = $request->get('grade', '');
 
@@ -662,11 +653,20 @@ class PaymentController extends Controller
             return true;
         })->values();
 
+        // Re-group filtered students by month
+        $filteredByMonth = $filtered->groupBy('monthKey')->map(function ($items, $monthKey) {
+            return [
+                'monthKey' => $monthKey,
+                'monthLabel' => $items->first()['monthLabel'],
+                'students' => $items,
+            ];
+        })->sortBy('monthKey')->values();
+
         $availableGrades = $all->pluck('student.year_level')->unique()->filter()->sort()->values();
 
         return view('payments.alerts', [
             'overdue'         => $overdue,
-            'overdueByMonth'  => $overdueByMonth,
+            'allByMonth'      => $filteredByMonth,
             'currentMonthKey' => $currentMonthKey,
             'closely'         => $closely,
             'upcoming'        => $upcoming,
