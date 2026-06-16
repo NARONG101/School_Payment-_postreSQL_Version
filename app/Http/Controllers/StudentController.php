@@ -121,10 +121,9 @@ class StudentController extends Controller
 
         $adminFee = 20; // $20 admin fee on enrollment only
         
-        // Calculate total with discount
-        $subtotal = $validated['monthly_fee'] + $adminFee;
-        $discountAmount = $subtotal * ($discount / 100);
-        $totalAmount = $subtotal - $discountAmount;
+        // Calculate total with discount (discount applied to monthly fee only)
+        $discountAmount = $validated['monthly_fee'] * ($discount / 100);
+        $totalAmount = ($validated['monthly_fee'] - $discountAmount) + $adminFee;
 
         $paymentData = [
             'receipt_number'    => Payment::generateReceiptNumber(),

@@ -474,9 +474,9 @@ document.addEventListener('DOMContentLoaded', function () {
             next = calcNextDate(enrollDate.value, day);
         }
 
-        var subtotal = fee + ADMIN_FEE;
-        var discountAmt = subtotal * (discount / 100);
-        var total = subtotal - discountAmt;
+        // Calculate discount on monthly fee only
+        var discountAmt = fee * (discount / 100);
+        var total = (fee - discountAmt) + ADMIN_FEE;
 
         feeDisplay.textContent        = '$' + fee.toFixed(2);
         discountAmtDisplay.textContent = '$' + discountAmt.toFixed(2);
