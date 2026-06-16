@@ -553,7 +553,16 @@ class PaymentController extends Controller
     {
         $lastPayment = $student->payments->first();
         $data = [
-            'student'              => $student,
+            'student'              => [
+                'id'                => $student->id,
+                'full_name'         => $student->full_name,
+                'student_id'        => $student->student_id,
+                'year_level'        => $student->year_level,
+                'time_type'         => $student->time_type,
+                'subject'           => $student->subject,
+                'monthly_fee'       => $student->monthly_fee,
+                'gender'            => $student->gender,
+            ],
             'lastPayment'          => $lastPayment ? [
                 'due_date' => $lastPayment->due_date,
                 'due_date_formatted' => $lastPayment->due_date?->format('M d, Y'),
