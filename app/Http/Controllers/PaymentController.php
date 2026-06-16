@@ -129,10 +129,11 @@ class PaymentController extends Controller
         $dueDate         = $coveringMonth->copy()->day(min($paymentDay, $lastDayCovering));
 
         // Calculate amounts (multiply by months covered, discount on monthly fee only)
-        $amountDue = $validated['amount_due'] ?? (float)$student->monthly_fee * $monthsCovered;
+        $baseMonthlyFee = $validated['amount_due'] ?? (float)$student->monthly_fee;
+        $amountDue = $baseMonthlyFee * $monthsCovered;
         $adminFee = 0;
         $discount = $validated['discount'] ?? ($student->discount ?? 0);
-        $discountAmount = $amountDue * ($discount / 100);
+        $discountAmount = ($baseMonthlyFee * $monthsCovered) * ($discount / 100);
         $totalDue = ($amountDue - $discountAmount) + $adminFee;
         $amountPaid = $totalDue; // Always fully paid
         $balance = max(0, $totalDue - $amountPaid);
@@ -226,10 +227,11 @@ class PaymentController extends Controller
             $adminFee = $validated['admin_fee'] ?? $payment->admin_fee;
             $discount = $validated['discount'] ?? $payment->discount;
             
-            $subtotal = $amountDue + $adminFee;
-            $discountAmount = $subtotal * ($discount / 100);
-            $amountPaid = $validated['amount_paid'] ?? ($subtotal - $discountAmount);
-            $balance = max(0, $subtotal - $discountAmount - $amountPaid);
+            // Discount applied only to amount_due, not including admin fee
+            $discountAmount = $amountDue * ($discount / 100);
+            $subtotal = ($amountDue - $discountAmount) + $adminFee;
+            $amountPaid = $validated['amount_paid'] ?? $subtotal;
+            $balance = max(0, $subtotal - $amountPaid);
             
             $validated['amount_due'] = $amountDue;
             $validated['admin_fee'] = $adminFee;
