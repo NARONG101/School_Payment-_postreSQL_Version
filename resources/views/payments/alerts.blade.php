@@ -113,6 +113,8 @@
 
 @section('content')
 
+<div id="alerts-data" data-total-count="{{ $totalCount }}" style="display:none"></div>
+
 {{-- ── 3 Summary Cards ─────────────────────────────────── --}}
 <div class="alert-summary-grid">
 
@@ -365,7 +367,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var searchInp = document.getElementById('alertSearch');
     var gradeEl   = document.getElementById('alertGrade');
     var countEl   = document.querySelector('.card-title');
-    var totalCount = {{ $totalCount }};
+    var alertsDataEl = document.getElementById('alerts-data');
+    var totalCount = parseInt(alertsDataEl ? alertsDataEl.dataset.totalCount : '0');
     
     // Get month data from data attribute
     const monthDataContainer = document.getElementById('month-data-container');

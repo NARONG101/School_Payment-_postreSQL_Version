@@ -38,10 +38,32 @@
     padding:12px 16px; border-bottom:1px solid var(--border);
     background:var(--bg-muted);
 }
-.sort-menu-item { transition:background 0.12s; }
+.sort-menu-item {
+    transition:background 0.12s;
+    width:100%;
+    text-align:left;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 14px;
+    border:none;
+    color:var(--text-primary);
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    border-bottom:1px solid var(--border);
+}
 .sort-menu-item:last-child { border-bottom:none !important; }
 .sort-menu-item:hover { background:var(--bg-hover) !important; color:var(--text-primary) !important; }
 .sort-menu-active { color:var(--primary) !important; background:var(--primary-50) !important; }
+.sort-check {
+    margin-left:auto;
+    color:var(--primary);
+    font-size:11px;
+}
+.sort-check-hidden {
+    visibility:hidden;
+}
 
 /* ── Avatar ──────────────────────────────────────── */
 .stu-avatar {
@@ -130,18 +152,13 @@
                 ] as $k => $o)
                 <button type="button"
                         class="sort-menu-item {{ $k === 'newest' ? 'sort-menu-active' : '' }}"
-                        data-sort="{{ $k }}"
-                        style="width:100%;text-align:left;background:{{ $k === 'newest' ? 'var(--primary-50)' : 'transparent' }};
-                               display:flex;align-items:center;gap:10px;padding:10px 14px;
-                               border:none;color:{{ $k === 'newest' ? 'var(--primary)' : 'var(--text-primary)' }};
-                               font-size:13px;font-weight:500;cursor:pointer;
-                               border-bottom:1px solid var(--border)">
+                        data-sort="{{ $k }}">
                     <i class="fas {{ $o['icon'] }}" style="width:14px;color:var(--text-muted)" aria-hidden="true"></i>
                     {{ $o['label'] }}
                     @if($k === 'newest')
-                    <i class="fas fa-check sort-check" style="margin-left:auto;color:var(--primary);font-size:11px" aria-hidden="true"></i>
+                    <i class="fas fa-check sort-check" aria-hidden="true"></i>
                     @else
-                    <i class="fas fa-check sort-check" style="margin-left:auto;color:var(--primary);font-size:11px;visibility:hidden" aria-hidden="true"></i>
+                    <i class="fas fa-check sort-check sort-check-hidden" aria-hidden="true"></i>
                     @endif
                 </button>
                 @endforeach
@@ -342,16 +359,12 @@ document.addEventListener('DOMContentLoaded', function () {
             /* Update UI */
             menuItems.forEach(function (mi) {
                 mi.classList.remove('sort-menu-active');
-                mi.style.background = 'transparent';
-                mi.style.color = 'var(--text-primary)';
                 var chk = mi.querySelector('.sort-check');
-                if (chk) chk.style.visibility = 'hidden';
+                if (chk) chk.classList.add('sort-check-hidden');
             });
             this.classList.add('sort-menu-active');
-            this.style.background = 'var(--primary-50)';
-            this.style.color = 'var(--primary)';
             var myChk = this.querySelector('.sort-check');
-            if (myChk) myChk.style.visibility = 'visible';
+            if (myChk) myChk.classList.remove('sort-check-hidden');
 
             sortLabel.textContent = this.textContent.trim().replace(/\s+/g, ' ');
             sortMenu.style.display = 'none';
