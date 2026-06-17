@@ -90,6 +90,15 @@
     </div>
     <div class="card-body">
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px">
+            {{-- All Grades Card --}}
+            <div class="grade-card" id="hist-grade-card-all"
+                 data-grade="all"
+                 role="button" tabindex="0"
+                 aria-label="Show All Grades">
+                <i class="fas fa-layer-group grade-card-icon" aria-hidden="true"></i>
+                <div class="grade-card-name">All Grades</div>
+                <div class="grade-card-count">{{ $students->count() }} student{{ $students->count() !== 1 ? 's' : '' }}</div>
+            </div>
             @foreach($gradeLevels as $grade)
             @php $gradeCount = $students->where('year_level', $grade)->count(); @endphp
             <div class="grade-card" id="hist-grade-card-{{ $grade }}"
@@ -329,6 +338,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var activeGrade = null;
     var currentSort = 'newest';
 
+    // Set "All Grades" as active by default
+    var allGradesCard = document.getElementById('hist-grade-card-all');
+    if (allGradesCard) {
+        allGradesCard.classList.add('active');
+    }
+
     /* ── Back button handler ────────────────────────────── */
     var backBtn = document.getElementById('month-students-back-btn');
     if (backBtn) {
@@ -346,14 +361,14 @@ document.addEventListener('DOMContentLoaded', function () {
     var gradeCards = document.querySelectorAll('[id^="hist-grade-card-"]');
     gradeCards.forEach(function(card) {
         card.addEventListener('click', function() {
-            var grade = parseInt(this.dataset.grade);
+            var grade = this.dataset.grade;
             histFilterGrade(grade);
         });
         // Optional: handle keyboard events for accessibility
         card.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                var grade = parseInt(this.dataset.grade);
+                var grade = this.dataset.grade;
                 histFilterGrade(grade);
             }
         });
@@ -421,27 +436,28 @@ document.addEventListener('DOMContentLoaded', function () {
     /* ── Grade card filter ───────────────────────────────── */
     function histFilterGrade(grade) {
         var cards = document.querySelectorAll('[id^="hist-grade-card-"]');
-        if (activeGrade === grade) {
+        if (grade === 'all') {
+            activeGrade = null;
+            cards.forEach(function (c) {
+                c.classList.remove('active');
+                if (c.dataset.grade === 'all') {
+                    c.classList.add('active');
+                }
+            });
+        } else if (activeGrade === grade) {
             activeGrade = null;
             cards.forEach(function (c) { c.classList.remove('active'); });
         } else {
             activeGrade = grade;
             cards.forEach(function (c) {
-                c.classList.toggle('active', parseInt(c.dataset.grade) === grade);
+                c.classList.toggle('active', c.dataset.grade === grade);
             });
         }
         applyFilter();
         document.querySelector('.card:last-of-type').scrollIntoView({ behavior:'smooth', block:'start' });
     };
 
-    document.querySelectorAll('[id^="hist-grade-card-"]').forEach(function (card) {
-        card.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                histFilterGrade(parseInt(card.dataset.grade));
-            }
-        });
-    });
+    // Remove the old redundant keydown listener since we already added them above!
 
     /* ── Apply search + grade filter ─────────────────────── */
     function applyFilter() {
@@ -449,7 +465,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var shown = 0;
         allRows.forEach(function (row) {
             var matchSearch = term === '' || row.dataset.search.indexOf(term) !== -1;
-            var matchGrade  = activeGrade === null || parseInt(row.dataset.grade) === activeGrade;
+            var matchGrade  = activeGrade === null || parseInt(row.dataset.grade) === parseInt(activeGrade);
             var show = matchSearch && matchGrade;
             row.style.display = show ? '' : 'none';
             if (show) shown++;
