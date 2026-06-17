@@ -3,8 +3,8 @@
 @section('page-title', $date->format('F Y').' Payments')
 
 @section('topbar-back')
-    <button type="button" class="btn btn-outline btn-sm"
-            onclick="history.length>1?history.back():window.location='{{ route('history.monthly') }}'">
+    <button type="button" id="month-students-back-btn" class="btn btn-outline btn-sm"
+            data-back-url="{{ route('history.monthly') }}">
         <i class="fas fa-arrow-left" aria-hidden="true"></i>
     </button>
 @endsection
@@ -94,7 +94,6 @@
             @php $gradeCount = $students->where('year_level', $grade)->count(); @endphp
             <div class="grade-card" id="hist-grade-card-{{ $grade }}"
                  data-grade="{{ $grade }}"
-                 onclick="histFilterGrade({{ $grade }})"
                  role="button" tabindex="0"
                  aria-label="Filter by Grade {{ $grade }}">
                 <i class="fas fa-users grade-card-icon" aria-hidden="true"></i>
@@ -330,6 +329,36 @@ document.addEventListener('DOMContentLoaded', function () {
     var activeGrade = null;
     var currentSort = 'newest';
 
+    /* ── Back button handler ────────────────────────────── */
+    var backBtn = document.getElementById('month-students-back-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', function() {
+            var backUrl = this.dataset.backUrl;
+            if (history.length > 1) {
+                history.back();
+            } else if (backUrl) {
+                window.location = backUrl;
+            }
+        });
+    }
+
+    /* ── Grade card click handlers ─────────────────────────── */
+    var gradeCards = document.querySelectorAll('[id^="hist-grade-card-"]');
+    gradeCards.forEach(function(card) {
+        card.addEventListener('click', function() {
+            var grade = parseInt(this.dataset.grade);
+            histFilterGrade(grade);
+        });
+        // Optional: handle keyboard events for accessibility
+        card.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                var grade = parseInt(this.dataset.grade);
+                histFilterGrade(grade);
+            }
+        });
+    });
+
     /* ── Sort dropdown toggle ────────────────────────────── */
     if (sortBtn) {
         sortBtn.addEventListener('click', function (e) {
@@ -390,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* ── Grade card filter ───────────────────────────────── */
-    window.histFilterGrade = function (grade) {
+    function histFilterGrade(grade) {
         var cards = document.querySelectorAll('[id^="hist-grade-card-"]');
         if (activeGrade === grade) {
             activeGrade = null;
