@@ -149,7 +149,7 @@ class StudentController extends Controller
 
         Payment::create($paymentData);
 
-        return redirect()->back()
+        return redirect()->route('students.index')
             ->with('success', 'Student enrolled successfully! First payment created.');
     }
 
