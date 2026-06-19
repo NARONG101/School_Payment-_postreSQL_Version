@@ -3,10 +3,9 @@
 @section('page-title', 'Payment Details')
 
 @section('topbar-back')
-    <button type="button" class="btn btn-outline btn-sm"
-            onclick="history.length>1?history.back():window.location='{{ route('payments.index') }}'">
+    <a href="{{ route('payments.index') }}" class="btn btn-outline btn-sm">
         <i class="fas fa-arrow-left" aria-hidden="true"></i>
-    </button>
+    </a>
 @endsection
 @section('topbar-actions')
     <a href="{{ route('payments.receipt', $payment) }}" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
