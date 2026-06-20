@@ -97,6 +97,7 @@
             <div class="stat-label">Active Students</div>
         </div>
     </div>
+    @if(auth()->user()->isAdmin())
     <a href="{{ route('revenue.index') }}" class="stat-card" style="text-decoration:none;color:inherit">
         <div class="stat-icon stat-icon-green"><i class="fas fa-money-bill-wave" style="color:var(--success)"></i></div>
         <div>
@@ -104,6 +105,7 @@
             <div class="stat-label">Collected This Month</div>
         </div>
     </a>
+    @endif
     <a href="{{ route('payments.alerts.overdue') }}" class="stat-card" style="text-decoration:none;color:inherit">
         <div class="stat-icon stat-icon-red"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i></div>
         <div>
@@ -150,10 +152,12 @@
                 <div class="qa-icon qa-purple"><i class="fas fa-receipt"></i></div>
                 {{ __('app.all_payments') }}
             </a>
+            @if(auth()->user()->isAdmin())
             <a href="{{ route('revenue.index') }}" class="quick-action-btn">
                 <div class="qa-icon qa-green"><i class="fas fa-chart-line"></i></div>
                 {{ __('app.revenue_report') }}
             </a>
+            @endif
             <a href="{{ route('history.monthly') }}" class="quick-action-btn">
                 <div class="qa-icon qa-blue"><i class="fas fa-history"></i></div>
                 {{ __('app.monthly_history') }}
@@ -243,6 +247,7 @@
     </div>
 </div>
 
+@if(auth()->user()->isAdmin())
 {{-- Monthly Chart --}}
 <div class="card" style="margin-top:18px">
     <div class="card-header">
@@ -271,4 +276,5 @@
         </div>
     </div>
 </div>
+@endif
 @endsection
