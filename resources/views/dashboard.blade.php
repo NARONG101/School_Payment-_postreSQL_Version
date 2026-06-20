@@ -183,7 +183,9 @@
                     <tr>
                         <th>Receipt</th>
                         <th>Student</th>
+                        @if(auth()->user()->isAdmin())
                         <th>Amount</th>
+                        @endif
                         <th>For Month</th>
                         <th>Status</th>
                     </tr>
@@ -196,7 +198,9 @@
                             <div style="font-weight:600;color:var(--text-primary)">{{ $payment->student?->full_name ?? '—' }}</div>
                             <div style="font-size:11px;color:var(--text-muted)">{{ $payment->student?->student_id ?? '—' }}</div>
                         </td>
+                        @if(auth()->user()->isAdmin())
                         <td style="font-weight:700;color:var(--text-primary)">${{ number_format($payment->amount_paid, 2) }}</td>
+                        @endif
                         <td style="font-size:12px;color:var(--text-muted)">
                             {{ $payment->due_date?->format('M d, Y') ?? $payment->payment_date?->format('M d, Y') }}
                             @if($payment->payment_date && $payment->due_date && $payment->payment_date->format('Y-m-d') !== $payment->due_date->format('Y-m-d'))
@@ -206,7 +210,7 @@
                         <td><span class="badge badge-success">Paid</span></td>
                     </tr>
                     @empty
-                    <tr><td colspan="5"><div class="empty-state"><i class="fas fa-receipt"></i><p>No recent payments</p></div></td></tr>
+                    <tr><td colspan="{{ auth()->user()->isAdmin() ? 5 : 4 }}"><div class="empty-state"><i class="fas fa-receipt"></i><p>No recent payments</p></div></td></tr>
                     @endforelse
                 </tbody>
             </table>

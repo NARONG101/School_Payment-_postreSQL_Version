@@ -111,77 +111,81 @@
     </div>
     <div class="table-wrap">
         <table>
-            <thead>
-                <tr>
-                    <th>Receipt #</th>
-                    <th>Student</th>
-                    <th>Grade</th>
-                    <th>Subject</th>
-                    <th>Status</th>
-                    <th>For Month</th>
-                    <th>Time Type</th>
-                    <th>Amount Paid</th>
-                    <th>Next Payment</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($payments as $payment)
-                @php
-                    $sc = ['paid'=>'text-success','partial'=>'text-warning','pending'=>'text-info','overdue'=>'text-danger'];
-                    $cls = $sc[$payment->status] ?? 'text-muted';
-                    // Build a searchable string for client-side search
-                    $searchStr = strtolower(implode(' ', array_filter([
-                        $payment->receipt_number,
-                        $payment->student?->full_name,
-                        $payment->student?->student_id,
-                        $payment->student?->subject,
-                        $payment->status,
-                        $payment->time_type,
-                        'grade '.($payment->student?->year_level ?? ''),
-                    ])));
-                @endphp
-                <tr data-searchable data-search="{{ $searchStr }}">
-                    <td><span class="mono" style="font-size:12px;color:var(--primary)">{{ $payment->receipt_number }}</span></td>
-                    <td>
-                        @if($payment->student)
-                        <a href="{{ route('students.show', $payment->student) }}" style="text-decoration:none">
-                            <div style="font-weight:600;color:var(--text-primary)">{{ $payment->student->full_name }} ({{ ucfirst($payment->student->gender ?? 'N/A') }})</div>
-                            <div style="font-size:11px;color:var(--text-muted)">{{ $payment->student->student_id }}</div>
-                        </a>
-                        @else <span style="color:var(--text-muted)">—</span>
+                <thead>
+                    <tr>
+                        <th>Receipt #</th>
+                        <th>Student</th>
+                        <th>Grade</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                        <th>For Month</th>
+                        <th>Time Type</th>
+                        @if(auth()->user()->isAdmin())
+                        <th>Amount Paid</th>
                         @endif
-                    </td>
-                    <td style="color:var(--text-secondary)">Grade {{ $payment->student?->year_level ?? '—' }}</td>
-                    <td style="color:var(--text-secondary)">{{ $payment->student?->subject ?? '—' }}</td>
-                    <td><span class="{{ $cls }}" style="font-weight:600">{{ ucfirst($payment->status) }}</span></td>
-                    <td style="font-size:12px;color:var(--text-muted)">
-                        {{ $payment->due_date?->format('M d, Y') ?? $payment->payment_date?->format('M d, Y') ?? '—' }}
-                        @if($payment->payment_date && $payment->due_date && $payment->payment_date->format('Y-m-d') !== $payment->due_date->format('Y-m-d'))
-                            <div style="font-size:10px;color:var(--text-muted)">paid {{ $payment->payment_date->format('M d, Y') }}</div>
+                        <th>Next Payment</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($payments as $payment)
+                    @php
+                        $sc = ['paid'=>'text-success','partial'=>'text-warning','pending'=>'text-info','overdue'=>'text-danger'];
+                        $cls = $sc[$payment->status] ?? 'text-muted';
+                        // Build a searchable string for client-side search
+                        $searchStr = strtolower(implode(' ', array_filter([
+                            $payment->receipt_number,
+                            $payment->student?->full_name,
+                            $payment->student?->student_id,
+                            $payment->student?->subject,
+                            $payment->status,
+                            $payment->time_type,
+                            'grade '.($payment->student?->year_level ?? ''),
+                        ])));
+                    @endphp
+                    <tr data-searchable data-search="{{ $searchStr }}">
+                        <td><span class="mono" style="font-size:12px;color:var(--primary)">{{ $payment->receipt_number }}</span></td>
+                        <td>
+                            @if($payment->student)
+                            <a href="{{ route('students.show', $payment->student) }}" style="text-decoration:none">
+                                <div style="font-weight:600;color:var(--text-primary)">{{ $payment->student->full_name }} ({{ ucfirst($payment->student->gender ?? 'N/A') }})</div>
+                                <div style="font-size:11px;color:var(--text-muted)">{{ $payment->student->student_id }}</div>
+                            </a>
+                            @else <span style="color:var(--text-muted)">—</span>
+                            @endif
+                        </td>
+                        <td style="color:var(--text-secondary)">Grade {{ $payment->student?->year_level ?? '—' }}</td>
+                        <td style="color:var(--text-secondary)">{{ $payment->student?->subject ?? '—' }}</td>
+                        <td><span class="{{ $cls }}" style="font-weight:600">{{ ucfirst($payment->status) }}</span></td>
+                        <td style="font-size:12px;color:var(--text-muted)">
+                            {{ $payment->due_date?->format('M d, Y') ?? $payment->payment_date?->format('M d, Y') ?? '—' }}
+                            @if($payment->payment_date && $payment->due_date && $payment->payment_date->format('Y-m-d') !== $payment->due_date->format('Y-m-d'))
+                                <div style="font-size:10px;color:var(--text-muted)">paid {{ $payment->payment_date->format('M d, Y') }}</div>
+                            @endif
+                        </td>
+                        <td style="color:var(--text-secondary)">{{ $payment->time_type ?? '—' }}</td>
+                        @if(auth()->user()->isAdmin())
+                        <td class="{{ $cls }}" style="font-weight:600">${{ number_format($payment->amount_paid,2) }}</td>
                         @endif
-                    </td>
-                    <td style="color:var(--text-secondary)">{{ $payment->time_type ?? '—' }}</td>
-                    <td class="{{ $cls }}" style="font-weight:600">${{ number_format($payment->amount_paid,2) }}</td>
-                    <td style="font-size:12px;color:var(--text-muted)">{{ $payment->next_payment_date?->format('M d, Y') ?? '—' }}</td>
-                    <td>
-                        <div style="display:flex;gap:4px">
-                            <a href="{{ route('payments.show', $payment) }}" class="btn btn-icon btn-outline" title="View"><i class="fas fa-eye" style="font-size:11px" aria-hidden="true"></i></a>
-                            <a href="{{ route('payments.receipt', $payment) }}" class="btn btn-icon btn-outline" title="Receipt" style="color:var(--danger)" target="_blank" rel="noopener"><i class="fas fa-file-pdf" style="font-size:11px" aria-hidden="true"></i></a>
-                            <button type="button" class="btn btn-icon btn-outline delete-btn" title="Delete" style="color:var(--danger)"
-                                    data-action="{{ route('payments.destroy', $payment) }}"
-                                    data-title="Delete Payment"
-                                    data-body="Delete receipt {{ e($payment->receipt_number) }}? This cannot be undone.">
-                                <i class="fas fa-trash" style="font-size:11px" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr><td colspan="10"><div class="empty-state"><i class="fas fa-receipt" aria-hidden="true"></i><p>No payments found</p></div></td></tr>
-                @endforelse
-            </tbody>
-        </table>
+                        <td style="font-size:12px;color:var(--text-muted)">{{ $payment->next_payment_date?->format('M d, Y') ?? '—' }}</td>
+                        <td>
+                            <div style="display:flex;gap:4px">
+                                <a href="{{ route('payments.show', $payment) }}" class="btn btn-icon btn-outline" title="View"><i class="fas fa-eye" style="font-size:11px" aria-hidden="true"></i></a>
+                                <a href="{{ route('payments.receipt', $payment) }}" class="btn btn-icon btn-outline" title="Receipt" style="color:var(--danger)" target="_blank" rel="noopener"><i class="fas fa-file-pdf" style="font-size:11px" aria-hidden="true"></i></a>
+                                <button type="button" class="btn btn-icon btn-outline delete-btn" title="Delete" style="color:var(--danger)"
+                                        data-action="{{ route('payments.destroy', $payment) }}"
+                                        data-title="Delete Payment"
+                                        data-body="Delete receipt {{ e($payment->receipt_number) }}? This cannot be undone.">
+                                    <i class="fas fa-trash" style="font-size:11px" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="{{ auth()->user()->isAdmin() ? 10 : 9 }}"><div class="empty-state"><i class="fas fa-receipt" aria-hidden="true"></i><p>No payments found</p></div></td></tr>
+                    @endforelse
+                </tbody>
+            </table>
     </div>
 </div>
 @endsection

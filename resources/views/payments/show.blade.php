@@ -176,6 +176,7 @@
                 </div>
 
                 {{-- Amount breakdown --}}
+                @if(auth()->user()->isAdmin())
                 <div class="amount-box">
                     @if($payment->admin_fee > 0)
                     <div class="amount-cols" style="grid-template-columns:repeat(4,1fr)">
@@ -213,6 +214,7 @@
                     </div>
                     @endif
                 </div>
+                @endif
 
                 {{-- Date details grid --}}
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
@@ -308,9 +310,11 @@
             @endif
 
             @if($payment->status === 'paid')
+                @if(auth()->user()->isAdmin())
                 <div style="font-size:12px;margin-top:10px;color:{{ $countdownColor }};opacity:0.85">
                     Next amount: <strong>${{ number_format($payment->student?->monthly_fee ?? 0, 2) }}</strong>
                 </div>
+                @endif
                 @if($stillOverdue && $nextMonthLabel)
                     {{-- Still overdue months — show prominent CTA --}}
                     <div style="margin-top:6px;font-size:11px;font-weight:700;color:var(--danger);background:rgba(239,68,68,0.15);padding:4px 10px;border-radius:20px;display:inline-block">
