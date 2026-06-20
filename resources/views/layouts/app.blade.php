@@ -671,10 +671,12 @@ textarea.form-control { resize:vertical; min-height:80px; }
            aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}">
             <i class="fas fa-th-large" aria-hidden="true"></i><span>Dashboard</span>
         </a>
+        @if(auth()->user()->isAdmin())
         <a href="{{ route('revenue.index') }}" class="nav-link {{ request()->routeIs('revenue.*') ? 'active' : '' }}"
            aria-current="{{ request()->routeIs('revenue.*') ? 'page' : 'false' }}">
             <i class="fas fa-chart-line" aria-hidden="true"></i><span>Revenue Report</span>
         </a>
+        @endif
         <div class="nav-section-label" aria-hidden="true">Students</div>
         <a href="{{ route('students.index') }}" class="nav-link {{ request()->routeIs('students.*') ? 'active' : '' }}"
            aria-current="{{ request()->routeIs('students.*') ? 'page' : 'false' }}">

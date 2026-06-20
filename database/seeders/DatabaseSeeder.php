@@ -33,6 +33,16 @@ class DatabaseSeeder extends Seeder
                 'role'     => 'admin',
             ]
         );
+        
+        // ── Receipts user ─────────────────────────────────────
+        User::firstOrCreate(
+            ['email' => 'receipts@school.ck'],
+            [
+                'name'     => 'Receipts User',
+                'password' => Hash::make('ReciptsCK123!'),
+                'role'     => 'receipts',
+            ]
+        );
 
         // ── Default payment types ─────────────────────────────
         $paymentTypes = [

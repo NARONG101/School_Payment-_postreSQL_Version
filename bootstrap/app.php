@@ -13,6 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // ── Security headers on every response ────────────────
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        
+        // ── Role middleware alias ────────────────────────────────
+        $middleware->alias([
+            'role' => \App\Http\Middleware\CheckRole::class,
+        ]);
 
         // ── Trust Render's load-balancer proxy ONLY ON RENDER ────────────────
         if (env('RENDER')) {
