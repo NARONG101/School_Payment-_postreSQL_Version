@@ -35,14 +35,11 @@ class DatabaseSeeder extends Seeder
         );
         
         // ── Receipts user ─────────────────────────────────────
-        User::firstOrCreate(
-            ['email' => 'receipts@school.ck'],
-            [
-                'name'     => 'Receipts User',
-                'password' => Hash::make('ReciptsCK123!'),
-                'role'     => 'receipts',
-            ]
-        );
+        $receiptsUser = User::firstOrNew(['email' => 'receipts@school.ck']);
+        $receiptsUser->name = 'Receipts User';
+        $receiptsUser->password = Hash::make('ReceiptsCK123!'); // You can change this password
+        $receiptsUser->role = 'receipts';
+        $receiptsUser->save();
 
         // ── Default payment types ─────────────────────────────
         $paymentTypes = [
