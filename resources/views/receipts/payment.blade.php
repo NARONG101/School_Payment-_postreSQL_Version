@@ -238,7 +238,17 @@ body {
         </tr>
         <tr>
             <td class="lbl">Method</td>
-            <td class="val">{{ $payment->payment_method ? ucfirst(str_replace('_',' ',$payment->payment_method)) : '—' }}</td>
+            <td class="val">
+                @if($payment->payment_method === 'cash')
+                    💵 Cash
+                @elseif($payment->payment_method === 'aba')
+                    🏦 ABA Bank
+                @elseif($payment->payment_method === 'ac')
+                    🏦 ACLEDA Bank
+                @else
+                    {{ $payment->payment_method ? ucfirst(str_replace('_',' ',$payment->payment_method)) : '—' }}
+                @endif
+            </td>
             <td class="lbl">Next Payment</td>
             <td class="val">{{ $payment->next_payment_date?->format('d/m/Y') ?? '—' }}</td>
         </tr>

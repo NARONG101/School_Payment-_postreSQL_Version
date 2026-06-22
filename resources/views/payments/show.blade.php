@@ -249,8 +249,10 @@
                         <div class="info-box-val">
                             @if($payment->payment_method === 'cash')
                                 💵 Cash
-                            @elseif($payment->payment_method === 'bank_transfer')
-                                🏦 Bank Transfer
+                            @elseif($payment->payment_method === 'aba')
+                                🏦 ABA Bank
+                            @elseif($payment->payment_method === 'ac')
+                                🏦 ACLEDA Bank
                             @else
                                 {{ $payment->payment_method ? ucfirst(str_replace('_',' ',$payment->payment_method)) : '—' }}
                             @endif
