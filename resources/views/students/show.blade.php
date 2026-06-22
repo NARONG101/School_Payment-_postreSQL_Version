@@ -123,6 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 @endif
             </div>
         </div>
+        @if(Auth::user()->isAdmin())
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="mini-stat">
                 <div style="font-size:18px;font-weight:800;color:var(--success)">${{ number_format($stats['total_paid'],2) }}</div>
@@ -141,6 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div style="font-size:11px;color:var(--text-muted)">Overdue</div>
             </div>
         </div>
+        @endif
     </div>
 
     {{-- Payments Table --}}
@@ -156,9 +158,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <thead>
                     <tr>
                         <th>Receipt #</th>
+                        @if(Auth::user()->isAdmin())
                         <th>Amount Due</th>
                         <th>Paid</th>
                         <th>Balance</th>
+                        @endif
                         <th>For Month</th>
                         <th>Payment Method</th>
                         <th>Time Type</th>
@@ -171,9 +175,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     @forelse($payments as $payment)
                     <tr class="{{ $payment->status==='overdue'?'alert-level-overdue':($payment->deadline_alert_level==='critical'?'alert-level-critical':'') }}">
                         <td><span class="mono" style="font-size:12px;color:var(--primary)">{{ $payment->receipt_number }}</span></td>
+                        @if(Auth::user()->isAdmin())
                         <td style="color:var(--text-primary)">${{ number_format($payment->amount_due,2) }}</td>
                         <td style="color:var(--success);font-weight:600">${{ number_format($payment->amount_paid,2) }}</td>
                         <td class="{{ $payment->balance > 0 ? 'payment-balance-positive' : 'payment-balance-zero' }}" style="font-weight:600">${{ number_format($payment->balance,2) }}</td>
+                        @endif
                         <td style="font-size:12px;color:var(--text-muted)">
                             {{ $payment->due_date?->format('M d, Y') ?? $payment->payment_date?->format('M d, Y') ?? '—' }}
                             @if($payment->payment_date && $payment->due_date && $payment->payment_date->format('Y-m-d') !== $payment->due_date->format('Y-m-d'))
@@ -222,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="12"><div class="empty-state"><i class="fas fa-receipt" aria-hidden="true"></i><p>No payments yet</p></div></td></tr>
+                    <tr><td colspan="{{ Auth::user()->isAdmin() ? 12 : 9 }}"><div class="empty-state"><i class="fas fa-receipt" aria-hidden="true"></i><p>No payments yet</p></div></td></tr>
                     @endforelse
                 </tbody>
             </table>

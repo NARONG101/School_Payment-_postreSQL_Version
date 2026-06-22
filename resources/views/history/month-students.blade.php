@@ -186,7 +186,10 @@
                     <th>Time Slot</th>
                     <th>Paid On</th>
                     <th>For Month</th>
+                    <th>Payment Method</th>
+                    @if(Auth::user()->isAdmin())
                     <th>Amount</th>
+                    @endif
                     <th>Next Payment</th>
                     <th>Actions</th>
                 </tr>
@@ -227,16 +230,37 @@
                             </td>
                             <td><span class="badge badge-primary">Grade {{ $student->year_level }}</span></td>
                             <td style="color:var(--text-secondary)">{{ $student->subject ?? '—' }}</td>
-                            <td style="font-size:12px;color:var(--text-secondary)">{{ $payment->time_type ?? '—' }}</td>
+                            <td style="font-size:12px;color:var(--text-secondary)">
+                                @if($payment->time_types && count($payment->time_types) > 0)
+                                    @foreach($payment->time_types as $type)
+                                        <span style="display:inline-block;margin-right:4px">{{ $type }}</span>
+                                    @endforeach
+                                @else
+                                    {{ $payment->time_type ?? '—' }}
+                                @endif
+                            </td>
                             <td style="font-size:12px;color:var(--text-muted)">
                                 {{ $payment->payment_date?->format('M d, Y') ?? '—' }}
                             </td>
                             <td style="font-size:12px;color:var(--text-muted)">
                                 {{ $payment->due_date?->format('M d, Y') ?? '—' }}
                             </td>
+                            <td style="font-size:12px;color:var(--text-secondary)">
+                                @if($payment->payment_method === 'cash')
+                                    💵 Cash
+                                @elseif($payment->payment_method === 'aba')
+                                    🏦 ABA
+                                @elseif($payment->payment_method === 'ac')
+                                    🏦 ACLEDA
+                                @else
+                                    {{ $payment->payment_method ? ucfirst(str_replace('_',' ',$payment->payment_method)) : '—' }}
+                                @endif
+                            </td>
+                            @if(Auth::user()->isAdmin())
                             <td style="font-weight:700;color:var(--success)">
                                 ${{ number_format($payment->amount_paid, 2) }}
                             </td>
+                            @endif
                             <td style="font-size:12px;color:var(--text-muted)">
                                 {{ $payment->next_payment_date?->format('M d, Y') ?? '—' }}
                             </td>
@@ -288,10 +312,21 @@
                             </td>
                             <td><span class="badge badge-primary">Grade {{ $student->year_level }}</span></td>
                             <td style="color:var(--text-secondary)">{{ $student->subject ?? '—' }}</td>
-                            <td style="font-size:12px;color:var(--text-secondary)">{{ $student->time_type ?? '—' }}</td>
+                            <td style="font-size:12px;color:var(--text-secondary)">
+                                @if($student->time_types && count($student->time_types) > 0)
+                                    @foreach($student->time_types as $type)
+                                        <span style="display:inline-block;margin-right:4px">{{ $type }}</span>
+                                    @endforeach
+                                @else
+                                    {{ $student->time_type ?? '—' }}
+                                @endif
+                            </td>
                             <td style="font-size:12px;color:var(--danger)"><strong>Not Paid Yet</strong></td>
                             <td style="font-size:12px;color:var(--text-muted)">{{ $date->format('M Y') }}</td>
+                            <td style="color:var(--text-muted)">—</td>
+                            @if(Auth::user()->isAdmin())
                             <td style="font-weight:700;color:var(--text-muted)">$0.00</td>
+                            @endif
                             <td style="font-size:12px;color:var(--text-muted)">{{ $student->payments->first()?->next_payment_date?->format('M d, Y') ?? '—' }}</td>
                             <td>
                                 <div style="display:flex;gap:4px">
@@ -308,7 +343,7 @@
                         </tr>
                     @endif
                 @empty
-                <tr><td colspan="10">
+                <tr><td colspan="{{ Auth::user()->isAdmin() ? 12 : 11 }}">
                     <div class="empty-state">
                         <i class="fas fa-calendar-times" aria-hidden="true"></i>
                         <p>No students for {{ $date->format('F Y') }}</p>
