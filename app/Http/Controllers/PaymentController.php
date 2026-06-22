@@ -72,7 +72,10 @@ class PaymentController extends Controller
             default => $query->orderByDesc('id')->get(), // newest first
         };
 
-        return view('payments.index', compact('payments', 'classType'));
+        // Get payment method counts
+        $paymentMethodCounts = $payments->groupBy('payment_method')->map(fn ($group) => $group->count());
+
+        return view('payments.index', compact('payments', 'classType', 'paymentMethodCounts'));
     }
 
     // ── Create ────────────────────────────────────────────────────────────────
@@ -102,7 +105,7 @@ class PaymentController extends Controller
             'time_types'        => 'required|array|min:1',
             'time_types.*'      => 'in:' . implode(',', self::TIME_SLOTS),
             'months_covered'    => 'required|integer|min:1|max:12',
-            'payment_method'    => 'required|in:cash,bank_transfer',
+            'payment_method'    => 'required|in:cash,aba,ac',
             'amount_due'        => 'nullable|numeric|min:0',
             'admin_fee'         => 'nullable|numeric|min:0',
             'discount'          => 'nullable|numeric|min:0|max:100',
@@ -207,7 +210,7 @@ class PaymentController extends Controller
     {
         $validated = $request->validate([
             'payment_date'      => 'nullable|date',
-            'payment_method'    => 'required|in:cash,bank_transfer',
+            'payment_method'    => 'required|in:cash,aba,ac',
             'time_types'        => 'required|array|min:1',
             'time_types.*'      => 'in:' . implode(',', self::TIME_SLOTS),
             'months_covered'    => 'required|integer|min:1|max:12',

@@ -264,7 +264,15 @@
                     </td>
                     <td style="color:var(--text-secondary)">{{ $student->subject ?? '—' }}</td>
                     <td style="color:var(--text-secondary)">{{ $student->come_from ?? '—' }}</td>
-                    <td style="color:var(--text-secondary);font-size:12px">{{ $student->time_type ?? '—' }}</td>
+                    <td style="color:var(--text-secondary);font-size:12px">
+                        @if($student->time_types && count($student->time_types) > 0)
+                            @foreach($student->time_types as $type)
+                                <span style="display:inline-block;margin-right:4px;">{{ $type }}</span>
+                            @endforeach
+                        @else
+                            {{ $student->time_type ?? '—' }}
+                        @endif
+                    </td>
                     <td style="color:var(--text-secondary);font-size:12px">${{ number_format($student->monthly_fee, 2) }}</td>
                     <td style="color:var(--text-secondary);font-size:12px">
                         @if($student->discount > 0)

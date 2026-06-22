@@ -201,8 +201,9 @@
                     <label class="form-label" for="payment_method">Payment Method <span style="color:var(--danger)">*</span></label>
                     <select id="payment_method" name="payment_method" class="form-control @error('payment_method') is-invalid @enderror" required>
                         <option value="">-- Select --</option>
-                        <option value="cash"          {{ old('payment_method',$payment->payment_method)==='cash'?'selected':'' }}>Cash</option>
-                        <option value="bank_transfer" {{ old('payment_method',$payment->payment_method)==='bank_transfer'?'selected':'' }}>Bank Transfer</option>
+                        <option value="cash" {{ old('payment_method',$payment->payment_method)==='cash'?'selected':'' }}>Cash</option>
+                        <option value="aba" {{ old('payment_method',$payment->payment_method)==='aba'?'selected':'' }}>ABA Bank</option>
+                        <option value="ac" {{ old('payment_method',$payment->payment_method)==='ac'?'selected':'' }}>ACLEDA Bank</option>
                     </select>
                     @error('payment_method')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>

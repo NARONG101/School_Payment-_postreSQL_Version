@@ -85,7 +85,7 @@ class StudentController extends Controller
             'discount'            => 'nullable|numeric|min:0|max:100',
             'time_types'          => 'required|array|min:1',
             'time_types.*'        => 'in:' . implode(',', self::TIME_SLOTS),
-            'payment_method'      => 'required|in:cash,bank_transfer',
+            'payment_method'      => 'required|in:cash,aba,ac',
             'payment_photo'       => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'study_status'        => 'nullable|in:studying,stopped',
         ]);
