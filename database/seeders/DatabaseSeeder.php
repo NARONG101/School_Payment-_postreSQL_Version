@@ -35,9 +35,13 @@ class DatabaseSeeder extends Seeder
         );
         
         // ── Receipts user ─────────────────────────────────────
-        $receiptsUser = User::firstOrNew(['email' => 'receipts@school.ck']);
-        $receiptsUser->name = 'Receipts User';
-        $receiptsUser->password = Hash::make('ReceiptsCK123!'); // You can change this password
+        $receiptsEmail    = env('Receipts_Email',    'receipts@school.ck');
+        $receiptsPassword = env('Receipts_Password', 'ReceiptsCK123!');
+        $receiptsName     = env('Receipts_User',     'Receipts User');
+
+        $receiptsUser = User::firstOrNew(['email' => $receiptsEmail]);
+        $receiptsUser->name = $receiptsName;
+        $receiptsUser->password = Hash::make($receiptsPassword);
         $receiptsUser->role = 'receipts';
         $receiptsUser->save();
 
