@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     ['icon'=>'fas fa-layer-group',  'label'=>'Grade',     'val'=>'Grade '.$student->year_level],
                     ['icon'=>'fas fa-phone',        'label'=>'Phone',     'val'=>$student->phone ?: 'N/A'],
                     ['icon'=>'fas fa-calendar',     'label'=>'Enrolled',  'val'=>$student->enrollment_date->format('M d, Y')],
-                    ['icon'=>'fas fa-clock',        'label'=>'Time Slot', 'val'=>$student->time_type ?: 'N/A'],
+                    ['icon'=>'fas fa-clock',        'label'=>'Time Slot', 'val'=>($student->time_types && count($student->time_types) > 0) ? implode(', ', $student->time_types) : ($student->time_type ?: 'N/A')],
                     ['icon'=>'fas fa-dollar-sign',  'label'=>'Monthly Fee', 'val'=>'$'.number_format($student->monthly_fee, 2)],
                     ['icon'=>'fas fa-percent',      'label'=>'Discount',  'val'=>($student->discount ?? 0).'%'],
                 ] as $info)
@@ -160,6 +160,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <th>Paid</th>
                         <th>Balance</th>
                         <th>For Month</th>
+                        <th>Payment Method</th>
+                        <th>Time Type</th>
                         <th>Next Payment</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -176,6 +178,26 @@ document.addEventListener('DOMContentLoaded', function() {
                             {{ $payment->due_date?->format('M d, Y') ?? $payment->payment_date?->format('M d, Y') ?? '—' }}
                             @if($payment->payment_date && $payment->due_date && $payment->payment_date->format('Y-m-d') !== $payment->due_date->format('Y-m-d'))
                                 <div style="font-size:10px;color:var(--text-muted)">paid {{ $payment->payment_date->format('M d, Y') }}</div>
+                            @endif
+                        </td>
+                        <td style="font-size:12px;color:var(--text-secondary)">
+                            @if($payment->payment_method === 'cash')
+                                💵 Cash
+                            @elseif($payment->payment_method === 'aba')
+                                🏦 ABA
+                            @elseif($payment->payment_method === 'ac')
+                                🏦 ACLEDA
+                            @else
+                                {{ $payment->payment_method ? ucfirst(str_replace('_',' ',$payment->payment_method)) : '—' }}
+                            @endif
+                        </td>
+                        <td style="font-size:12px;color:var(--text-secondary)">
+                            @if($payment->time_types && count($payment->time_types) > 0)
+                                @foreach($payment->time_types as $type)
+                                    <span style="display:inline-block;margin-right:4px">{{ $type }}</span>
+                                @endforeach
+                            @else
+                                {{ $payment->time_type ?: '—' }}
                             @endif
                         </td>
                         <td style="font-size:12px;color:var(--text-muted)">
