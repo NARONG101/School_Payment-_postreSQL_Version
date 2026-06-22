@@ -149,8 +149,12 @@ class MonthlyHistoryController extends Controller
         }
 
         $gradeLevels = $students->pluck('year_level')->unique()->sort()->values();
+        
+        // Calculate payment method counts
+        $allPaidPaymentsForMonth = $students->flatMap(fn ($s) => $s->payments->where('status', 'paid'));
+        $paymentMethodCounts = $allPaidPaymentsForMonth->groupBy('payment_method')->map(fn ($group) => $group->count());
 
-        return view('history.month-students', compact('yearMonth', 'date', 'students', 'gradeLevels', 'isCurrentMonth'));
+        return view('history.month-students', compact('yearMonth', 'date', 'students', 'gradeLevels', 'isCurrentMonth', 'paymentMethodCounts'));
     }
 
     // ── Students: list paid students for a month + grade ─────────────────────

@@ -71,6 +71,22 @@
     border-radius:50%; display:flex; align-items:center; justify-content:center;
     font-weight:700; color:var(--primary); font-size:12px; flex-shrink:0;
 }
+
+/* Payment method stats */
+.payment-method-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+}
+.payment-method-stat.badge-success { background: var(--success-light); border-color: var(--success); color: var(--success); }
+.payment-method-stat.badge-primary { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+.payment-method-stat.badge-purple { background: #f3e8ff; border-color: #7c3aed; color: #7c3aed; }
 </style>
 @endsection
 
@@ -120,6 +136,23 @@
     <div class="card-header">
         <div class="card-title" id="histTableTitle">
             All Students ({{ $students->count() }})
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            @php
+                $methodLabels = [
+                    'cash' => ['label' => 'Cash', 'class' => 'badge-success', 'icon' => '💵'],
+                    'aba' => ['label' => 'ABA', 'class' => 'badge-primary', 'icon' => '🏦'],
+                    'ac' => ['label' => 'ACLEDA', 'class' => 'badge-purple', 'icon' => '🏦'],
+                ];
+            @endphp
+            @foreach($methodLabels as $method => $info)
+                @if(isset($paymentMethodCounts[$method]))
+                    <div class="payment-method-stat {{ $info['class'] }}">
+                        <span>{{ $info['icon'] }} {{ $info['label'] }}:</span>
+                        <span style="font-weight: bold">{{ $paymentMethodCounts[$method] }}</span>
+                    </div>
+                @endif
+            @endforeach
         </div>
     </div>
 
@@ -186,6 +219,7 @@
                     <th>Time Slot</th>
                     <th>Paid On</th>
                     <th>For Month</th>
+                    <th>Payment Method</th>
                     <th>Amount</th>
                     <th>Next Payment</th>
                     <th>Actions</th>
@@ -227,12 +261,31 @@
                             </td>
                             <td><span class="badge badge-primary">Grade {{ $student->year_level }}</span></td>
                             <td style="color:var(--text-secondary)">{{ $student->subject ?? '—' }}</td>
-                            <td style="font-size:12px;color:var(--text-secondary)">{{ $payment->time_type ?? '—' }}</td>
+                            <td style="font-size:12px;color:var(--text-secondary)">
+                                @if($payment->time_types && count($payment->time_types) > 0)
+                                    @foreach($payment->time_types as $type)
+                                        <span style="display:inline-block;margin-right:4px">{{ $type }}</span>
+                                    @endforeach
+                                @else
+                                    {{ $payment->time_type ?? '—' }}
+                                @endif
+                            </td>
                             <td style="font-size:12px;color:var(--text-muted)">
                                 {{ $payment->payment_date?->format('M d, Y') ?? '—' }}
                             </td>
                             <td style="font-size:12px;color:var(--text-muted)">
                                 {{ $payment->due_date?->format('M d, Y') ?? '—' }}
+                            </td>
+                            <td style="font-size:12px;color:var(--text-secondary)">
+                                @if($payment->payment_method === 'cash')
+                                    💵 Cash
+                                @elseif($payment->payment_method === 'aba')
+                                    🏦 ABA
+                                @elseif($payment->payment_method === 'ac')
+                                    🏦 ACLEDA
+                                @else
+                                    {{ $payment->payment_method ? ucfirst(str_replace('_',' ',$payment->payment_method)) : '—' }}
+                                @endif
                             </td>
                             <td style="font-weight:700;color:var(--success)">
                                 ${{ number_format($payment->amount_paid, 2) }}
@@ -288,9 +341,18 @@
                             </td>
                             <td><span class="badge badge-primary">Grade {{ $student->year_level }}</span></td>
                             <td style="color:var(--text-secondary)">{{ $student->subject ?? '—' }}</td>
-                            <td style="font-size:12px;color:var(--text-secondary)">{{ $student->time_type ?? '—' }}</td>
+                            <td style="font-size:12px;color:var(--text-secondary)">
+                                @if($student->time_types && count($student->time_types) > 0)
+                                    @foreach($student->time_types as $type)
+                                        <span style="display:inline-block;margin-right:4px">{{ $type }}</span>
+                                    @endforeach
+                                @else
+                                    {{ $student->time_type ?? '—' }}
+                                @endif
+                            </td>
                             <td style="font-size:12px;color:var(--danger)"><strong>Not Paid Yet</strong></td>
                             <td style="font-size:12px;color:var(--text-muted)">{{ $date->format('M Y') }}</td>
+                            <td style="font-size:12px;color:var(--text-secondary)">—</td>
                             <td style="font-weight:700;color:var(--text-muted)">$0.00</td>
                             <td style="font-size:12px;color:var(--text-muted)">{{ $student->payments->first()?->next_payment_date?->format('M d, Y') ?? '—' }}</td>
                             <td>
@@ -308,7 +370,7 @@
                         </tr>
                     @endif
                 @empty
-                <tr><td colspan="10">
+                <tr><td colspan="11">
                     <div class="empty-state">
                         <i class="fas fa-calendar-times" aria-hidden="true"></i>
                         <p>No students for {{ $date->format('F Y') }}</p>
