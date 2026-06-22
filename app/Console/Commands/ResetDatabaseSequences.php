@@ -20,18 +20,18 @@ class ResetDatabaseSequences extends Command
 
         // Reset users sequence
         $maxUserId = DB::table('users')->max('id') ?? 0;
-        DB::statement("SELECT setval(pg_get_serial_sequence('users', 'id'), ?, false)", [$maxUserId]);
-        $this->info("Users sequence set to {$maxUserId}");
+        DB::statement("SELECT setval(pg_get_serial_sequence('users', 'id'), ?, true)", [$maxUserId]);
+        $this->info("Users sequence set to {$maxUserId} (next value will be " . ($maxUserId + 1) . ")");
 
         // Reset students sequence
         $maxStudentId = DB::table('students')->max('id') ?? 0;
-        DB::statement("SELECT setval(pg_get_serial_sequence('students', 'id'), ?, false)", [$maxStudentId]);
-        $this->info("Students sequence set to {$maxStudentId}");
+        DB::statement("SELECT setval(pg_get_serial_sequence('students', 'id'), ?, true)", [$maxStudentId]);
+        $this->info("Students sequence set to {$maxStudentId} (next value will be " . ($maxStudentId + 1) . ")");
 
         // Reset payments sequence
         $maxPaymentId = DB::table('payments')->max('id') ?? 0;
-        DB::statement("SELECT setval(pg_get_serial_sequence('payments', 'id'), ?, false)", [$maxPaymentId]);
-        $this->info("Payments sequence set to {$maxPaymentId}");
+        DB::statement("SELECT setval(pg_get_serial_sequence('payments', 'id'), ?, true)", [$maxPaymentId]);
+        $this->info("Payments sequence set to {$maxPaymentId} (next value will be " . ($maxPaymentId + 1) . ")");
 
         $this->info('Done!');
     }

@@ -9,15 +9,15 @@ return new class extends Migration
     {
         // Fix users id sequence
         $maxUserId = DB::table('users')->max('id') ?? 0;
-        DB::statement("SELECT setval(pg_get_serial_sequence('users', 'id'), ?, false)", [$maxUserId]);
+        DB::statement("SELECT setval(pg_get_serial_sequence('users', 'id'), ?, true)", [$maxUserId]);
 
         // Fix students id sequence
         $maxStudentId = DB::table('students')->max('id') ?? 0;
-        DB::statement("SELECT setval(pg_get_serial_sequence('students', 'id'), ?, false)", [$maxStudentId]);
+        DB::statement("SELECT setval(pg_get_serial_sequence('students', 'id'), ?, true)", [$maxStudentId]);
 
         // Fix payments id sequence
         $maxPaymentId = DB::table('payments')->max('id') ?? 0;
-        DB::statement("SELECT setval(pg_get_serial_sequence('payments', 'id'), ?, false)", [$maxPaymentId]);
+        DB::statement("SELECT setval(pg_get_serial_sequence('payments', 'id'), ?, true)", [$maxPaymentId]);
     }
 
     public function down(): void
