@@ -49,7 +49,7 @@
             <i class="fas fa-moon" id="loginThemeIcon"></i>
         </button>
         <div class="brand">
-            <img src="/logo.png" class="brand-logo" alt="CK Takhmao School Logo" style="background:transparent;border:none;box-shadow:none;">
+            <img src="/logo.png?v={{ time() }}" class="brand-logo" alt="CK Takhmao School Logo" style="background:transparent;border:none;box-shadow:none;">
             <div class="brand-name">CK Takhmao School</div>
             <div class="brand-sub">សាលាបង្វឹក CK តាខ្មៅ</div>
         </div>
