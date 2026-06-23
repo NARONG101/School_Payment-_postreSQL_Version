@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\StudentController;
@@ -7,6 +8,15 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentTypeController;
 use App\Http\Controllers\RevenueController;
 use App\Http\Controllers\Auth\LoginController;
+
+// TEMPORARY: Route to reset database sequences (remove after using)
+Route::get('/reset-sequences', function () {
+    if (!Auth::check() || !Auth::user()->isAdmin()) {
+        abort(403);
+    }
+    Artisan::call('app:reset-database-sequences');
+    return 'Database sequences reset successfully!';
+})->middleware('auth', 'role:admin');
 
 // ── Auth routes ────────────────────────────────────────────────
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
