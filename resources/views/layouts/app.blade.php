@@ -720,14 +720,12 @@ textarea.form-control { resize:vertical; min-height:80px; }
         </a>
     </nav>
     <div class="sidebar-footer">
-        <div class="user-info" style="margin-bottom:10px;">
+        <div class="user-info">
             <div class="user-avatar" aria-hidden="true">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}</div>
             <div class="user-details">
                 <div class="user-name">{{ auth()->user()->name ?? 'Admin' }}</div>
                 <div class="user-role">{{ ucfirst(auth()->user()->role ?? 'admin') }}</div>
             </div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;">
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
                 <button type="submit" class="logout-btn" title="Sign out" aria-label="Sign out">

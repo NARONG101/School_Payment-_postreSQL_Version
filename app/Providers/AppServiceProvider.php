@@ -27,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
         } else {
             // For LOCAL DEVELOPMENT ONLY - 100% FORCE HTTP
             URL::forceScheme('http');
+            URL::forceRootUrl('http://127.0.0.1:8000');
+            $this->app['config']->set('app.url', 'http://127.0.0.1:8000');
             $this->app['config']->set('session.secure', false);
         }
 
