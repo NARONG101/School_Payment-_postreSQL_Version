@@ -48,6 +48,53 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+.autocomplete-wrapper {
+    position: relative;
+    width: 100%;
+}
+.autocomplete-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    display: none;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.autocomplete-dropdown.open {
+    display: block;
+}
+.autocomplete-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.autocomplete-item:hover {
+    background: var(--bg-hover);
+}
+.autocomplete-item .student-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.autocomplete-item .student-info {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
 .months-panel {
     border-radius: 14px;
     padding: 18px 20px;
@@ -251,64 +298,6 @@
     font-weight: 500;
     color: var(--text-primary);
 }
-
-/* Autocomplete styles */
-.autocomplete-wrapper {
-    position: relative;
-    width: 100%;
-}
-.autocomplete-input {
-    width: 100%;
-    padding: 10px 13px;
-    border: 1.5px solid var(--border-input);
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    color: var(--text-primary);
-    background: var(--bg-input);
-}
-.autocomplete-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-light);
-}
-.autocomplete-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    margin-top: 4px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-md);
-    z-index: 1000;
-    display: none;
-    max-height: 300px;
-    overflow-y: auto;
-}
-.autocomplete-dropdown.open {
-    display: block;
-}
-.autocomplete-item {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 10px 13px;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-.autocomplete-item:hover {
-    background: var(--bg-hover);
-}
-.autocomplete-item .student-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-.autocomplete-item .student-info {
-    font-size: 12px;
-    color: var(--text-muted);
-}
 </style>
 @endsection
 
@@ -382,8 +371,9 @@
                 </label>
                 <div class="autocomplete-wrapper">
                     <input type="text" id="studentSearch"
-                           class="autocomplete-input @error('student_id') is-invalid @enderror"
-                           placeholder="Type student name or ID to search...">
+                           class="form-control autocomplete-input @error('student_id') is-invalid @enderror"
+                           placeholder="Type student name or ID to search..."
+                           autocomplete="off">
                     <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
                 </div>
                 <input type="hidden" id="studentId" name="student_id" value="{{ old('student_id') }}" required>
@@ -632,6 +622,7 @@ function goBack() {
     var studentSearch    = document.getElementById('studentSearch');
     var studentId        = document.getElementById('studentId');
     var autocompleteDropdown = document.getElementById('autocompleteDropdown');
+    var selectedStudent  = null;
     var autoFields       = document.getElementById('autoFields');
     var noMsg            = document.getElementById('noStudentMsg');
     var amountDueInput   = document.getElementById('amountDueInput');
@@ -650,9 +641,7 @@ function goBack() {
     var coverInput       = document.getElementById('coveringMonthInput');
     var nextHidden       = document.getElementById('nextPaymentInput');
     var submitBtn        = document.getElementById('submitBtn');
-
-    var selectedStudent = null;
-    var searchTimeout = null;
+    var searchTimeout    = null;
 
     var MF = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var ML = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -710,14 +699,15 @@ function goBack() {
 
         searchTimeout = setTimeout(function() {
             fetch('{{ route('students.search') }}?q=' + encodeURIComponent(query))
-                .then(response => response.json())
-                .then(data => {
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
                     autocompleteDropdown.innerHTML = '';
                     if (data.length > 0) {
                         data.forEach(function(student) {
                             var item = document.createElement('div');
                             item.className = 'autocomplete-item';
-                            item.innerHTML = '<div class="student-name">' + student.full_name + '</div>' +
+                            item.innerHTML = 
+                                '<div class="student-name">' + student.full_name + '</div>' +
                                 '<div class="student-info">Grade ' + student.year_level + ' • ' + (student.gender || 'n/a') + '</div>';
                             item.addEventListener('click', function() {
                                 selectStudent(student);
@@ -726,7 +716,8 @@ function goBack() {
                         });
                         autocompleteDropdown.classList.add('open');
                     } else {
-                        autocompleteDropdown.innerHTML = '<div class="autocomplete-item" style="cursor: default;"><div class="student-info">No students found</div></div>';
+                        autocompleteDropdown.innerHTML = 
+                            '<div class="autocomplete-item" style="cursor: default;"><div class="student-info">No students found</div></div>';
                         autocompleteDropdown.classList.add('open');
                     }
                 });
@@ -834,7 +825,7 @@ function goBack() {
         if (!unpaid.length && !upcoming.length) {
             /* Calculate next month from today */
             var nx2 = addOneMonth(today.getFullYear(), today.getMonth());
-            upcoming.push(toISO(nx2.y, nx2.m, 1);
+            upcoming.push(toISO(nx2.y, nx2.m, 1));
         }
 
         if (unpaid.length) {

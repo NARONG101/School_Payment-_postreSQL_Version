@@ -15,3 +15,5 @@ import '@fontsource/kantumruy-pro/400.css';
 import '@fontsource/kantumruy-pro/500.css';
 import '@fontsource/kantumruy-pro/600.css';
 import '@fontsource/kantumruy-pro/700.css';
+
+console.log('App loaded!');
