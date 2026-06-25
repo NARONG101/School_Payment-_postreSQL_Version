@@ -956,6 +956,10 @@ function goBack() {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
     });
 
+    @if($selectedStudent)
+        // Auto-select the student if provided
+        selectStudent(@json($selectedStudent));
+    @endif
 }());
 </script>
 
