@@ -204,6 +204,7 @@ img { max-width:100%; }
     padding:14px; border-top:1px solid var(--sidebar-border); flex-shrink:0;
 }
 .user-info { display:flex; align-items:center; gap:10px; }
+.user-details { flex: 1; }
 .user-avatar {
     width:34px; height:34px; background:var(--primary);
     border-radius:50%; display:flex; align-items:center;
