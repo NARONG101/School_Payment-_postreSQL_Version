@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
     // Students
     Route::resource('students', StudentController::class)->middleware('role:admin,receipts');
     Route::get('students-export-csv', [StudentController::class, 'exportCsv'])->name('students.export.csv')->middleware('role:admin,receipts');
+    Route::get('students-search', [StudentController::class, 'search'])->name('students.search')->middleware('role:admin,receipts');
 
     // Payments
     Route::prefix('payments')->name('payments.')->group(function () {
