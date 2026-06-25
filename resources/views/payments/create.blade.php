@@ -48,75 +48,6 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Autocomplete styles */
-.autocomplete-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-.autocomplete-input {
-    width: 100%;
-    padding: 10px 13px;
-    border: 1.5px solid var(--border-input);
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    color: var(--text-primary);
-    background: var(--bg-input);
-    font-family: inherit;
-    outline: none;
-    transition: border 0.15s, box-shadow 0.15s;
-    -webkit-appearance: none;
-    appearance: none;
-}
-
-.autocomplete-input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-light);
-}
-
-.autocomplete-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    margin-top: 4px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-md);
-    z-index: 1000;
-    max-height: 300px;
-    overflow-y: auto;
-    display: none;
-}
-
-.autocomplete-dropdown.open {
-    display: block;
-}
-
-.autocomplete-item {
-    padding: 10px 13px;
-    cursor: pointer;
-    transition: background 0.15s;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.autocomplete-item:hover,
-.autocomplete-item.highlighted {
-    background: var(--bg-hover);
-}
-
-.autocomplete-item-name {
-    font-weight: 500;
-}
-
-.autocomplete-item-details {
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
 .months-panel {
     border-radius: 14px;
     padding: 18px 20px;
@@ -319,6 +250,64 @@
     font-size: 14px;
     font-weight: 500;
     color: var(--text-primary);
+}
+
+/* Autocomplete styles */
+.autocomplete-wrapper {
+    position: relative;
+    width: 100%;
+}
+.autocomplete-input {
+    width: 100%;
+    padding: 10px 13px;
+    border: 1.5px solid var(--border-input);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--text-primary);
+    background: var(--bg-input);
+}
+.autocomplete-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    display: none;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.autocomplete-dropdown.open {
+    display: block;
+}
+.autocomplete-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.autocomplete-item:hover {
+    background: var(--bg-hover);
+}
+.autocomplete-item .student-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.autocomplete-item .student-info {
+    font-size: 12px;
+    color: var(--text-muted);
 }
 </style>
 @endsection
@@ -708,6 +697,51 @@ function goBack() {
     // Initialize trigger text
     updateTriggerText();
 
+    // Autocomplete search
+    studentSearch.addEventListener('input', function() {
+        var query = this.value.trim();
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            autocompleteDropdown.innerHTML = '';
+            autocompleteDropdown.classList.remove('open');
+            return;
+        }
+
+        searchTimeout = setTimeout(function() {
+            fetch('{{ route('students.search') }}?q=' + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(data => {
+                    autocompleteDropdown.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(function(student) {
+                            var item = document.createElement('div');
+                            item.className = 'autocomplete-item';
+                            item.innerHTML = '<div class="student-name">' + student.full_name + '</div>' +
+                                '<div class="student-info">Grade ' + student.year_level + ' • ' + (student.gender || 'n/a') + '</div>';
+                            item.addEventListener('click', function() {
+                                selectStudent(student);
+                            });
+                            autocompleteDropdown.appendChild(item);
+                        });
+                        autocompleteDropdown.classList.add('open');
+                    } else {
+                        autocompleteDropdown.innerHTML = '<div class="autocomplete-item" style="cursor: default;"><div class="student-info">No students found</div></div>';
+                        autocompleteDropdown.classList.add('open');
+                    }
+                });
+        }, 300);
+    });
+
+    function selectStudent(student) {
+        selectedStudent = student;
+        studentSearch.value = student.full_name;
+        studentId.value = student.id;
+        autocompleteDropdown.classList.remove('open');
+        autocompleteDropdown.innerHTML = '';
+        update();
+    }
+
     /* ── Calculate total function ─────────────────────────── */
     function calculateTotal() {
         var baseFee = parseFloat(amountDueInput.value) || 0;
@@ -800,7 +834,7 @@ function goBack() {
         if (!unpaid.length && !upcoming.length) {
             /* Calculate next month from today */
             var nx2 = addOneMonth(today.getFullYear(), today.getMonth());
-            upcoming.push(toISO(nx2.y, nx2.m, 1));
+            upcoming.push(toISO(nx2.y, nx2.m, 1);
         }
 
         if (unpaid.length) {
@@ -835,7 +869,7 @@ function goBack() {
         chip.classList.add('selected');
 
         if (!selectedStudent) return;
-
+        
         var iso           = chip.dataset.iso;
         var monthsCovered = parseInt(monthsCoveredInput.value) || 1;
         var nextISO       = nextAfterCovering(iso, selectedStudent.payment_day, monthsCovered);
@@ -884,68 +918,6 @@ function goBack() {
 
         buildChips(firstOwed, selectedStudent.payment_day);
     }
-
-    /* ── Autocomplete logic ──────────────────────────────── */
-    async function searchStudents(query) {
-        if (!query || query.length < 1) {
-            autocompleteDropdown.innerHTML = '';
-            autocompleteDropdown.classList.remove('open');
-            return;
-        }
-
-        try {
-            const response = await fetch('{{ route('students.search') }}?q=' + encodeURIComponent(query));
-            const students = await response.json();
-
-            autocompleteDropdown.innerHTML = '';
-            if (students.length === 0) {
-                autocompleteDropdown.classList.remove('open');
-                return;
-            }
-
-            students.forEach(function(student) {
-                const item = document.createElement('div');
-                item.className = 'autocomplete-item';
-                item.innerHTML = `
-                    <div>
-                        <div class="autocomplete-item-name">${student.full_name}</div>
-                        <div class="autocomplete-item-details">Grade ${student.year_level} (${student.gender})</div>
-                    </div>
-                `;
-                item.addEventListener('click', function() {
-                    selectStudent(student);
-                });
-                autocompleteDropdown.appendChild(item);
-            });
-
-            autocompleteDropdown.classList.add('open');
-        } catch (error) {
-            console.error('Error searching students:', error);
-        }
-    }
-
-    function selectStudent(student) {
-        selectedStudent = student;
-        studentId.value = student.id;
-        studentSearch.value = student.full_name;
-        autocompleteDropdown.classList.remove('open');
-        update();
-    }
-
-    // Search input event listeners
-    studentSearch.addEventListener('input', function() {
-        const query = this.value;
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() {
-            searchStudents(query);
-        }, 300);
-    });
-
-    studentSearch.addEventListener('focus', function() {
-        if (this.value.length > 0) {
-            searchStudents(this.value);
-        }
-    });
 
     amountDueInput.addEventListener('input', calculateTotal);
     discountInput.addEventListener('input', calculateTotal);
@@ -1003,7 +975,7 @@ function previewUpload(input) {
         reader.onload = function(e) {
             document.getElementById('uploadPreviewImg').src = e.target.result;
             document.getElementById('uploadPreview').style.display = '';
-        }
+        };
         reader.readAsDataURL(input.files[0]);
     }
 }
