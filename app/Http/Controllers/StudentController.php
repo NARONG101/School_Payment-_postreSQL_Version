@@ -328,7 +328,6 @@ class StudentController extends Controller
             ->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', '%' . $search . '%')
                   ->orWhere('last_name', 'like', '%' . $search . '%')
-                  ->orWhere('full_name', 'like', '%' . $search . '%')
                   ->orWhere('student_id', 'like', '%' . $search . '%');
             })
             ->orderBy('first_name')
@@ -338,7 +337,7 @@ class StudentController extends Controller
         // Format data for autocomplete
         $formatted = $students->map(function ($student) {
             $lastPay = $student->payments->first();
-            $payDay = (int)($student->monthly_payment_day ?? 1);
+            $payDay = (int) ($student->monthly_payment_day ?? 1);
             
             if ($lastPay && $lastPay->next_payment_date) {
                 $firstOwed = $lastPay->next_payment_date->format('Y-m-d');
@@ -356,8 +355,8 @@ class StudentController extends Controller
                 'full_name' => $student->full_name,
                 'year_level' => $student->year_level,
                 'gender' => $student->gender ?? 'n/a',
-                'monthly_fee' => (float)$student->monthly_fee,
-                'discount' => (float)($student->discount ?? 0),
+                'monthly_fee' => (float) $student->monthly_fee,
+                'discount' => (float) ($student->discount ?? 0),
                 'payment_day' => $payDay,
                 'time_types' => $student->time_types ?? [],
                 'first_owed' => $firstOwed,
