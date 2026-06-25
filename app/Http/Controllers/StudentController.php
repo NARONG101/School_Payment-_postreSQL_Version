@@ -328,6 +328,8 @@ class StudentController extends Controller
             ->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', '%' . $search . '%')
                   ->orWhere('last_name', 'like', '%' . $search . '%')
+                  ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", ['%' . $search . '%'])
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $search . '%'])
                   ->orWhere('student_id', 'like', '%' . $search . '%');
             })
             ->orderBy('first_name')
