@@ -72,9 +72,15 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="password">Password</label>
-                <input type="password" id="password" name="password"
-                       class="form-control @error('password') is-invalid @enderror"
-                       autocomplete="current-password" required aria-required="true">
+                <div style="position:relative;">
+                    <input type="password" id="password" name="password"
+                           class="form-control @error('password') is-invalid @enderror"
+                           autocomplete="current-password" required aria-required="true"
+                           style="padding-right:45px;">
+                    <button type="button" id="togglePassword" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7280;">
+                        <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                    </button>
+                </div>
                 @error('password')<div class="invalid-feedback" role="alert">{{ $message }}</div>@enderror
             </div>
             <div class="remember-row">
@@ -94,6 +100,21 @@
     if(saved==='dark'||saved==='light'){apply(saved);}
     else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches){apply('dark');}
     btn.addEventListener('click',function(){apply(html.getAttribute('data-theme')==='dark'?'light':'dark');});
+
+    // Toggle password visibility
+    var passwordInput = document.getElementById('password');
+    var toggleBtn = document.getElementById('togglePassword');
+    var toggleIcon = document.getElementById('passwordToggleIcon');
+
+    toggleBtn.addEventListener('click', function() {
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.className = 'fas fa-eye-slash';
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.className = 'fas fa-eye';
+        }
+    });
 })();
 </script>
 </body>
