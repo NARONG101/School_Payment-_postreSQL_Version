@@ -25,6 +25,27 @@
         .form-group{margin-bottom:20px;}
         .form-label{display:block;margin-bottom:8px;font-size:14px;font-weight:600;color:var(--text-l);}
         .form-control{width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;color:var(--input-text);background:var(--input-bg);font-family:inherit;outline:none;transition:border 0.15s,box-shadow 0.15s;-webkit-appearance:none;appearance:none;}
+        /* Hide browser's default password toggle button */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none !important;
+            width : 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        input[type="password"]::-webkit-contacts-auto-fill-button,
+        input[type="password"]::-webkit-credentials-auto-fill-button {
+            visibility: hidden !important;
+            display: none !important;
+            pointer-events: none !important;
+            position: absolute !important;
+            right: 0 !important;
+        }
+        /* Hide Chrome's password reveal button */
+        input::-webkit-reveal-password-button {
+            display: none !important;
+        }
         .form-control:focus{border-color:#1a56db;box-shadow:0 0 0 3px rgba(26,86,219,0.15);}
         .form-control.is-invalid{border-color:#ef4444;}
         .invalid-feedback{color:#ef4444;font-size:13px;margin-top:5px;}
