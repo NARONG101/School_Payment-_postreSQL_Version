@@ -173,8 +173,8 @@
                     <strong id="sortLabel">{{ [
                         'newest'=>'Newest','oldest'=>'Oldest',
                         'az'=>'A → Z','za'=>'Z → A',
-                        'enroll'=>'Enrollment','grade'=>'Grade'
-                    ][$sortBy] ?? 'Oldest' }}</strong>
+                        'enroll'=>'Enrollment','discount'=>'Discount'
+                    ][$sortBy] ?? 'Newest' }}</strong>
                 </span>
                 <i class="fas fa-chevron-down" id="sortChevron" style="font-size:10px;transition:transform 0.2s" aria-hidden="true"></i>
             </button>
@@ -191,7 +191,7 @@
                     'az'     => ['label'=>'A → Z',       'icon'=>'fa-arrow-down-a-z'],
                     'za'     => ['label'=>'Z → A',       'icon'=>'fa-arrow-up-z-a'],
                     'enroll' => ['label'=>'Enrollment',  'icon'=>'fa-calendar'],
-                    'grade'  => ['label'=>'Grade',       'icon'=>'fa-layer-group'],
+                    'discount'  => ['label'=>'Discount',       'icon'=>'fa-percent'],
                 ] as $key => $opt)
                 <a href="#"
                    data-sort="{{ $key }}"

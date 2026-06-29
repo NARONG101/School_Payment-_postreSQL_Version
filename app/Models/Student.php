@@ -17,6 +17,20 @@ class Student extends Model
         'monthly_fee', 'time_type', 'time_types', 'status', 'study_status', 'discount',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saved(function ($student) {
+            // If discount is set to 100%, auto-generate missing payments
+            if ($student->discount == 100) {
+                \Artisan::call('students:auto-pay-100-discount', [
+                    '--student' => $student->id,
+                ]);
+            }
+        });
+    }
+
     protected $casts = [
         'enrollment_date' => 'date',
         'date_of_birth'   => 'date',

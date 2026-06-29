@@ -204,6 +204,9 @@
                         <option value="cash" {{ old('payment_method',$payment->payment_method)==='cash'?'selected':'' }}>Cash</option>
                         <option value="aba" {{ old('payment_method',$payment->payment_method)==='aba'?'selected':'' }}>ABA Bank</option>
                         <option value="ac" {{ old('payment_method',$payment->payment_method)==='ac'?'selected':'' }}>ACLEDA Bank</option>
+                        @if($payment->payment_method === 'auto')
+                            <option value="auto" {{ old('payment_method',$payment->payment_method)==='auto'?'selected':'' }}>Auto</option>
+                        @endif
                     </select>
                     @error('payment_method')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>

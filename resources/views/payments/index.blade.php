@@ -57,6 +57,7 @@
                     'cash' => ['label' => 'Cash', 'class' => 'badge-success', 'icon' => '💵'],
                     'aba' => ['label' => 'ABA', 'class' => 'badge-primary', 'icon' => '🏦'],
                     'ac' => ['label' => 'ACLEDA', 'class' => 'badge-purple', 'icon' => '🏦'],
+                    'auto' => ['label' => 'Auto', 'class' => 'badge-secondary', 'icon' => '⚡'],
                 ];
             @endphp
             @foreach($methodLabels as $method => $info)
@@ -183,6 +184,7 @@
                         'cash' => '💵 Cash',
                         'aba' => '🏦 ABA',
                         'ac' => '🏦 ACLEDA',
+                        'auto' => '⚡ Auto',
                     ][$payment->payment_method] ?? $payment->payment_method;
                 @endphp
                 <tr data-searchable data-search="{{ $searchStr }}">

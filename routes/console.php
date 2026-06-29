@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Schedule daily database backup
 Schedule::command('db:backup')->dailyAt('02:00')->timezone('Asia/Phnom_Penh')->withoutOverlapping();
+
+// Schedule daily auto-pay for 100% discount students
+Schedule::command('students:auto-pay-100-discount')->dailyAt('02:30')->timezone('Asia/Phnom_Penh')->withoutOverlapping();

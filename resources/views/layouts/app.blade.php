@@ -705,6 +705,8 @@ textarea.form-control { resize:vertical; min-height:80px; }
             @php
                 $alertCount = \App\Models\Student::where(function ($q) {
                     $q->where('status','active')->orWhereNull('status');
+                })->where(function ($q) {
+                    $q->where('discount', '<', 100)->orWhereNull('discount');
                 })->with(['payments' => fn($q) => $q->orderByDesc('next_payment_date')
                                                     ->orderByDesc('id')])->get()
                 ->filter(function ($s) {

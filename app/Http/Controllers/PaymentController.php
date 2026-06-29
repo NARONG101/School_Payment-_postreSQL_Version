@@ -142,7 +142,7 @@ class PaymentController extends Controller
             'time_types'        => 'required|array|min:1',
             'time_types.*'      => 'in:' . implode(',', self::TIME_SLOTS),
             'months_covered'    => 'required|integer|min:1|max:12',
-            'payment_method'    => 'required|in:cash,aba,ac',
+            'payment_method'    => 'required|in:cash,aba,ac,auto',
             'amount_due'        => 'nullable|numeric|min:0',
             'admin_fee'         => 'nullable|numeric|min:0',
             'discount'          => 'nullable|numeric|min:0|max:100',
@@ -247,7 +247,7 @@ class PaymentController extends Controller
     {
         $validated = $request->validate([
             'payment_date'      => 'nullable|date',
-            'payment_method'    => 'required|in:cash,aba,ac',
+            'payment_method'    => 'required|in:cash,aba,ac,auto',
             'time_types'        => 'required|array|min:1',
             'time_types.*'      => 'in:' . implode(',', self::TIME_SLOTS),
             'months_covered'    => 'required|integer|min:1|max:12',
@@ -411,6 +411,9 @@ class PaymentController extends Controller
         } elseif ($classType === 'weekend') {
             $students = $students->filter(fn ($s) => str_starts_with($s->time_type ?? '', 'sat-sun'));
         }
+
+        // Filter out students with 100% discount
+        $students = $students->filter(fn ($s) => ($s->discount ?? 0) < 100);
 
         $rows = $students->map(fn ($s) => $this->buildStudentAlertData($s, $now))
             ->when($filter !== 'all', fn ($c) => $c->filter(fn ($d) => $d['alertLevel'] === $filter))
@@ -661,6 +664,9 @@ class PaymentController extends Controller
             $students = $students->filter(fn ($s) => str_starts_with($s->time_type ?? '', 'sat-sun'));
         }
 
+        // Filter out students with 100% discount
+        $students = $students->filter(fn ($s) => ($s->discount ?? 0) < 100);
+
         $overdue         = collect();
         $allByMonth      = collect();
         $closely         = collect();
@@ -738,7 +744,7 @@ class PaymentController extends Controller
     {
         $now    = Carbon::now();
         $grades = $this->activeStudentsWithLastPayment()->get()
-            ->filter(fn ($s) => $this->buildStudentAlertData($s, $now)['alertLevel'] === 'overdue')
+            ->filter(fn ($s) => ($s->discount ?? 0) < 100 && $this->buildStudentAlertData($s, $now)['alertLevel'] === 'overdue')
             ->pluck('year_level')->unique()->sort()->values();
 
         return view('payments.alerts-grades', ['grades' => $grades, 'title' => 'Overdue Payments', 'type' => 'overdue']);
@@ -748,6 +754,7 @@ class PaymentController extends Controller
     {
         $now  = Carbon::now();
         $data = $this->activeStudentsWithLastPayment()->where('year_level', $grade)->get()
+            ->filter(fn ($s) => ($s->discount ?? 0) < 100)
             ->map(fn ($s) => $this->buildStudentAlertData($s, $now))
             ->filter(fn ($d) => $d['alertLevel'] === 'overdue')->values();
 
@@ -758,7 +765,7 @@ class PaymentController extends Controller
     {
         $now    = Carbon::now();
         $grades = $this->activeStudentsWithLastPayment()->get()
-            ->filter(fn ($s) => $this->buildStudentAlertData($s, $now)['alertLevel'] === 'closely')
+            ->filter(fn ($s) => ($s->discount ?? 0) < 100 && $this->buildStudentAlertData($s, $now)['alertLevel'] === 'closely')
             ->pluck('year_level')->unique()->sort()->values();
 
         return view('payments.alerts-grades', ['grades' => $grades, 'title' => 'Closely Date Payments', 'type' => 'closely']);
@@ -768,6 +775,7 @@ class PaymentController extends Controller
     {
         $now  = Carbon::now();
         $data = $this->activeStudentsWithLastPayment()->where('year_level', $grade)->get()
+            ->filter(fn ($s) => ($s->discount ?? 0) < 100)
             ->map(fn ($s) => $this->buildStudentAlertData($s, $now))
             ->filter(fn ($d) => $d['alertLevel'] === 'closely')->values();
 
@@ -778,7 +786,7 @@ class PaymentController extends Controller
     {
         $now    = Carbon::now();
         $grades = $this->activeStudentsWithLastPayment()->get()
-            ->filter(fn ($s) => $this->buildStudentAlertData($s, $now)['alertLevel'] === 'upcoming')
+            ->filter(fn ($s) => ($s->discount ?? 0) < 100 && $this->buildStudentAlertData($s, $now)['alertLevel'] === 'upcoming')
             ->pluck('year_level')->unique()->sort()->values();
 
         return view('payments.alerts-grades', ['grades' => $grades, 'title' => 'Upcoming Payments', 'type' => 'upcoming']);
@@ -788,6 +796,7 @@ class PaymentController extends Controller
     {
         $now  = Carbon::now();
         $data = $this->activeStudentsWithLastPayment()->where('year_level', $grade)->get()
+            ->filter(fn ($s) => ($s->discount ?? 0) < 100)
             ->map(fn ($s) => $this->buildStudentAlertData($s, $now))
             ->filter(fn ($d) => $d['alertLevel'] === 'upcoming')->values();
 

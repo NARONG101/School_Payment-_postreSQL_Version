@@ -27,7 +27,7 @@ class StudentController extends Controller
     public function index(Request $request)
     {
         // All students for the full table (with sort)
-        $sortBy        = $request->get('sort', 'oldest');
+        $sortBy        = $request->get('sort');
         $classType     = $request->get('class_type', ''); // 'weekday', 'weekend', or ''
         $selectedGrade = $request->get('grade', '');
 
@@ -45,7 +45,7 @@ class StudentController extends Controller
             'az'     => $allQuery->orderBy('last_name')->orderBy('first_name')->get(),
             'za'     => $allQuery->orderByDesc('last_name')->orderByDesc('first_name')->get(),
             'enroll'  => $allQuery->orderByDesc('enrollment_date')->get(),
-            'grade'  => $allQuery->orderByDesc('year_level')->orderBy('last_name')->get(),
+            'discount' => $allQuery->orderByDesc('discount')->orderBy('last_name')->get(),
             default  => $allQuery->orderByDesc('id')->get(), // newest
         };
 
@@ -216,7 +216,7 @@ class StudentController extends Controller
 
     public function exportCsv(Request $request)
     {
-        $sortBy        = $request->get('sort', 'oldest');
+        $sortBy        = $request->get('sort');
         $classType     = $request->get('class_type', '');
         $selectedGrade = $request->get('grade', '');
 
@@ -234,7 +234,7 @@ class StudentController extends Controller
             'az'     => $allQuery->orderBy('last_name')->orderBy('first_name')->get(),
             'za'     => $allQuery->orderByDesc('last_name')->orderByDesc('first_name')->get(),
             'enroll' => $allQuery->orderByDesc('enrollment_date')->get(),
-            'grade'  => $allQuery->orderByDesc('year_level')->orderBy('last_name')->get(),
+            'discount' => $allQuery->orderByDesc('discount')->orderBy('last_name')->get(),
             default  => $allQuery->orderByDesc('id')->get(),
         };
 
