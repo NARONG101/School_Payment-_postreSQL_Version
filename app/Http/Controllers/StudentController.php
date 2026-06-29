@@ -83,6 +83,7 @@ class StudentController extends Controller
             'monthly_payment_day' => 'required|integer|min:1|max:31',
             'monthly_fee'         => 'required|numeric|min:0|max:99999',
             'discount'            => 'nullable|numeric|min:0|max:100',
+            'admin_fee'           => 'required|numeric|min:0|max:99999',
             'time_types'          => 'required|array|min:1',
             'time_types.*'        => 'in:' . implode(',', self::TIME_SLOTS),
             'payment_method'      => 'required|in:cash,aba,ac',
@@ -107,20 +108,19 @@ class StudentController extends Controller
         $paymentMethod = $validated['payment_method'];
         $paymentPhoto  = $request->file('payment_photo');
         $discount      = $validated['discount'] ?? 0;
+        $adminFee      = $validated['admin_fee'] ?? 20;
 
-        unset($validated['payment_method'], $validated['payment_photo'], $validated['time_type']);
+        unset($validated['payment_method'], $validated['payment_photo'], $validated['time_type'], $validated['admin_fee']);
 
         $student = Student::create($validated);
 
-        // Auto-create first payment (enrollment date, with $20 admin fee — one time only)
+        // Auto-create first payment (enrollment date, with admin fee)
         $enrollDate = Carbon::parse($validated['enrollment_date']);
         $paymentDay = (int) $validated['monthly_payment_day'];
 
         // Next payment = next occurrence of payment_day AFTER enrollment date
         $nextPaymentDate = Student::nextPaymentDateFrom($enrollDate, $paymentDay);
 
-        $adminFee = 20; // $20 admin fee on enrollment only
-        
         // Calculate total with discount (discount applied to monthly fee only)
         $discountAmount = $validated['monthly_fee'] * ($discount / 100);
         $totalAmount = ($validated['monthly_fee'] - $discountAmount) + $adminFee;
@@ -131,7 +131,7 @@ class StudentController extends Controller
             'amount_due'        => $validated['monthly_fee'],
             'admin_fee'         => $adminFee,
             'discount'          => $discount,
-            'amount_paid'        => $totalAmount,
+            'amount_paid'       => $totalAmount,
             'balance'           => 0,
             'payment_date'      => $enrollDate,
             'due_date'          => $enrollDate,
@@ -139,7 +139,7 @@ class StudentController extends Controller
             'next_payment_date' => $nextPaymentDate,
             'status'            => 'paid',
             'payment_method'    => $paymentMethod,
-            'time_types'         => $timeTypes,
+            'time_types'        => $timeTypes,
             'created_by'        => Auth::id(),
         ];
 

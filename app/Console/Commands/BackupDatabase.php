@@ -40,7 +40,7 @@ class BackupDatabase extends Command
             (int) $port,
             escapeshellarg($username),
             escapeshellarg($dbname),
-            escapeshellarg($filepath)
+            $filepath
         );
 
         $this->info("Backing up database '{$dbname}'...");
